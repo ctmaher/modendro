@@ -8,24 +8,22 @@ n_mon_corr(
   chrono = NULL,
   clim = NULL,
   var = NULL,
-  site = NULL,
   chrono.col = "xxxstd",
   agg.fun = "mean",
   max.lag = 3,
   corr.method = "pearson",
+  chrono.name = NULL,
   plots = TRUE
 )
 }
 \arguments{
-\item{chrono}{A chron object (such as that produced by dplR's \code{chron()}).}
+\item{chrono}{a chron object (such as that produced by dplR's \code{chron()}).}
 
 \item{clim}{a \code{data.frame} with at least 3 columns: year, month (numeric), and a climate variable.}
 
-\item{var}{character vector - the name of the climate variable of interest in the \code{clim} data.frame (i.e., the colname).}
+\item{var}{character vector - the colname of the climate variable of interest in the \code{clim} data.frame.}
 
-\item{site}{character vector - the name of your site.}
-
-\item{chrono.col}{A chron object (such as that produced by dplR's \code{chron()}).}
+\item{chrono.col}{character vector - the colname of the chronology series (default is "xxxstd", which is the defualt produced by dplR's \code{chron()}).}
 
 \item{agg.fun}{character vector specifying the function to use for aggregating monthly climate combinations.
 Options are "mean" or "sum", e.g., for temperature or precipitation data, respectively. Default is "mean".}
@@ -34,19 +32,22 @@ Options are "mean" or "sum", e.g., for temperature or precipitation data, respec
 
 \item{corr.method}{character vector specifying which correlation method to use. Passes to \code{cor.test()}.}
 
+\item{chrono.name}{character vector - the name of your chronology. This is used in the title of your plot.}
+
 \item{plots}{logical vector indicating whether or not to produce plots.}
 }
 \value{
-A named numeric vector with the series IDs (colnames) and the estimated optimal power of transformation
+A 1-2 element list containing data.frames of the correlation results and the default plots of the same data.
 }
 \description{
 Function to take a tree ring chronology and a monthly climate variable to compute
 monthly aggregate correlations for every combination of consecutive months for calendar years and water years (Oct-Sept)
-The function computes the correlations for a specified number lagged years (ie, years before ring formation).
+The function computes the correlations for a specified number lagged years (i.e., years before ring formation).
+This function is designed for exploratory data analysis on growth-climate relationships in trees.
 3 years is the default and is a sensible maximum for most analyses.
 }
 \details{
-This needs work
+This
 }
 \examples{
 Will add some later

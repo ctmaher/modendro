@@ -3,25 +3,26 @@
 #' @description
 #' Function to take a tree ring chronology and a monthly climate variable to compute
 #' monthly aggregate correlations for every combination of consecutive months for calendar years and water years (Oct-Sept)
-#' The function computes the correlations for a specified number lagged years (ie, years before ring formation).
+#' The function computes the correlations for a specified number lagged years (i.e., years before ring formation).
+#' This function is designed for exploratory data analysis on growth-climate relationships in trees.
 #' 3 years is the default and is a sensible maximum for most analyses.
 #'
 #' @details
-#' This needs work
+#' This
 #'
 #'
-#' @param chrono A chron object (such as that produced by dplR's `chron()`).
+#' @param chrono a chron object (such as that produced by dplR's `chron()`).
 #' @param clim a `data.frame` with at least 3 columns: year, month (numeric), and a climate variable.
-#' @param var character vector - the name of the climate variable of interest in the `clim` data.frame (i.e., the colname).
-#' @param site character vector - the name of your site.
-#' @param chrono.col A chron object (such as that produced by dplR's `chron()`).
+#' @param var character vector - the colname of the climate variable of interest in the `clim` data.frame.
+#' @param chrono.col character vector - the colname of the chronology series (default is "xxxstd", which is the defualt produced by dplR's `chron()`).
 #' @param agg.fun character vector specifying the function to use for aggregating monthly climate combinations.
 #' Options are "mean" or "sum", e.g., for temperature or precipitation data, respectively. Default is "mean".
 #' @param max.lag numeric vector specifying how many years of lag to calculate calculations for. Default is 3 years.
 #' @param corr.method character vector specifying which correlation method to use. Passes to `cor.test()`.
+#' @param chrono.name character vector - the name of your chronology. This is used in the title of your plot.
 #' @param plots logical vector indicating whether or not to produce plots.
 #'
-#' @return A named numeric vector with the series IDs (colnames) and the estimated optimal power of transformation
+#' @return A 1-2 element list containing data.frames of the correlation results and the default plots of the same data.
 #'
 #' @import plyr
 #' @import ggplot2
@@ -34,9 +35,10 @@
 
 
 
-n_mon_corr <- function(chrono = NULL, clim = NULL, var = NULL, site = NULL,
+n_mon_corr <- function(chrono = NULL, clim = NULL, var = NULL,
                        chrono.col = "xxxstd", agg.fun = "mean",
-                       max.lag = 3, corr.method = "pearson", plots = TRUE){
+                       max.lag = 3, corr.method = "pearson",
+                       chrono.name = NULL, plots = TRUE){
 
   if (chrono.col %in% colnames(chrono)){
 
@@ -133,7 +135,9 @@ n_mon_corr <- function(chrono = NULL, clim = NULL, var = NULL, site = NULL,
       # return the result
       result
     })
-    cal.cor.res$sig <- ifelse(cal.cor.res$p > 0.05, "", ifelse(cal.cor.res$p <= 0.05 & cal.cor.res$p >= 0.01, "*",ifelse(cal.cor.res$p <= 0.001, "***","**")))
+    cal.cor.res$sig <- ifelse(cal.cor.res$p > 0.05, "",
+                              ifelse(cal.cor.res$p <= 0.05 & cal.cor.res$p >= 0.01, "*",
+                                     ifelse(cal.cor.res$p <= 0.001, "***","**")))
     cal.cor.res$seas.win <- "Calendar year"
 
 
@@ -201,8 +205,8 @@ n_mon_corr <- function(chrono = NULL, clim = NULL, var = NULL, site = NULL,
 
     plot.df$simp.sig <- ifelse(plot.df$sig %in% c("*","**","***"), "Sig.","Not sig.")
     mo.xaxis <- c(10:12,1:12)
-    title <- ifelse(is.null(site), paste0("Chronology correlations with ",var),
-                    paste0(site, " chronology correlations with ",var))
+    title <- ifelse(is.null(chrono.name), paste0("Chronology correlations with ",var),
+                    paste0(chrono.name, " chronology correlations with ",var))
 
     out.plot <- ggplot(plot.df, aes(start.mo, coef, color = simp.sig)) +
       geom_point(shape = 5, size = 1.5) +
