@@ -8,9 +8,10 @@ n_mon_corr(
   chrono = NULL,
   clim = NULL,
   var = NULL,
-  chrono.col = "xxxstd",
+  clim.rel.per.begin = NULL,
+  chrono.col = "std",
   agg.fun = "mean",
-  max.lag = 3,
+  max.lag = 2,
   corr.method = "pearson",
   chrono.name = NULL,
   plots = TRUE

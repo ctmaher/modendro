@@ -13,4 +13,5 @@ Imports:
     dplR,
     ggplot2,
     plyr,
-    tidyr
+    tidyr,
+    lubridate
