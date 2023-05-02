@@ -1,8 +1,8 @@
-#' Growth-climate correlations via moving windows
+#' Flexible length monthly growth-climate correlations
 #'
 #' @description
 #' Exploratory Data Analysis function to take a tree ring chronology and a monthly climate variable to compute
-#' static monthly aggregate correlations for every combination of consecutive months for calendar years and "water years"
+#' static monthly aggregate correlations for every combination (lengths 1:12) of consecutive months for calendar years and "water years"
 #' that are putatively relevant climatically to each year of tree ring formation (e.g., Oct-Sept for N hemisphere, Apr-Mar for S hemisphere).
 #' The function computes the correlations for a specified number lagged years (i.e., years before ring formation).
 #' 2 years is the default and is a sensible maximum for most analyses. The correlations are "static" because there
