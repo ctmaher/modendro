@@ -16,7 +16,7 @@
 #' which for tree ring data is typically 0.01 or 0.001 mm.
 #'
 #'
-#' @param rwl A rwl object (read in by dplR's `read.rwl()`). Essentially a data.frame with columns names as series IDs and years as rownames
+#' @param rwl A rwl object (read in by dplR's `read.rwl()`). Essentially a data.frame with columns names as series IDs and years as rownames.
 #'
 #' @return A two-element list, 1 is the transformed series and 2 contains the messages about the transformations
 #'

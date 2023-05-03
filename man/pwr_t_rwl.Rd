@@ -7,7 +7,7 @@
 pwr_t_rwl(rwl)
 }
 \arguments{
-\item{rwl}{A rwl object (read in by dplR's \code{read.rwl()}). Essentially a data.frame with columns names as series IDs and years as rownames}
+\item{rwl}{A rwl object (read in by dplR's \code{read.rwl()}). Essentially a data.frame with columns names as series IDs and years as rownames.}
 }
 \value{
 A two-element list, 1 is the transformed series and 2 contains the messages about the transformations
