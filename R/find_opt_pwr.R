@@ -71,9 +71,10 @@ find_opt_pwr <- function(rwl) {
   lmean[diffs.ind] <- NA
   lmean[lmean.ind] <- NA
 
-  # Make the dfs into lists
-  diffs <- split(diffs, f = colnames(diffs))
-  lmean <- split(lmean, f = colnames(lmean))
+  # Make the dfs into lists - use apply(MARGIN = 2, simplify = F) & an identity function
+  # split() wasn't working well because the colnames are not really a factor in "wide" format.
+  diffs <- apply(diffs, MARGIN = 2, FUN = \(x) x, simplify = FALSE)
+  lmean <- apply(lmean, MARGIN = 2, FUN = \(x) x, simplify = FALSE)
 
   # Get the slopes
   slopes <- mapply(FUN = \(x, y) {

@@ -29,3 +29,11 @@ test_that("Names (series IDs) are equal in the input rwl and outputs", {
   out.test <- find_opt_pwr(mat.test)
   expect_equal(colnames(mat.test), names(out.test))
 })
+
+test_that("Basic functionality; returns a vector", {
+  mat.test <- matrix(nrow = 10, ncol = 10)
+  rownames(mat.test) <- 1:10
+  colnames(mat.test) <- 1:10
+  mat.test <- apply(mat.test, MARGIN = 2, FUN = \(x) runif(length(x), 0.1, 2))
+  expect_vector(find_opt_pwr(mat.test))
+})
