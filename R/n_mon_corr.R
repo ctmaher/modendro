@@ -22,7 +22,7 @@
 #' It is the user's responsibility to make sure that the chronology is properly constructed -
 #' properly dealing with the "dark arts" of detrending & standardization and also accounting for temporal autocorrelation in the data.
 #' If you don't know what this means or you just took a chronology directly from the ITRDB without knowing how it was made,
-#'  you have some homework to do.
+#'  you have some homework to do. There aren't universal answers to these tasks - each dataset is somewhat unique.
 #'
 #'
 #' @param chrono a `chron` object (such as that produced by dplR's `chron()`).
@@ -34,7 +34,8 @@
 #' @param agg.fun character vector specifying the function to use for aggregating monthly climate combinations.
 #' Options are "mean" or "sum", e.g., for temperature or precipitation data, respectively. Default is "mean".
 #' @param max.lag numeric vector specifying how many years of lag to calculate calculations for. Default is 2 years.
-#' @param corr.method character vector specifying which correlation method to use. Passes to `cor.test()`.
+#' @param corr.method character vector specifying which correlation method to use. Options are `c("pearson", "kendall", "spearman")`.
+#'  Passes to `cor.test()`.
 #' @param chrono.name character vector - the name of your chronology (optional). This is used in the title of your plot.
 #' If you produce many plots, this helps keep them identifiable.
 #' @param plots logical vector indicating whether or not to produce plots. Default is TRUE.
@@ -42,9 +43,11 @@
 #' @details
 #' Exploring a wide range of plausible growth-climate relationships can be a useful first step once you have
 #' a collection of cross-dated tree ring series and have properly detrended them, standardized them, and dealt
-#' with temporal autocorrelation. There aren't universal answers to these tasks - each dataset is unique.
+#' with temporal autocorrelation.
 #'
-#' A note on choosing tree ring analyses based in the Southern hemisphere:
+#' The default correlation test method is Pearson product moment correlation coefficient.
+#'
+#' A note on tree ring analyses based in the Southern hemisphere:
 #' `n_mon_corr()` is designed to work in both the Northern and Southern hemispheres. Hemisphere matters
 #' for tree ring growth-climate relationships because tree ring formation in the Southern hemisphere typically
 #' spans two calendar years (e.g., starting in Nov 2000 and ending in Mar of 2001).
@@ -54,14 +57,18 @@
 #' The current implementation handles this implicitly by assuming that if `clim.rel.per.begin` is between 1:6,
 #' this is a S. hemisphere analysis and the current "growth year" is the same as the calendar year of `clim.rel.per.begin`.
 #' If `clim.rel.per.begin` is between 7:12, it is assumed that the is a N. hemisphere analysis and the current "growth year"
-#' is the calendar year following current `clim.rel.per.begin`. E.g., if `clim.rel.per.begin = 4`, the climatically relevant period
+#' is the calendar year following `clim.rel.per.begin`. E.g., if `clim.rel.per.begin = 4`, the climatically relevant period
 #' will be defined as months `c(4,5,6,7,8,9,10,11,12,1,2,3)` with the calendar year of the FIRST 9 months as the
 #' "growth year". If `clim.rel.per.begin = 10`, the climatically relevant period
 #' will be defined as months `c(10,11,12,1,2,3,4,5,6,7,8,9)` with the calendar year of the LAST 9 months as the
 #' "growth year".
 #'
 #' Interpreting the plots:
-#'
+#' The plots show a 12-month sequence of consecutive months on the x-axis & the correlation coefficient on the y-axis.
+#' The diamonds indicate the starting month of an n-month aggregate period, small vertical bars the end. Horizontal lines connect
+#' the start and end months for periods > 1 month. Significant correlations (as determined by `cor.test()`) are shown
+#' in black, no significant ones in grey. Plot panel labels (right-hand side of plots) indicate lag years: 0 = current year,
+#' -1 = previous year, -2 = 2 years back.
 #'
 #'
 #' @return A 1-2 element list containing data.frames of the correlation results and the default plots of the same data.
@@ -106,14 +113,20 @@ n_mon_corr <- function(chrono = NULL, clim = NULL,
               length(match.test[match.test == TRUE]) == 1
   )
 
+  stopifnot("No valid climatically relevant period begin month provided (must be an integer month)" =
+              is.numeric(clim.rel.per.begin))
+
+
   stopifnot("Arg agg.fun must be either 'mean' or 'sum'" =
               agg.fun %in% "mean" |
               agg.fun %in% "sum"
   )
 
 
-  stopifnot("No valid climatically relevant period begin month provided (must be an integer month)" =
-              is.numeric(clim.rel.per.begin))
+  stopifnot("Arg corr.method must be an exact match of one of these: c('pearson','kendall','spearman')" =
+              corr.method %in% c("pearson", "kendall", "spearman")
+  )
+
 
   # make sure that "year" columns are labelled as such
   colnames(clim)[which((substr(colnames(clim), start = 1, stop = 2)
@@ -125,11 +138,11 @@ n_mon_corr <- function(chrono = NULL, clim = NULL,
                         %in% c("Mo","mo")) == T)] <- "month"
 
   # make sure year and month are integers
-  clim$year <- as.integer(clim$year)
-  clim$month <- as.integer(clim$month)
+  clim[,"year"] <- as.integer(clim[,"year"])
+  clim[,"month"] <- as.integer(clim[,"month"])
 
   # Get the year from row names
-  chrono$year <- rownames(chrono) |> as.integer()
+  chrono[,"year"] <- rownames(chrono) |> as.integer()
 
   # Create a chronological sequence of months starting with the numeric month
   # given as the clim.rel.per.begin argument
@@ -143,21 +156,21 @@ n_mon_corr <- function(chrono = NULL, clim = NULL,
 
   clim$growyear <- if (clim.rel.per.begin %in% 1:6) {
     offset <- clim.rel.per.begin - 1
-    c(rep(min(clim$year) - 1, offset), clim$year[1:(length(clim$year) - offset)])
+    c(rep(min(clim[,"year"]) - 1, offset), clim[,"year"][1:(length(clim[,"year"]) - offset)])
   } else {
     offset <- 12 - clim.rel.per.begin + 1
-    c(clim$year[(offset + 1):length(clim$year)], rep(max(clim$year) + 1, offset))
+    c(clim[,"year"][(offset + 1):length(clim[,"year"])], rep(max(clim[,"year"]) + 1, offset))
   }
 
 
   # Find the complete years in the climate data
   clim.complete <- aggregate(month ~ growyear, data = clim, length)
   clim.complete <- clim.complete[clim.complete$month == 12,]
-  clim <- clim[clim$growyear %in% clim.complete$growyear,]
+  clim <- clim[clim[,"growyear"] %in% clim.complete[,"growyear"],]
 
   # Find min and max complete years for the correlations, i.e., the complete overlap
-  min.y <- max(min(chrono$year), min(clim$growyear))
-  max.y <- min(max(chrono$year), max(clim$growyear))
+  min.y <- max(min(chrono[,"year"]), min(clim[,"growyear"]))
+  max.y <- min(max(chrono[,"year"]), max(clim[,"growyear"]))
 
   # Create a vector of all possible combinations of months
   # Regular calendar year first
@@ -287,7 +300,7 @@ n_mon_corr <- function(chrono = NULL, clim = NULL,
       ggtitle(label = title,
               subtitle = paste0("Monthly climate ",
                                 agg.fun, "s with annual lag 0:",
-                                max.lag, " (years ", min.y, "-", max.y, ")"))
+                                max.lag, " (overlapping years ", min.y, "-", max.y, ")"))
 
     out.list <- list(lag.list, out.plot)
     return(out.list)

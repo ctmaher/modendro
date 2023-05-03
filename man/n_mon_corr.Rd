@@ -34,7 +34,8 @@ Options are "mean" or "sum", e.g., for temperature or precipitation data, respec
 
 \item{max.lag}{numeric vector specifying how many years of lag to calculate calculations for. Default is 2 years.}
 
-\item{corr.method}{character vector specifying which correlation method to use. Passes to \code{cor.test()}.}
+\item{corr.method}{character vector specifying which correlation method to use. Options are \code{c("pearson", "kendall", "spearman")}.
+Passes to \code{cor.test()}.}
 
 \item{chrono.name}{character vector - the name of your chronology (optional). This is used in the title of your plot.
 If you produce many plots, this helps keep them identifiable.}
@@ -66,14 +67,16 @@ Fair warning: this is a basic function that will accept any tree ring chronology
 It is the user's responsibility to make sure that the chronology is properly constructed -
 properly dealing with the "dark arts" of detrending & standardization and also accounting for temporal autocorrelation in the data.
 If you don't know what this means or you just took a chronology directly from the ITRDB without knowing how it was made,
-you have some homework to do.
+you have some homework to do. There aren't universal answers to these tasks - each dataset is somewhat unique.
 }
 \details{
 Exploring a wide range of plausible growth-climate relationships can be a useful first step once you have
 a collection of cross-dated tree ring series and have properly detrended them, standardized them, and dealt
-with temporal autocorrelation. There aren't universal answers to these tasks - each dataset is unique.
+with temporal autocorrelation.
 
-A note on choosing tree ring analyses based in the Southern hemisphere:
+The default correlation test method is Pearson product moment correlation coefficient.
+
+A note on tree ring analyses based in the Southern hemisphere:
 \code{n_mon_corr()} is designed to work in both the Northern and Southern hemispheres. Hemisphere matters
 for tree ring growth-climate relationships because tree ring formation in the Southern hemisphere typically
 spans two calendar years (e.g., starting in Nov 2000 and ending in Mar of 2001).
@@ -83,13 +86,18 @@ This has implications for how the climate data is aligned with the treering data
 The current implementation handles this implicitly by assuming that if \code{clim.rel.per.begin} is between 1:6,
 this is a S. hemisphere analysis and the current "growth year" is the same as the calendar year of \code{clim.rel.per.begin}.
 If \code{clim.rel.per.begin} is between 7:12, it is assumed that the is a N. hemisphere analysis and the current "growth year"
-is the calendar year following current \code{clim.rel.per.begin}. E.g., if \code{clim.rel.per.begin = 4}, the climatically relevant period
+is the calendar year following \code{clim.rel.per.begin}. E.g., if \code{clim.rel.per.begin = 4}, the climatically relevant period
 will be defined as months \code{c(4,5,6,7,8,9,10,11,12,1,2,3)} with the calendar year of the FIRST 9 months as the
 "growth year". If \code{clim.rel.per.begin = 10}, the climatically relevant period
 will be defined as months \code{c(10,11,12,1,2,3,4,5,6,7,8,9)} with the calendar year of the LAST 9 months as the
 "growth year".
 
 Interpreting the plots:
+The plots show a 12-month sequence of consecutive months on the x-axis & the correlation coefficient on the y-axis.
+The diamonds indicate the starting month of an n-month aggregate period, small vertical bars the end. Horizontal lines connect
+the start and end months for periods > 1 month. Significant correlations (as determined by \code{cor.test()}) are shown
+in black, no significant ones in grey. Plot panel labels (right-hand side of plots) indicate lag years: 0 = current year,
+-1 = previous year, -2 = 2 years back.
 }
 \examples{
 Will add some later
