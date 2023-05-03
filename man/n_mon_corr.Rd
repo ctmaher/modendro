@@ -2,7 +2,7 @@
 % Please edit documentation in R/n_mon_corr.R
 \name{n_mon_corr}
 \alias{n_mon_corr}
-\title{Flexible length monthly growth-climate correlations}
+\title{Flexible-length monthly growth-climate correlations for exploratory data analysis}
 \usage{
 n_mon_corr(
   chrono = NULL,
@@ -45,7 +45,7 @@ If you produce many plots, this helps keep them identifiable.}
 A 1-2 element list containing data.frames of the correlation results and the default plots of the same data.
 }
 \description{
-Exploratory Data Analysis function to take a tree ring chronology and a monthly climate variable to compute
+Exploratory data analysis (EDA) function to take a tree ring chronology and a monthly climate variable to compute
 static monthly aggregate correlations for every combination (lengths 1:12) of consecutive months for calendar years and "water years"
 that are putatively relevant climatically to each year of tree ring formation (e.g., Oct-Sept for N hemisphere, Apr-Mar for S hemisphere).
 The function computes the correlations for a specified number lagged years (i.e., years before ring formation).
@@ -59,7 +59,8 @@ all combinations of consecutive months are run by default - this includes all th
 Longer periods are essentially covered by the lags, so periods longer than 12 months will be irrelevant for
 the majority of cases (& thus are not possible to specify). Chose for \code{clim.rel.per.begin} the first month in
 after which you are reasonably certain that no tree ring growth is occurring at your site. Note that this analysis
-assumes that there is a seasonality of growth.
+assumes that there is a seasonality of growth. This approach should allow discovery of potentially meaningful
+growth-climate relationships than methods that force rigidly-defined seasons of a fixed length.
 
 Fair warning: this is a basic function that will accept any tree ring chronology and climate data in the proper format.
 It is the user's responsibility to make sure that the chronology is properly constructed -

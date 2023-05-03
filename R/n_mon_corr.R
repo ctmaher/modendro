@@ -1,7 +1,7 @@
-#' Flexible length monthly growth-climate correlations
+#' Flexible-length monthly growth-climate correlations for exploratory data analysis
 #'
 #' @description
-#' Exploratory Data Analysis function to take a tree ring chronology and a monthly climate variable to compute
+#' Exploratory data analysis (EDA) function to take a tree ring chronology and a monthly climate variable to compute
 #' static monthly aggregate correlations for every combination (lengths 1:12) of consecutive months for calendar years and "water years"
 #' that are putatively relevant climatically to each year of tree ring formation (e.g., Oct-Sept for N hemisphere, Apr-Mar for S hemisphere).
 #' The function computes the correlations for a specified number lagged years (i.e., years before ring formation).
@@ -15,7 +15,8 @@
 #' Longer periods are essentially covered by the lags, so periods longer than 12 months will be irrelevant for
 #' the majority of cases (& thus are not possible to specify). Chose for `clim.rel.per.begin` the first month in
 #' after which you are reasonably certain that no tree ring growth is occurring at your site. Note that this analysis
-#' assumes that there is a seasonality of growth.
+#' assumes that there is a seasonality of growth. This approach should allow discovery of potentially meaningful
+#' growth-climate relationships than methods that force rigidly-defined seasons of a fixed length.
 #'
 #' Fair warning: this is a basic function that will accept any tree ring chronology and climate data in the proper format.
 #' It is the user's responsibility to make sure that the chronology is properly constructed -
