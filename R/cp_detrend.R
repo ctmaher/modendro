@@ -133,58 +133,29 @@ cp_detrend <-
       # Make the plots
 
       # convert all rwl format data.frames to long format, and then rbind them together.
-      # long.rwl <- reshape(as.data.frame(rwl), idvar = "year", ids = row.names(rwl),
-      #                     times = colnames(rwl), timevar = "series",
-      #                     varying = list(colnames(rwl)), direction = "long")
-      # colnames(long.rwl)[2] <- "value"
-      # long.rwl$type <- "rw"
-
-      rwl <- as.data.frame(rwl)
-      year <- rownames(rwl) |> as.numeric()
-      rwl <- cbind(year, rwl)
-      long.rwl <- tidyr::pivot_longer(rwl, cols = -year,
-                                      names_to = "series" , values_to = "value")
-      long.rwl$type <- "rw"
-
-      # long.trans <- reshape(as.data.frame(trans), idvar = "year", ids = row.names(trans),
-      #                       times = colnames(trans), timevar = "series",
-      #                       varying = list(colnames(trans)), direction = "long")
-      # colnames(long.trans)[2] <- "value"
-      # long.trans$type <- "pwr.t"
+      rw <- as.data.frame(rwl)
+      rw[, "year"] <- rownames(rwl) |> as.numeric()
+      long.rw <- tidyr::pivot_longer(rw, cols = -year,
+                                     names_to = "series" , values_to = "value")
+      long.rw$type <- "rw"
 
       trans <- as.data.frame(trans)
-      year <- rownames(curv) |> as.numeric()
-      trans <- cbind(year, trans)
+      trans[, "year"] <- rownames(curv) |> as.numeric()
       long.trans <- tidyr::pivot_longer(trans, cols = -year,
                                         names_to = "series" , values_to = "value")
-      long.trans$type <- "rw"
-
-      # long.curv <- reshape(as.data.frame(curv), idvar = "year", ids = row.names(curv),
-      #                      times = colnames(curv), timevar = "series",
-      #                      varying = list(colnames(curv)), direction = "long") |>
-      #   na.omit()
-      # colnames(long.curv)[2] <- "value"
-      # long.curv$type <- "pwr.t_cu"
+      long.trans$type <- "pwr.t_cu"
 
       curv <- as.data.frame(curv)
-      year <- rownames(curv) |> as.numeric()
-      curv <- cbind(year, curv)
+      curv[, "year"] <- rownames(curv) |> as.numeric()
       long.curv <- tidyr::pivot_longer(curv, cols = -year,
                                        names_to = "series" , values_to = "value")
-      long.curv$type <- "rw"
-
-      # long.detr <- reshape(as.data.frame(detr), idvar = "year", ids = row.names(detr),
-      #                      times = colnames(detr), timevar = "series",
-      #                      varying = list(colnames(detr)), direction = "long")
-      # colnames(long.detr)[2] <- "value"
-      # long.detr$type <- "de"
+      long.curv$type <- "pwr.t_cu"
 
       detr <- as.data.frame(detr)
-      year <- rownames(detr) |> as.numeric()
-      detr <- cbind(year, detr)
+      detr[, "year"] <- rownames(detr) |> as.numeric()
       long.detr <- tidyr::pivot_longer(detr, cols = -year,
                                        names_to = "series" , values_to = "value")
-      long.detr$type <- "rw"
+      long.detr$type <- "de"
 
       all.df <- rbind(long.rwl, long.trans, long.detr) |>
         na.omit() |> as.data.frame()
@@ -214,7 +185,7 @@ cp_detrend <-
       # Make the plots
       plot.list <- mapply(FUN = \(x, y) {
 
-        max.trans <- x[x[, "type"] %in% "pwr.t", "value"] |> max(na.rm = TRUE)
+        max.trans <- x[x[, "type"] %in% "pwr.t_cu", "value"] |> max(na.rm = TRUE)
         this.order <- c(unique(x[, "label"])[startsWith(unique(x[, "label"]),
                                                         prefix = "Or")],
                         unique(x[, "label"])[startsWith(unique(x[, "label"]),
@@ -243,8 +214,8 @@ cp_detrend <-
                     size = 3,
                     aes(label = message)) +
           xlab("Year") +
-          scale_x_continuous(breaks = seq(min(x[, "year"]),
-                                          max(x[, "year"]),
+          scale_x_continuous(breaks = seq(min(x[, "year"], na.rm = TRUE),
+                                          max(x[, "year"], na.rm = TRUE),
                                           length.out = 5) |>
                                round(digits = -1)) +
           theme(strip.background = element_blank(),
@@ -257,7 +228,6 @@ cp_detrend <-
       x = all.list, y = curv.list,
       SIMPLIFY = FALSE)
 
-
       out.list <- list(detr[, !c(colnames(detr) %in% "year")],
                        curv[, !c(colnames(detr) %in% "year")],
                        trans[, !c(colnames(detr) %in% "year")],
@@ -267,42 +237,26 @@ cp_detrend <-
     } else { # i.e., detrending == FALSE
 
       # convert all rwl format data.frames to long format, and then rbind them together.
-      # long.rwl <- reshape(as.data.frame(rwl), idvar = "year", ids = row.names(rwl),
-      #                     times = colnames(rwl), timevar = "series",
-      #                     varying = list(colnames(rwl)), direction = "long")
-      # colnames(long.rwl)[2] <- "value"
-      # long.rwl$type <- "rw"
-
-      rwl <- as.data.frame(rwl)
-      year <- rownames(rwl) |> as.numeric()
-      rwl <- cbind(year, rwl)
-      long.rwl <- tidyr::pivot_longer(rwl, cols = -year,
-                                      names_to = "series" , values_to = "value")
-      long.rwl$type <- "rw"
-
-      # long.trans <- reshape(trans, idvar = "year", ids = row.names(trans),
-      #                       times = colnames(trans), timevar = "series",
-      #                       varying = list(colnames(trans)), direction = "long")
-      # colnames(long.trans)[2] <- "value"
-      # long.trans$type <- "pwr.t"
+      rw <- as.data.frame(rwl)
+      rw[, "year"] <- rownames(rw) |> as.numeric()
+      long.rw <- tidyr::pivot_longer(rw, cols = -year,
+                                     names_to = "series" , values_to = "value")
+      long.rw$type <- "rw"
 
       trans <- as.data.frame(trans)
-      year <- rownames(trans) |> as.numeric()
-      trans <- cbind(year, trans)
+      trans[, "year"] <- rownames(trans) |> as.numeric()
       long.trans <- tidyr::pivot_longer(trans, cols = -year,
                                         names_to = "series" , values_to = "value")
-      long.trans$type <- "rw"
+      long.trans$type <- "pwr.t"
 
 
-      all.df <- rbind(long.rwl, long.trans) |>
+      all.df <- rbind(long.rw, long.trans) |>
         na.omit() |> as.data.frame()
 
       all.df$year <- as.numeric(all.df$year)
       all.df$label <- ifelse(all.df$type %in% "rw",
                              paste("Original ring widths - series ID:", all.df$series),
-                             ifelse(all.df$type %in% "pwr.t",
-                                    paste0("Transformed series"),
-                                    "Residual detrended series"))
+                             "Transformed series")
 
       # merge the message data with the rest of the data.
       mess.df <- data.frame(series = names(messages),
