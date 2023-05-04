@@ -202,6 +202,11 @@ cp_detrend <-
         z[, "value"] <- max.trans
         z[, "year"] <- median(y[, "year"])
 
+        x_axis_params <- seq(min(na.omit(x[, "year"])),
+                             max(na.omit(x[, "year"])),
+                             length.out = 5) |>
+          round(digits = -1)
+
         ggplot2::ggplot(x, aes(year, value, color = type)) +
           scale_color_manual(values = c("black","black","blue"),
                              guide = "none") +
@@ -214,10 +219,8 @@ cp_detrend <-
                     size = 3,
                     aes(label = message)) +
           xlab("Year") +
-          scale_x_continuous(breaks = seq(min(x[, "year"], na.rm = TRUE),
-                                          max(x[, "year"], na.rm = TRUE),
-                                          length.out = 5) |>
-                               round(digits = -1)) +
+          scale_x_continuous(breaks = x_axis_params,
+                             limits = range(x_axis_params)) +
           theme(strip.background = element_blank(),
                 strip.text = element_text(hjust = 0),
                 strip.clip = "off",
@@ -282,6 +285,11 @@ cp_detrend <-
                             z[, "value"] <- max.trans
                             z[, "year"] <- median(x[, "year"])
 
+                            x_axis_params <- seq(min(na.omit(x[, "year"])),
+                                                 max(na.omit(x[, "year"])),
+                                                 length.out = 5) |>
+                              round(digits = -1)
+
                             ggplot2::ggplot(x, aes(year, value)) +
                               geom_line(linewidth = 0.25) +
                               facet_wrap(~type,
@@ -291,10 +299,8 @@ cp_detrend <-
                                         size = 2.5,
                                         aes(label = message)) +
                               xlab("Year") +
-                              scale_x_continuous(breaks = seq(min(x[, "year"]),
-                                                              max(x[, "year"]),
-                                                              length.out = 5) |>
-                                                   round(digits = -1)) +
+                              scale_x_continuous(breaks = x_axis_params,
+                                                 limits = range(x_axis_params)) +
                               theme(strip.background = element_blank(),
                                     strip.text = element_text(hjust = 0),
                                     strip.clip = "off",
