@@ -10,7 +10,7 @@
 #' and climate time series data.
 #'
 #' Because this is EDA, the "climatically relevant period" is defined as a an inclusive 12 month period beginning
-#' on the month you specify with `clim.rel.per.begin`. There is no sense in trying to shorten this period because
+#' on the integer month you specify with `clim.rel.per.begin`. There is no sense in trying to shorten this period because
 #' all combinations of consecutive months are run by default - this includes all the possible shorter periods.
 #' Longer periods are essentially covered by the lags, so periods longer than 12 months will be irrelevant for
 #' the majority of cases (& thus are not possible to specify). Chose for `clim.rel.per.begin` the first month in
