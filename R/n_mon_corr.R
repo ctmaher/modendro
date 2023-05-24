@@ -102,6 +102,10 @@ n_mon_corr <- function(chrono = NULL, clim = NULL,
               data.class(clim) %in% "matrix"
   )
 
+  # stopifnot("No year column in chronology dataframe, please add one (year may be contained in rownames)" =
+  #             substr(colnames(chrono), 1, 1) %in% c("Y","y")
+  #           )
+
   match.test <- var %in% colnames(clim)
   stopifnot("Arg var must match one unique column name in clim" =
               length(match.test[match.test == TRUE]) == 1
@@ -131,8 +135,7 @@ n_mon_corr <- function(chrono = NULL, clim = NULL,
   # make sure that "year" columns are labelled as such
   colnames(clim)[which((substr(colnames(clim), start = 1, stop = 1)
                         %in% c("Y","y")) == T)] <- "year"
-  colnames(chrono)[which((substr(colnames(chrono), start = 1, stop = 1)
-                          %in% c("Y","y")) == T)] <- "year"
+
   # same for month
   colnames(clim)[which((substr(colnames(clim), start = 1, stop = 1)
                         %in% c("M","m")) == T)] <- "month"
@@ -147,9 +150,14 @@ n_mon_corr <- function(chrono = NULL, clim = NULL,
   clim[,"year"] <- as.integer(clim[,"year"])
   clim[,"month"] <- as.integer(clim[,"month"])
 
-  # Get the year from row names - this doesn't work any more
-  #chrono[,"year"] <- rownames(chrono) |> as.integer()
-  chrono[,"year"] <- as.numeric(chrono[,"year"])
+  # Get the year from row names - but this may not work
+  if (any(substr(colnames(chrono), 1, 1) %in% c("Y","y")) == FALSE) {
+    chrono[,"year"] <- rownames(chrono) |> as.numeric()
+  } else {
+    colnames(chrono)[which((substr(colnames(chrono), start = 1, stop = 1)
+                            %in% c("Y","y")) == T)] <- "year"
+    chrono[,"year"] <- as.numeric(chrono[,"year"])
+  }
 
   # Create a chronological sequence of months starting with the numeric month
   # given as the clim.rel.per.begin argument
