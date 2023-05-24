@@ -56,6 +56,6 @@ test_that("Essential function works - and returns a vector", {
   }
   clim <- do.call("rbind", clim.list)
   expect_vector(n_mon_corr(chrono = chrono, clim = clim, var = "clim.var",
-             chrono.col = "std", chrono.name = "Synthetic"))
+             clim.rel.per.begin = 3, chrono.col = "std", chrono.name = "Synthetic"))
 })
 

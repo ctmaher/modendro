@@ -25,7 +25,7 @@
 #'  you have some homework to do. There aren't universal answers to these tasks - each dataset is somewhat unique.
 #'
 #'
-#' @param chrono a `chron` object (such as that produced by dplR's `chron()`).
+#' @param chrono a `chron` object (such as that produced by dplR's `chron()`). Make sure this has a `year` variable.
 #' @param clim a `data.frame` with at least 3 columns: year, month (numeric), and a climate variable.
 #' @param var character vector - the colname of the climate variable of interest in the `clim` data.frame.
 #' @param clim.rel.per.begin an integer month representing the beginning of the climatically relevant period to the growth year (always a 12 month period).
@@ -129,20 +129,27 @@ n_mon_corr <- function(chrono = NULL, clim = NULL,
 
 
   # make sure that "year" columns are labelled as such
-  colnames(clim)[which((substr(colnames(clim), start = 1, stop = 2)
-                        %in% c("Ye","ye")) == T)] <- "year"
-  colnames(chrono)[which((substr(colnames(chrono), start = 1, stop = 2)
-                          %in% c("Ye","ye")) == T)] <- "year"
+  colnames(clim)[which((substr(colnames(clim), start = 1, stop = 1)
+                        %in% c("Y","y")) == T)] <- "year"
+  colnames(chrono)[which((substr(colnames(chrono), start = 1, stop = 1)
+                          %in% c("Y","y")) == T)] <- "year"
   # same for month
-  colnames(clim)[which((substr(colnames(clim), start = 1, stop = 2)
-                        %in% c("Mo","mo")) == T)] <- "month"
+  colnames(clim)[which((substr(colnames(clim), start = 1, stop = 1)
+                        %in% c("M","m")) == T)] <- "month"
 
-  # make sure year and month are integers
+  stopifnot("Month variable in climate data not numeric or integer" =
+              is.numeric(clim[,"month"]) |
+              is.integer(clim[,"month"]) |
+              is.double(clim[,"month"])
+  )
+
+  # make sure year and month are integers from here on out
   clim[,"year"] <- as.integer(clim[,"year"])
   clim[,"month"] <- as.integer(clim[,"month"])
 
-  # Get the year from row names
-  chrono[,"year"] <- rownames(chrono) |> as.integer()
+  # Get the year from row names - this doesn't work any more
+  #chrono[,"year"] <- rownames(chrono) |> as.integer()
+  chrono[,"year"] <- as.numeric(chrono[,"year"])
 
   # Create a chronological sequence of months starting with the numeric month
   # given as the clim.rel.per.begin argument
