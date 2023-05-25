@@ -170,13 +170,15 @@ n_mon_corr <- function(chrono = NULL, clim = NULL,
   # Define the "growth year" based on the clim.rel.per.begin
 
   if (clim.rel.per.begin %in% 1:6) {
-    message("Assuming Southern hemisphere conventions for linking growth years and climate years because you chose a month between 1:6 for clim.rel.per.begin
+    message("Assuming Southern hemisphere conventions for linking growth years
+    and climate years because you chose a month between 1:6 for clim.rel.per.begin
             (see ?n_mon_corr for details)")
     offset <- clim.rel.per.begin - 1
     clim$growyear <- c(rep(min(clim[,"year"]) - 1, offset), clim[,"year"][1:(length(clim[,"year"]) - offset)])
 
   } else {
-    message("Assuming Northern hemisphere conventions for linking growth years and climate years because you chose a month between 1:6 for clim.rel.per.begin
+    message("Assuming Northern hemisphere conventions for linking growth years
+    and climate years because you chose a month between 7:12 for clim.rel.per.begin
             (see ?n_mon_corr for details)")
     offset <- 12 - clim.rel.per.begin + 1
     clim$growyear <- c(clim[,"year"][(offset + 1):length(clim[,"year"])], rep(max(clim[,"year"]) + 1, offset))
