@@ -2,13 +2,14 @@
 % Please edit documentation in R/n_mon_corr.R
 \name{n_mon_corr}
 \alias{n_mon_corr}
-\title{Flexible-length monthly growth-climate correlations for exploratory data analysis}
+\title{Flexible monthly aggregate growth-climate correlations for exploratory data analysis}
 \usage{
 n_mon_corr(
   chrono = NULL,
   clim = NULL,
   var = NULL,
-  clim.rel.per.begin = 10,
+  rel.per.begin = NULL,
+  hemisphere = NULL,
   chrono.col = "std",
   agg.fun = "mean",
   max.lag = 2,
@@ -18,14 +19,17 @@ n_mon_corr(
 )
 }
 \arguments{
-\item{chrono}{a \code{chron} object (such as that produced by dplR's \code{chron()}).}
+\item{chrono}{a \code{chron} object (such as that produced by dplR's \code{chron()}). Make sure this has a \code{year} variable.}
 
 \item{clim}{a \code{data.frame} with at least 3 columns: year, month (numeric), and a climate variable.}
 
 \item{var}{character vector - the colname of the climate variable of interest in the \code{clim} data.frame.}
 
-\item{clim.rel.per.begin}{an integer month representing the beginning of the climatically relevant period to the growth year (always a 12 month period).
+\item{rel.per.begin}{an integer month representing the beginning of the climatically relevant period to the growth year (always a 12 month period).
 This will include the "water year" of the calendar year before growth. E.g., 10 for N hemisphere (the default), 4 for S hemisphere. See details below for more info.}
+
+\item{hemisphere}{a character vector specifying which hemisphere your chronology comes from ("N" or "S"), default is "N".
+Conventions for assigning growth years - and thus aligning tree ring and climate data - are different for N and S hemisphere.}
 
 \item{chrono.col}{character vector - the colname of the chronology series (default is "std", which is the defualt produced by dplR's \code{chron()}).}
 
@@ -46,26 +50,22 @@ If you produce many plots, this helps keep them identifiable.}
 A 1-2 element list containing data.frames of the correlation results and the default plots of the same data.
 }
 \description{
-Exploratory data analysis (EDA) function to take a tree ring chronology and a monthly climate variable to compute
-static monthly aggregate correlations for every combination (lengths 1:12) of consecutive months for calendar years and "water years"
-that are putatively relevant climatically to each year of tree ring formation (e.g., Oct-Sept for N hemisphere, Apr-Mar for S hemisphere).
-The function computes the correlations for a specified number lagged years (i.e., years before ring formation).
-2 years is the default and is a sensible maximum for most analyses. The correlations are "static" because there
-is no moving window analysis - the correlations are for the entire period of maximum overlap between your chronology
-and climate time series data.
+Exploratory data analysis (EDA) function to compute correlations between a tree ring chronology and a monthly climate variable
+aggregated for every combination (lengths 1:12) of consecutive months inside of a 12-month long "relevant climatic period" that could conceivably be relevant
+to growth in any given year.
 
-Because this is EDA, the "climatically relevant period" is defined as a an inclusive 12 month period beginning
-on the month you specify with \code{clim.rel.per.begin}. There is no sense in trying to shorten this period because
-all combinations of consecutive months are run by default - this includes all the possible shorter periods.
-Longer periods are essentially covered by the lags, so periods longer than 12 months will be irrelevant for
-the majority of cases (& thus are not possible to specify). Chose for \code{clim.rel.per.begin} the first month in
-after which you are reasonably certain that no tree ring growth is occurring at your site. Note that this analysis
-assumes that there is a seasonality of growth. This approach should allow discovery of potentially meaningful
-growth-climate relationships than methods that force rigidly-defined seasons of a fixed length.
+The user specifies the beginning month of the relevant climate period - this is the 1st month after radial growth stops
+(i.e., the 1st month of the fall season). For example, if radial growth typically terminates sometime in September, the user would enter
+\code{rel.per.begin = 10} to specify a relevant climatic period that starts in October of the previous year and ends in September of
+the next year (i.e., the calendar year of growth). In this way the relevant climatic period covers the "water year" months leading
+up to the growing period and only extends through the months when growth occurs. It is nonsensical to include months after
+radial growth stops - doing so may result in spurious correlations. Climate no longer has an effect on radial growth after growth has stopped.
+
+Compared to methods that force rigidly-defined seasons of a fixed length, this approach should allow greater discovery of meaningful growth-climate relationships.
 
 Fair warning: this is a basic function that will accept any tree ring chronology and climate data in the proper format.
 It is the user's responsibility to make sure that the chronology is properly constructed -
-properly dealing with the "dark arts" of detrending & standardization and also accounting for temporal autocorrelation in the data.
+properly dealing with the "dark arts" of detrending & standardization (see ?detrend.series in the \code{dplR} package) and also accounting for temporal autocorrelation in the data.
 If you don't know what this means or you just took a chronology directly from the ITRDB without knowing how it was made,
 you have some homework to do. There aren't universal answers to these tasks - each dataset is somewhat unique.
 }
@@ -83,12 +83,12 @@ spans two calendar years (e.g., starting in Nov 2000 and ending in Mar of 2001).
 It was Schulman's (1956) protocol to assign the earlier calendar year to the tree rings in the Southern hemisphere,
 i.e., the calendar year in which growth began. \code{n_mon_corr()} assumes your data follows this standard as well.
 This has implications for how the climate data is aligned with the treering data.
-The current implementation handles this implicitly by assuming that if \code{clim.rel.per.begin} is between 1:6,
-this is a S. hemisphere analysis and the current "growth year" is the same as the calendar year of \code{clim.rel.per.begin}.
-If \code{clim.rel.per.begin} is between 7:12, it is assumed that the is a N. hemisphere analysis and the current "growth year"
-is the calendar year following \code{clim.rel.per.begin}. E.g., if \code{clim.rel.per.begin = 4}, the climatically relevant period
+The current implementation handles this implicitly by assuming that if \code{rel.per.begin} is between 1:6,
+this is a S. hemisphere analysis and the current "growth year" is the same as the calendar year of \code{rel.per.begin}.
+If \code{rel.per.begin} is between 7:12, it is assumed that the is a N. hemisphere analysis and the current "growth year"
+is the calendar year following \code{rel.per.begin}. E.g., if \code{rel.per.begin = 4}, the climatically relevant period
 will be defined as months \code{c(4,5,6,7,8,9,10,11,12,1,2,3)} with the calendar year of the FIRST 9 months as the
-"growth year". If \code{clim.rel.per.begin = 10}, the climatically relevant period
+"growth year". If \code{rel.per.begin = 10}, the climatically relevant period
 will be defined as months \code{c(10,11,12,1,2,3,4,5,6,7,8,9)} with the calendar year of the LAST 9 months as the
 "growth year".
 

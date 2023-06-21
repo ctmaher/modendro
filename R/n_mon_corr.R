@@ -1,26 +1,22 @@
-#' Flexible-length monthly growth-climate correlations for exploratory data analysis
+#' Flexible monthly aggregate growth-climate correlations for exploratory data analysis
 #'
 #' @description
-#' Exploratory data analysis (EDA) function to take a tree ring chronology and a monthly climate variable to compute
-#' static monthly aggregate correlations for every combination (lengths 1:12) of consecutive months for calendar years and "water years"
-#' that are putatively relevant climatically to each year of tree ring formation (e.g., Oct-Sept for N hemisphere, Apr-Mar for S hemisphere).
-#' The function computes the correlations for a specified number lagged years (i.e., years before ring formation).
-#' 2 years is the default and is a sensible maximum for most analyses. The correlations are "static" because there
-#' is no moving window analysis - the correlations are for the entire period of maximum overlap between your chronology
-#' and climate time series data.
+#' Exploratory data analysis (EDA) function to compute correlations between a tree ring chronology and a monthly climate variable
+#' aggregated for every combination (lengths 1:12) of consecutive months inside of a 12-month long "relevant climatic period" that could conceivably be relevant
+#' to growth in any given year.
 #'
-#' Because this is EDA, the "climatically relevant period" is defined as a an inclusive 12 month period beginning
-#' on the integer month you specify with `clim.rel.per.begin`. There is no sense in trying to shorten this period because
-#' all combinations of consecutive months are run by default - this includes all the possible shorter periods.
-#' Longer periods are essentially covered by the lags, so periods longer than 12 months will be irrelevant for
-#' the majority of cases (& thus are not possible to specify). Chose for `clim.rel.per.begin` the first month in
-#' after which you are reasonably certain that no tree ring growth is occurring at your site. Note that this analysis
-#' assumes that there is a seasonality of growth. This approach should allow discovery of potentially meaningful
-#' growth-climate relationships than methods that force rigidly-defined seasons of a fixed length.
+#' The user specifies the beginning month of the relevant climate period - this is the 1st month after radial growth stops
+#' (i.e., the 1st month of the fall season). For example, if radial growth typically terminates sometime in September, the user would enter
+#' `rel.per.begin = 10` to specify a relevant climatic period that starts in October of the previous year and ends in September of
+#' the next year (i.e., the calendar year of growth). In this way the relevant climatic period covers the "water year" months leading
+#' up to the growing period and only extends through the months when growth occurs. It is nonsensical to include months after
+#' radial growth stops - doing so may result in spurious correlations. Climate no longer has an effect on radial growth after growth has stopped.
+#'
+#' Compared to methods that force rigidly-defined seasons of a fixed length, this approach should allow greater discovery of meaningful growth-climate relationships.
 #'
 #' Fair warning: this is a basic function that will accept any tree ring chronology and climate data in the proper format.
 #' It is the user's responsibility to make sure that the chronology is properly constructed -
-#' properly dealing with the "dark arts" of detrending & standardization and also accounting for temporal autocorrelation in the data.
+#' properly dealing with the "dark arts" of detrending & standardization (see ?detrend.series in the `dplR` package) and also accounting for temporal autocorrelation in the data.
 #' If you don't know what this means or you just took a chronology directly from the ITRDB without knowing how it was made,
 #'  you have some homework to do. There aren't universal answers to these tasks - each dataset is somewhat unique.
 #'
@@ -28,8 +24,10 @@
 #' @param chrono a `chron` object (such as that produced by dplR's `chron()`). Make sure this has a `year` variable.
 #' @param clim a `data.frame` with at least 3 columns: year, month (numeric), and a climate variable.
 #' @param var character vector - the colname of the climate variable of interest in the `clim` data.frame.
-#' @param clim.rel.per.begin an integer month representing the beginning of the climatically relevant period to the growth year (always a 12 month period).
+#' @param rel.per.begin an integer month representing the beginning of the climatically relevant period to the growth year (always a 12 month period).
 #' This will include the "water year" of the calendar year before growth. E.g., 10 for N hemisphere (the default), 4 for S hemisphere. See details below for more info.
+#' @param hemisphere a character vector specifying which hemisphere your chronology comes from ("N" or "S"), default is "N".
+#' Conventions for assigning growth years - and thus aligning tree ring and climate data - are different for N and S hemisphere.
 #' @param chrono.col character vector - the colname of the chronology series (default is "std", which is the defualt produced by dplR's `chron()`).
 #' @param agg.fun character vector specifying the function to use for aggregating monthly climate combinations.
 #' Options are "mean" or "sum", e.g., for temperature or precipitation data, respectively. Default is "mean".
@@ -54,12 +52,12 @@
 #' It was Schulman's (1956) protocol to assign the earlier calendar year to the tree rings in the Southern hemisphere,
 #' i.e., the calendar year in which growth began. `n_mon_corr()` assumes your data follows this standard as well.
 #' This has implications for how the climate data is aligned with the treering data.
-#' The current implementation handles this implicitly by assuming that if `clim.rel.per.begin` is between 1:6,
-#' this is a S. hemisphere analysis and the current "growth year" is the same as the calendar year of `clim.rel.per.begin`.
-#' If `clim.rel.per.begin` is between 7:12, it is assumed that the is a N. hemisphere analysis and the current "growth year"
-#' is the calendar year following `clim.rel.per.begin`. E.g., if `clim.rel.per.begin = 4`, the climatically relevant period
+#' The current implementation handles this implicitly by assuming that if `rel.per.begin` is between 1:6,
+#' this is a S. hemisphere analysis and the current "growth year" is the same as the calendar year of `rel.per.begin`.
+#' If `rel.per.begin` is between 7:12, it is assumed that the is a N. hemisphere analysis and the current "growth year"
+#' is the calendar year following `rel.per.begin`. E.g., if `rel.per.begin = 4`, the climatically relevant period
 #' will be defined as months `c(4,5,6,7,8,9,10,11,12,1,2,3)` with the calendar year of the FIRST 9 months as the
-#' "growth year". If `clim.rel.per.begin = 10`, the climatically relevant period
+#' "growth year". If `rel.per.begin = 10`, the climatically relevant period
 #' will be defined as months `c(10,11,12,1,2,3,4,5,6,7,8,9)` with the calendar year of the LAST 9 months as the
 #' "growth year".
 #'
@@ -87,13 +85,15 @@
 
 
 n_mon_corr <- function(chrono = NULL, clim = NULL,
-                       var = NULL, clim.rel.per.begin = 10,
+                       var = NULL, rel.per.begin = NULL,
+                       hemisphere = NULL,
                        chrono.col = "std", agg.fun = "mean",
                        max.lag = 2, corr.method = "pearson",
                        chrono.name = NULL, plots = TRUE){
 
 
-  # Error catching
+  ## Initial error catching and interactive prompts
+
   stopifnot("Arg chrono or clim are not an object of class 'chron', 'data.frame', or 'matrix'" =
               data.class(chrono) %in% "chron" |
               data.class(chrono) %in% "data.frame" |
@@ -117,9 +117,28 @@ n_mon_corr <- function(chrono = NULL, clim = NULL,
               length(match.test[match.test == TRUE]) == 1
   )
 
-  stopifnot("No valid climatically relevant period begin month provided (must be an integer month)" =
-              is.numeric(clim.rel.per.begin))
+  if (is.null(rel.per.begin)) {
+    cat("You haven't specified the beginning month of the relevant climate period -\n",
+        "this is the 1st month after radial growth typically stops in a year\n",
+        "(i.e., the 1st month of the fall season at your site).\n",
+        "This is approximate, but you should have a reasonable idea of what month this is for your study system.\n")
+    rel.per.begin <- readline(prompt = "First month of relevant climate period = ") |> as.integer()
+  }
 
+  if (is.null(hemisphere)) {
+    cat("You haven't specified the hemisphere from which your tree ring series comes from.\n",
+        "This is important because there are different conventions for linking growth years\n",
+        "to climate years for N vs. S hemispheres")
+    hemisphere <- readline(prompt = "Enter hemisphere ('N' or 'S') = ")
+  }
+
+  stopifnot("Invalid climatically relevant period begin month provided (must be a single integer month)" =
+              is.numeric(rel.per.begin) &
+              length(rel.per.begin) == 1)
+
+  stopifnot("Invalid hemisphere argument provided (must be a character vector & either 'S' or 'N')" =
+              is.character(hemisphere) &
+              substr(hemisphere, 1, 1) %in% c("s","S","N","n")) # actually more permissive than the error message suggests
 
   stopifnot("Arg agg.fun must be either 'mean' or 'sum'" =
               agg.fun %in% "mean" |
@@ -159,32 +178,41 @@ n_mon_corr <- function(chrono = NULL, clim = NULL,
     chrono[,"year"] <- as.numeric(chrono[,"year"])
   }
 
+  # Clean up the hemisphere argument if needed
+  hemisphere <- ifelse(substr(hemisphere, 1, 1) %in% c("n","N") , "N", "S")
+
   # Create a chronological sequence of months starting with the numeric month
   # given as the clim.rel.per.begin argument
   mon.seq <- rep(1:12, 2) # A list of months representing 2 whole calendar years.
-  mon.seq <- mon.seq[clim.rel.per.begin:length(mon.seq)][1:12] # 12 months in a row
+  mon.seq <- mon.seq[rel.per.begin:length(mon.seq)][1:12] # 12 months in a row
   # This seq of months will then be relevant to a particular current growth year, though the
   # months span 2 calendar years. According to standard practice, for N hemisphere tree rings, the
   # growth year is the later calendar year. In the S hemisphere, it is the earlier calendar year.
 
-  # Define the "growth year" based on the clim.rel.per.begin
+  # Print the relevant climate period
+  cat("You have specified the following months for your relevant climate period in the\n",
+      hemisphere, "hemisphere:", mon.seq)
 
-  if (clim.rel.per.begin %in% 1:6) {
-    message("Assuming Southern hemisphere conventions for linking growth years
-    and climate years because you chose a month between 1:6 for clim.rel.per.begin
-            (see ?n_mon_corr for details)")
-    offset <- clim.rel.per.begin - 1
+
+  # Define the "growth year" based on the hemisphere argument
+  if (hemisphere %in% "S") {
+    message("\nAssuming Southern hemisphere conventions for linking growth years
+    and climate years (see ?n_mon_corr for details)")
+    offset <- rel.per.begin - 1
     clim$growyear <- c(rep(min(clim[,"year"]) - 1, offset), clim[,"year"][1:(length(clim[,"year"]) - offset)])
 
   } else {
-    message("Assuming Northern hemisphere conventions for linking growth years
-    and climate years because you chose a month between 7:12 for clim.rel.per.begin
-            (see ?n_mon_corr for details)")
-    offset <- 12 - clim.rel.per.begin + 1
+    message("\nAssuming Northern hemisphere conventions for linking growth years
+    and climate years (see ?n_mon_corr for details)")
+    offset <- 12 - rel.per.begin + 1
     clim$growyear <- c(clim[,"year"][(offset + 1):length(clim[,"year"])], rep(max(clim[,"year"]) + 1, offset))
 
   }
 
+  # Give warnings - and stop the function - if someone uses unusual values for rel.per.begin for a given hemisphere
+  # This is to provide guardrails for users who don't understand the rel.per & to minimize the chance that they will
+  # be looking at potentially spurious correlations for months AFTER radial growth has ceased in a given year.
+  # This can be done with a combination of
 
   # Find the complete years in the climate data
   clim.complete <- aggregate(month ~ growyear, data = clim, length)
