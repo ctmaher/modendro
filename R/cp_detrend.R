@@ -204,7 +204,7 @@ cp_detrend <-
 
         x_axis_params <- seq(min(na.omit(x[, "year"])),
                              max(na.omit(x[, "year"])),
-                             length.out = 5) |>
+                             length.out = 6) |>
           round(digits = -1)
 
         ggplot2::ggplot(x, aes(year, value, color = type)) +
@@ -287,7 +287,7 @@ cp_detrend <-
 
                             x_axis_params <- seq(min(na.omit(x[, "year"])),
                                                  max(na.omit(x[, "year"])),
-                                                 length.out = 5) |>
+                                                 length.out = 6) |>
                               round(digits = -1)
 
                             ggplot2::ggplot(x, aes(year, value)) +
