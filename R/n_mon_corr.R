@@ -2,7 +2,7 @@
 #'
 #' @description
 #' Exploratory data analysis (EDA) function to compute correlations between a tree ring chronology and a monthly climate variable
-#' aggregated for every combination (lengths 1:12) of consecutive months inside of a 12-month long "relevant climatic period" that could conceivably be relevant
+#' aggregated for every combination (lengths 1:12) of consecutive months inside of a 12-month long "relevant climate period" that could conceivably be relevant
 #' to growth in any given year.
 #'
 #' The ideas behind the relevant climate period are that climate no longer has an effect on radial growth after growth has stopped &
