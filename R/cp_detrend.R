@@ -157,7 +157,7 @@ cp_detrend <-
                                        names_to = "series" , values_to = "value")
       long.detr$type <- "de"
 
-      all.df <- rbind(long.rwl, long.trans, long.detr) |>
+      all.df <- rbind(long.rw, long.trans, long.detr) |>
         na.omit() |> as.data.frame()
 
       all.df$year <- as.numeric(all.df$year)
