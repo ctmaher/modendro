@@ -5,12 +5,15 @@
 #' aggregated for every combination (lengths 1:12) of consecutive months inside of a 12-month long "relevant climatic period" that could conceivably be relevant
 #' to growth in any given year.
 #'
+#' The ideas behind the relevant climate period are that climate no longer has an effect on radial growth after growth has stopped &
+#' that current year's growth could have been influenced by climate in any month AFTER the previous year's growth stopped.
+#'
 #' The user specifies the beginning month of the relevant climate period - this is the 1st month after radial growth stops
 #' (i.e., the 1st month of the fall season). For example, if radial growth typically terminates sometime in September, the user would enter
 #' `rel.per.begin = 10` to specify a relevant climatic period that starts in October of the previous year and ends in September of
 #' the next year (i.e., the calendar year of growth). In this way the relevant climatic period covers the "water year" months leading
 #' up to the growing period and only extends through the months when growth occurs. It is nonsensical to include months after
-#' radial growth stops - doing so may result in spurious correlations. Climate no longer has an effect on radial growth after growth has stopped.
+#' radial growth stops - doing so may result in spurious correlations.
 #'
 #' Compared to methods that force rigidly-defined seasons of a fixed length, this approach should allow greater discovery of meaningful growth-climate relationships.
 #'
@@ -25,8 +28,8 @@
 #' @param clim a `data.frame` with at least 3 columns: year, month (numeric), and a climate variable.
 #' @param var character vector - the colname of the climate variable of interest in the `clim` data.frame.
 #' @param rel.per.begin an integer month representing the beginning of the climatically relevant period to the growth year (always a 12 month period).
-#' This will include the "water year" of the calendar year before growth. E.g., 10 for N hemisphere (the default), 4 for S hemisphere. See details below for more info.
-#' @param hemisphere a character vector specifying which hemisphere your chronology comes from ("N" or "S"), default is "N".
+#' This will include the "water year" of the calendar year before growth. E.g., 10 for N hemisphere, 4 for S hemisphere. See details below for more info.
+#' @param hemisphere a character vector specifying which hemisphere your chronology - & climate data - comes from ("N" or "S").
 #' Conventions for assigning growth years - and thus aligning tree ring and climate data - are different for N and S hemisphere.
 #' @param chrono.col character vector - the colname of the chronology series (default is "std", which is the defualt produced by dplR's `chron()`).
 #' @param agg.fun character vector specifying the function to use for aggregating monthly climate combinations.
