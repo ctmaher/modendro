@@ -236,6 +236,9 @@ cp_detrend <-
                        trans[, !c(colnames(detr) %in% "year")],
                        messages,
                        plot.list)
+      names(out.list) <- c("Resid. detrended series", "Detrend curves",
+                           "Transformed ring widths", "Messages about transformations",
+                           "Plots")
 
     } else { # i.e., detrending == FALSE
 
@@ -311,6 +314,8 @@ cp_detrend <-
 
 
       out.list <- list(trans[, !c(colnames(trans) %in% "year")], messages, plot.list)
+      names(out.list) <- c("Transformed ring widths", "Messages about transformations",
+                           "Plots")
 
     }
     out.list
