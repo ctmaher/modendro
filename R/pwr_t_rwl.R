@@ -34,28 +34,31 @@
 #' pwr_t_rwl(rwl = ca533)
 
 pwr_t_rwl <- function(rwl) {
-
   # Error catching
-  stopifnot("rwl is not an object of class 'rwl', 'data.frame', or 'matrix'" =
-              data.class(rwl) %in% "rwl" |
-              data.class(rwl) %in% "data.frame" |
-              data.class(rwl) %in% "matrix"
+  stopifnot(
+    "rwl is not an object of class 'rwl', 'data.frame', or 'matrix'" =
+      data.class(rwl) %in% "rwl" |
+      data.class(rwl) %in% "data.frame" |
+      data.class(rwl) %in% "matrix"
   )
 
-  stopifnot("rwl has no rownames (must be years only) or no colnames (must be series IDs only)" =
-              !is.null(rownames(rwl)) |
-              !is.null(colnames(rwl))
+  stopifnot(
+    "rwl has no rownames (must be years only) or no colnames (must be series IDs only)" =
+      !is.null(rownames(rwl)) |
+      !is.null(colnames(rwl))
   )
 
   if (apply(rwl, MARGIN = 2, FUN = \(x) all(is.na(x))) |> any() == TRUE) {
-    these_are_NA <- colnames(rwl)[which(apply(rwl, MARGIN = 2, FUN = \(x) all(is.na(x))) == TRUE)]
-    stop("The following series have no values (all NAs): " , paste(these_are_NA, collapse = ", "))
+    these_are_NA <-
+      colnames(rwl)[which(apply(rwl, MARGIN = 2, FUN = \(x) all(is.na(x))) == TRUE)]
+    stop("The following series have no values (all NAs): " ,
+         paste(these_are_NA, collapse = ", "))
   }
 
   # Replace ≤0 values in both rwls with the minimum possible non-zero value given the resolution of the data
   # & make sure they match
   min.value <- ifelse(sapply(na.omit(unlist(rwl)),
-                             FUN = \(x) nchar(sub(".", "", x, fixed=TRUE))) |>
+                             FUN = \(x) nchar(sub(".", "", x, fixed = TRUE))) |>
                         max() <= 3,
                       0.01, 0.001)
 
@@ -76,14 +79,29 @@ pwr_t_rwl <- function(rwl) {
   pwr.trans <- which(optimal.pwr.t > 0.1 & optimal.pwr.t <= 1)
 
   # Do the transformations - the no trans option is implicit
-  rwl0[, to.log] <- log10(rwl0[,to.log])
-  rwl0[, pwr.trans] <- mapply(FUN = function(x, y) {x^y},
-                              x = rwl0[, pwr.trans], y = optimal.pwr.t[pwr.trans])
+  rwl0[, to.log] <- log10(rwl0[, to.log])
+  rwl0[, pwr.trans] <- mapply(
+    FUN = function(x, y) {
+      x ^ y
+    },
+    x = rwl0[, pwr.trans],
+    y = optimal.pwr.t[pwr.trans]
+  )
 
-  messages <- ifelse(optimal.pwr.t <= 0.1, "Series was log10 transformed",
-                     ifelse(optimal.pwr.t > 1, "Series was not transformed",
-                            paste("Series was transformed with power =", round(optimal.pwr.t, digits = 3))))
+  pwr.t.df <- data.frame(series = names(optimal.pwr.t),
+                         optimal.pwr = optimal.pwr.t)
+  pwr.t.df$action <-
+    ifelse(
+      optimal.pwr.t <= 0.1,
+      "log10 transformation",
+      ifelse(optimal.pwr.t > 1, "No transformation",
+             "Power transformed")
+    )
 
-  list(as.data.frame(rwl0), messages)
-
+  out.list <- list(as.data.frame(rwl0), pwr.t.df, rwl)
+  names(out.list) <-
+    c("Transformed ring widths",
+      "Metadata about transformations",
+      "Raw ring widths")
+  out.list
 } # end of functions

@@ -35,32 +35,36 @@
 
 
 find_opt_pwr <- function(rwl) {
-
   # Error catching
-  stopifnot("rwl is not an object of class 'rwl', 'data.frame', or 'matrix'" =
-              data.class(rwl) %in% "rwl" |
-              data.class(rwl) %in% "data.frame" |
-              data.class(rwl) %in% "matrix"
+  stopifnot(
+    "rwl is not an object of class 'rwl', 'data.frame', or 'matrix'" =
+      data.class(rwl) %in% "rwl" |
+      data.class(rwl) %in% "data.frame" |
+      data.class(rwl) %in% "matrix"
   )
 
-  stopifnot("rwl has no rownames (must be years only) or no colnames (must be series IDs only)" =
-              !is.null(rownames(rwl)) |
-              !is.null(colnames(rwl))
+  stopifnot(
+    "rwl has no rownames (must be years only) or no colnames (must be series IDs only)" =
+      !is.null(rownames(rwl)) |
+      !is.null(colnames(rwl))
   )
 
   if (apply(rwl, MARGIN = 2, FUN = \(x) all(is.na(x))) |> any() == TRUE) {
-    these_are_NA <- colnames(rwl)[which(apply(rwl, MARGIN = 2, FUN = \(x) all(is.na(x))) == TRUE)]
-    stop("The following series have no values (all NAs): " , paste(these_are_NA, collapse = ", "))
+    these_are_NA <-
+      colnames(rwl)[which(apply(rwl, MARGIN = 2, FUN = \(x) all(is.na(x))) == TRUE)]
+    stop("The following series have no values (all NAs): " ,
+         paste(these_are_NA, collapse = ", "))
   }
 
   # absolute value of 1st differences.
   # set up lagged vector for 1st differences
-  rwl.lag <- rbind(rep(NA, ncol(rwl)), rwl[1:(nrow(rwl) - 1), , drop = FALSE])
+  rwl.lag <-
+    rbind(rep(NA, ncol(rwl)), rwl[1:(nrow(rwl) - 1), , drop = FALSE])
 
   # absolute value of 1st differences
   # Cook & Peters equate this as the standard deviation (it is not the same, but 1st differences is what they use).
   diffs <- abs(rwl - rwl.lag)
-  lmean <- (rwl + rwl.lag)/2
+  lmean <- (rwl + rwl.lag) / 2
 
   # Any zero values in diffs or means should be avoided
   diffs.ind <- which(diffs < 0.001, arr.ind = TRUE)
@@ -73,8 +77,14 @@ find_opt_pwr <- function(rwl) {
 
   # Make the dfs into lists - use apply(MARGIN = 2, simplify = F) & an identity function
   # split() wasn't working well because the colnames are not really a factor in "wide" format.
-  diffs <- apply(diffs, MARGIN = 2, FUN = \(x) x, simplify = FALSE)
-  lmean <- apply(lmean, MARGIN = 2, FUN = \(x) x, simplify = FALSE)
+  diffs <- apply(diffs,
+                 MARGIN = 2,
+                 FUN = \(x) x,
+                 simplify = FALSE)
+  lmean <- apply(lmean,
+                 MARGIN = 2,
+                 FUN = \(x) x,
+                 simplify = FALSE)
 
   # Get the slopes
   slopes <- mapply(FUN = \(x, y) {
@@ -85,5 +95,5 @@ find_opt_pwr <- function(rwl) {
   slopes <- slopes[colnames(rwl)]
 
   # Determine optimal power of transformation by subtracting slope from 1
-  abs(1-slopes)
+  abs(1 - slopes)
 } # End of function
