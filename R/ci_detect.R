@@ -59,7 +59,9 @@ ci_detect <- function(rwl,
   out_iter <- vector("list", length = max.iter + 1)
   # The 1st element in the outlier iteration list is the initial data. This has to be a 2-element list
   # to match the output of out_det_rem(). It is just an empty filler.
-  out_iter[[1]] <- list(cp_list, vector("list", length = length(cp_list)))
+  start.list <- list(cp_list, vector("list", length = length(cp_list)))
+  names(start.list) <- c("Original RWI","Empty filler")
+  out_iter[[1]] <- start.list
   names(out_iter) <- 0:max.iter
   for (i in 2:(max.iter+1)) {
     out_iter[[i]] <- out_det_rem(out_iter[[i-1]][[1]], min.win = min.win, max.win = max.win, span = out.span)
@@ -124,7 +126,7 @@ ci_detect <- function(rwl,
   ## Last steps are to output the main results (disturbance-free, disturbance index, original series)
   # and all of the iterations of the outlier removal process, with the trend curves, etc.
   # all of these can then be plotted in the plot_ci_detect() function
-  ci_output_list <- list(untransformed_rwl, dis_index_rwl, out_iter[[2:(max.iter+1)]])
+  ci_output_list <- list(untransformed_rwl, dis_index_rwl, out_iter)
   names(ci_output_list) <- c("Disturbance-free series", "Disturbance index", "Outlier removal iterations")
   ci_output_list
 
