@@ -126,8 +126,8 @@ ci_detect <- function(rwl,
   ## Last steps are to output the main results (disturbance-free, disturbance index, original series)
   # and all of the iterations of the outlier removal process, with the trend curves, etc.
   # all of these can then be plotted in the plot_ci_detect() function
-  ci_output_list <- list(untransformed_rwl, dis_index_rwl, out_iter)
-  names(ci_output_list) <- c("Disturbance-free series", "Disturbance index", "Outlier removal iterations")
+  ci_output_list <- list(untransformed_rwl, dis_index_rwl, out_iter, rwl)
+  names(ci_output_list) <- c("Disturbance-free series", "Disturbance index", "Outlier removal iterations", "Original series")
   ci_output_list
 
 } # End of the ci_detect() function
