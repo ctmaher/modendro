@@ -18,9 +18,18 @@
 
 
 ## The outlier detection and removal process
-out_det_rem <- function(rwi, min.win = 9, max.win = 30, span = 1) {
+out_det_rem <- function(rwi,
+                        min.win = 9,
+                        max.win = 30,
+                        span = 1) {
   ## Find the best AR model for each series
-  ar_fits <- lapply(rwi, FUN = \(x) ar(x, method = "burg", aic = TRUE, na.action = na.omit))
+  ar_fits <-
+    lapply(rwi, FUN = \(x) ar(
+      x,
+      method = "burg",
+      aic = TRUE,
+      na.action = na.omit
+    ))
 
   # Get the resids
   ar_resids <- lapply(ar_fits, FUN = \(x) x$resid)
@@ -30,27 +39,43 @@ out_det_rem <- function(rwi, min.win = 9, max.win = 30, span = 1) {
 
   ## "Backcast" the NAs (due to the ar order lag) at the beginning of each series
   # Fit ar models of the same order as those above to the reversed data
-  comp_resids <- mapply(FUN = \(x, y) {
-    if (x$order > 0) { # If best fit order was 0, we don't need to do backcasting
-      br <- ar(y, order.max = x$order, method = "burg", aic = FALSE)$resid |>
-        rev() # flip it back to the correct chronological order
-      # subset just the ones that need to be filled in & attach to beginning of rest of resids
-      c(br[1:x$order], na.omit(x$resid)) |>
-        as.numeric()
-    } else { # If best fit order was 0, just return the AR resids (no backcasting).
-      x$resid
-    }
-  }, x = ar_fits, y = cp_rev, SIMPLIFY = FALSE)
+  comp_resids <- mapply(
+    FUN = \(x, y) {
+      if (x$order > 0) {
+        # If best fit order was 0, we don't need to do backcasting
+        br <-
+          ar(y,
+             order.max = x$order,
+             method = "burg",
+             aic = FALSE)$resid |>
+          rev() # flip it back to the correct chronological order
+        # subset just the ones that need to be filled in & attach to beginning of rest of resids
+        c(br[1:x$order], na.omit(x$resid)) |>
+          as.numeric()
+      } else {
+        # If best fit order was 0, just return the AR resids (no backcasting).
+        x$resid
+      }
+    },
+    x = ar_fits,
+    y = cp_rev,
+    SIMPLIFY = FALSE
+  )
 
   # add the names back (these are the years) as rownames of data.frames
-  comp_resids <- mapply(FUN = \(x, y) {
-    rn <- names(x)
-    x <- as.data.frame(x)
-    colnames(x) <- "value"
-    rownames(x) <- rn
-    x[,"value"] <- y
-    x
-  }, x = rwi, y = comp_resids, SIMPLIFY = FALSE)
+  comp_resids <- mapply(
+    FUN = \(x, y) {
+      rn <- names(x)
+      x <- as.data.frame(x)
+      colnames(x) <- "value"
+      rownames(x) <- rn
+      x[, "value"] <- y
+      x
+    },
+    x = rwi,
+    y = comp_resids,
+    SIMPLIFY = FALSE
+  )
 
   ## Compute moving window averages of various lengths - the length of the window corresponds to outlier length
   # the min.win sets the smallest possible size, and tradition has it that 20 is the longest period. We can
@@ -67,7 +92,10 @@ out_det_rem <- function(rwi, min.win = 9, max.win = 30, span = 1) {
       values <- x$value
 
       # Compute the moving average using rollmean from the zoo package
-      ma <- rollmean(values, k = w, align = "left", fill = NA)
+      ma <- rollmean(values,
+                     k = w,
+                     align = "left",
+                     fill = NA)
 
       # Return the result
       data.frame(value = ma)
@@ -95,17 +123,37 @@ out_det_rem <- function(rwi, min.win = 9, max.win = 30, span = 1) {
     })
   })
 
-  lo_vals <- mapply(FUN = \(x, y) {
-    mapply(FUN = \(a, b) {
-      a - b*3.29
-    }, a = x, b = y, SIMPLIFY = FALSE)
-  }, x = tbrms, y = mads, SIMPLIFY = FALSE)
+  lo_vals <- mapply(
+    FUN = \(x, y) {
+      mapply(
+        FUN = \(a, b) {
+          a - b * 3.29
+        },
+        a = x,
+        b = y,
+        SIMPLIFY = FALSE
+      )
+    },
+    x = tbrms,
+    y = mads,
+    SIMPLIFY = FALSE
+  )
 
-  hi_vals <- mapply(FUN = \(x, y) {
-    mapply(FUN = \(a, b) {
-      a + b*3.29
-    }, a = x, b = y, SIMPLIFY = FALSE)
-  }, x = tbrms, y = mads, SIMPLIFY = FALSE)
+  hi_vals <- mapply(
+    FUN = \(x, y) {
+      mapply(
+        FUN = \(a, b) {
+          a + b * 3.29
+        },
+        a = x,
+        b = y,
+        SIMPLIFY = FALSE
+      )
+    },
+    x = tbrms,
+    y = mads,
+    SIMPLIFY = FALSE
+  )
 
 
   ## Identify outliers for each series & each moving window size, select the largest among window sizes
@@ -116,39 +164,59 @@ out_det_rem <- function(rwi, min.win = 9, max.win = 30, span = 1) {
 
   # 1st step is to determine which ma values are outside of lo.vals & hi.vals, if any, for all ma window sizes
   # These steps return index values for all outliers
-  pos_out <- mapply(FUN = \(x, y) {
-    mapply(FUN = \(a, b) {
-      # Find the index position of any outliers
-      index_pos <- which(a$value > b)
+  pos_out <- mapply(
+    FUN = \(x, y) {
+      mapply(
+        FUN = \(a, b) {
+          # Find the index position of any outliers
+          index_pos <- which(a$value > b)
 
-      # Compute how big the outlier is
-      dev <- abs(a$value[index_pos] - b)
+          # Compute how big the outlier is
+          dev <- abs(a$value[index_pos] - b)
 
-      # Put the results in a data.frame
-      out_df <- data.frame(index_pos = index_pos, dev = dev)
+          # Put the results in a data.frame
+          out_df <- data.frame(index_pos = index_pos, dev = dev)
 
-      # return just the largest outlier within each window size
-      out_df[which.max(out_df$dev),]
+          # return just the largest outlier within each window size
+          out_df[which.max(out_df$dev), ]
 
-    }, a = x, b = y, SIMPLIFY = FALSE)
-  }, x = mov_avgs, y = hi_vals, SIMPLIFY = FALSE)
+        },
+        a = x,
+        b = y,
+        SIMPLIFY = FALSE
+      )
+    },
+    x = mov_avgs,
+    y = hi_vals,
+    SIMPLIFY = FALSE
+  )
 
-  neg_out <- mapply(FUN = \(x, y) {
-    mapply(FUN = \(a, b) {
-      # Find the index position of any outliers
-      index_pos <- which(a$value < b)
+  neg_out <- mapply(
+    FUN = \(x, y) {
+      mapply(
+        FUN = \(a, b) {
+          # Find the index position of any outliers
+          index_pos <- which(a$value < b)
 
-      # Compute how big the outlier is
-      dev <- abs(a$value[index_pos] - b)
+          # Compute how big the outlier is
+          dev <- abs(a$value[index_pos] - b)
 
-      # Put the results in a data.frame
-      out_df <- data.frame(index_pos = index_pos, dev = dev)
+          # Put the results in a data.frame
+          out_df <- data.frame(index_pos = index_pos, dev = dev)
 
-      # return just the largest outlier within each window size
-      out_df[which.max(out_df$dev),]
+          # return just the largest outlier within each window size
+          out_df[which.max(out_df$dev), ]
 
-    }, a = x, b = y, SIMPLIFY = FALSE)
-  }, x = mov_avgs, y = lo_vals, SIMPLIFY = FALSE)
+        },
+        a = x,
+        b = y,
+        SIMPLIFY = FALSE
+      )
+    },
+    x = mov_avgs,
+    y = lo_vals,
+    SIMPLIFY = FALSE
+  )
 
 
   # Now find the largest outliers for each series among all window sizes and record the window size and the index value.
@@ -175,34 +243,94 @@ out_det_rem <- function(rwi, min.win = 9, max.win = 30, span = 1) {
 
   # Second the max among all window lengths (i.e., just 1 or no outlier for each series)
   max_pos_out <- lapply(max_pos_outs, FUN = \(x) {
-    x[which.max(x$dev),]
+    x[which.max(x$dev), ]
   })
 
   max_neg_out <- lapply(max_neg_outs, FUN = \(x) {
-    x[which.max(x$dev),]
+    x[which.max(x$dev), ]
   })
 
   # Third find which is the largest of the pos and neg outliers
-  max_out <- mapply(FUN = \(x, y) {
-    if (nrow(x) > 0 & nrow(y) > 0) { # If there are both pos & neg outliers...
-      if (x$dev > y$dev) { # Chose largest of the two
-        x
-      } else {
-        y
-      }
-    } else { # if there aren't both
-      if (nrow(x) > 0) { # if there is only a pos outlier
-        x
-      } else {
-        if (nrow(y) > 0) { # if there is only a neg outlier
-          y
+  max_out <- mapply(
+    FUN = \(x, y) {
+      if (nrow(x) > 0 &
+          nrow(y) > 0) {
+        # If there are both pos & neg outliers...
+        if (x$dev > y$dev) {
+          # Chose largest of the two
+          x
         } else {
-          "No outliers detected"
+          y
+        }
+      } else {
+        # if there aren't both
+        if (nrow(x) > 0) {
+          # if there is only a pos outlier
+          x
+        } else {
+          if (nrow(y) > 0) {
+            # if there is only a neg outlier
+            y
+          } else {
+            "No outliers detected"
+          }
         }
       }
-    }
 
-  }, x = max_pos_out, y = max_neg_out, SIMPLIFY = FALSE)
+    },
+    x = max_pos_out,
+    y = max_neg_out,
+    SIMPLIFY = FALSE
+  )
+  # max_out contains some basic outlier info - the index of the starting year of the outlier (ie, year),
+  # the dev value of the outlier (magnitude), the window length, and the direction of the outlier.
+  # index_pos & win_len determine the subset over which to fit a curve (out_curves, below).
+  # Can also use win_len to choose the relevant mov_avgs, tbrms, and lo_ & hi_vals out thresholds
+  # The AR residual series can be extracted...
+
+  out_mov_avgs <- Map(
+    f = \(a, b, c, d, e, x) {
+      if (is.character(a)) {
+        # For the series with no outliers detected
+        a
+      } else {
+        # create a data.frame that makes plotting easy (using ggplot2)
+        win_len <- a[, "win_len"]
+        # Residual series and moving averages are data.frames already
+        ar_resid_vals <- b
+        ar_resid_vals[, "type"] <- "AR residuals"
+        ar_ma_vals <- c[[as.character(win_len)]]
+        ar_ma_vals[, "type"] <- paste0(win_len, " year mean")
+
+        # The following are just single values - they must be repeated
+        tbrm_vals <-
+          data.frame(value = rep(d[[as.character(win_len)]], nrow(ar_ma_vals)),
+                     type = "TBRM")
+        lo_thresh_vals <-
+          data.frame(value = rep(e[[as.character(win_len)]], nrow(ar_ma_vals)),
+                     type = "Outlier thresh.")
+        hi_thresh_vals <-
+          data.frame(value = rep(x[[as.character(win_len)]], nrow(ar_ma_vals)),
+                     type = "Outlier thresh.")
+
+        # bind them together & return the result
+        rbind(ar_resid_vals,
+              ar_ma_vals,
+              tbrm_vals,
+              lo_thresh_vals,
+              hi_thresh_vals)
+
+      }
+
+    },
+    a = max_out,
+    b = comp_resids,
+    c = mov_avgs,
+    d = tbrms,
+    e = lo_vals,
+    x = hi_vals
+  )
+
 
   ## Fit curves to the largest outlier from each series (the resid detrended series in cp_list),
   # subtract the outlier curve, store the records of everything.
@@ -211,20 +339,27 @@ out_det_rem <- function(rwi, min.win = 9, max.win = 30, span = 1) {
     # Control for the ones with no outliers
     if (is.character(y)) {
       out_period <- y
-    } else { # extract the outlier period and fit a curve
+    } else {
+      # extract the outlier period and fit a curve
       series_df <- data.frame(x)
       colnames(series_df) <- "rwi"
-      series_df$year <- rownames(series_df) # keep this as a character for now
-      out_period <- series_df[y[,"index_pos"]:(y[,"index_pos"] + y$win_len - 1),]
+      series_df$year <-
+        rownames(series_df) # keep this as a character for now
+      out_period <-
+        series_df[y[, "index_pos"]:(y[, "index_pos"] + y$win_len - 1), ]
 
-      # Start simple, with a loess spline
+      # Fit loess splines
       # Note: you can adjust the weight of each point using the weights argument
       # This could help with mimicking the the Hugershoff-type curves (which are more flexible at the start).
       # It might also make more sense to weight the last value more so that the residual is minimized.
       # This would limit sharp jumps in the resulting series.
       wts <- rep(1, nrow(out_period))
       wts[nrow(out_period)] <- 4
-      curve <- loess(rwi ~ year, data = out_period, span = span, weights = wts)
+      curve <-
+        loess(rwi ~ year,
+              data = out_period,
+              span = span,
+              weights = wts)
       out_period$curve <- curve$fitted
       # "Correct" the rwi values for the outlier period by subtracting the fitted curve (aka, the residuals)
       out_period$rwi.cor <- curve$residuals
@@ -247,8 +382,10 @@ out_det_rem <- function(rwi, min.win = 9, max.win = 30, span = 1) {
 
   #rwi2
 
-  det_rem_out_list <- list(rwi2, out_curves)
-  names(det_rem_out_list) <- c("Corrected RWI", "Outlier metadata")
+  det_rem_out_list <- list(rwi2, out_curves, out_mov_avgs)
+  names(det_rem_out_list) <-
+    c("Corrected RWI", "Outlier curves", "Outlier detection")
   det_rem_out_list
 
 } # End of the out_det_rem() function
+
