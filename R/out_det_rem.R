@@ -13,11 +13,7 @@
 #' @import zoo
 #' @import stats
 #' @export
-
-
-
-
-## The outlier detection and removal process
+å
 out_det_rem <- function(rwi,
                         min.win = 9,
                         max.win = 30,
@@ -82,10 +78,9 @@ out_det_rem <- function(rwi,
   # reassess that later - maybe the user can just specify this, within reasonable limits (max = 1/3 of series?).
 
   mov_avgs <- lapply(comp_resids, \(x) {
-    # Option to use 1/3 the series length. This seems excessive for many tree ring series.
-    # if (is.null(max.win)) {
-    # max.win <- round(length(x$value)/3)
-    # }
+    # Cap max.win at 1/3 the series length. If not, detection becomes oversensitive for short series
+    max.win <- min(max.win, round(nrow(x) / 3))
+
     win_lens <- min.win:max.win
     ma_list <- lapply(win_lens, \(w) {
       # Extract the values from the data frame
@@ -178,7 +173,7 @@ out_det_rem <- function(rwi,
           out_df <- data.frame(index_pos = index_pos, dev = dev)
 
           # return just the largest outlier within each window size
-          out_df[which.max(out_df$dev), ]
+          out_df[which.max(out_df$dev),]
 
         },
         a = x,
@@ -205,7 +200,7 @@ out_det_rem <- function(rwi,
           out_df <- data.frame(index_pos = index_pos, dev = dev)
 
           # return just the largest outlier within each window size
-          out_df[which.max(out_df$dev), ]
+          out_df[which.max(out_df$dev),]
 
         },
         a = x,
@@ -243,11 +238,11 @@ out_det_rem <- function(rwi,
 
   # Second the max among all window lengths (i.e., just 1 or no outlier for each series)
   max_pos_out <- lapply(max_pos_outs, FUN = \(x) {
-    x[which.max(x$dev), ]
+    x[which.max(x$dev),]
   })
 
   max_neg_out <- lapply(max_neg_outs, FUN = \(x) {
-    x[which.max(x$dev), ]
+    x[which.max(x$dev),]
   })
 
   # Third find which is the largest of the pos and neg outliers
@@ -300,7 +295,7 @@ out_det_rem <- function(rwi,
         ar_resid_vals <- b
         ar_resid_vals[, "type"] <- "AR residuals"
         ar_ma_vals <- c[[as.character(win_len)]]
-        ar_ma_vals[, "type"] <- paste0(win_len, " year mean")
+        ar_ma_vals[, "type"] <- paste0(win_len, "-year mean")
 
         # The following are just single values - they must be repeated
         tbrm_vals <-
@@ -308,10 +303,10 @@ out_det_rem <- function(rwi,
                      type = "TBRM")
         lo_thresh_vals <-
           data.frame(value = rep(e[[as.character(win_len)]], nrow(ar_ma_vals)),
-                     type = "Outlier thresh.")
+                     type = "Detection thresh.")
         hi_thresh_vals <-
           data.frame(value = rep(x[[as.character(win_len)]], nrow(ar_ma_vals)),
-                     type = "Outlier thresh.")
+                     type = " ")
 
         # bind them together & return the result
         rbind(ar_resid_vals,
@@ -346,7 +341,7 @@ out_det_rem <- function(rwi,
       series_df$year <-
         rownames(series_df) # keep this as a character for now
       out_period <-
-        series_df[y[, "index_pos"]:(y[, "index_pos"] + y$win_len - 1), ]
+        series_df[y[, "index_pos"]:(y[, "index_pos"] + y$win_len - 1),]
 
       # Fit loess splines
       # Note: you can adjust the weight of each point using the weights argument
@@ -363,6 +358,7 @@ out_det_rem <- function(rwi,
       out_period$curve <- curve$fitted
       # "Correct" the rwi values for the outlier period by subtracting the fitted curve (aka, the residuals)
       out_period$rwi.cor <- curve$residuals
+      out_period$dir <- y$out_dir
     }
     # Return the results
     out_period
@@ -388,4 +384,3 @@ out_det_rem <- function(rwi,
   det_rem_out_list
 
 } # End of the out_det_rem() function
-

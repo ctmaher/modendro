@@ -43,7 +43,7 @@ ci_detect <- function(rwl,
                       max.win = 30,
                       thresh = 3.29,
                       out.span = 1,
-                      max.iter = 15) {
+                      max.iter = 10) {
 
   ## Run cp_detrend to power transform and detrend the rwl
   cp_out <- cp_detrend(rwl, detrend.method = detrend.method, nyrs = nyrs)
@@ -131,4 +131,3 @@ ci_detect <- function(rwl,
   ci_output_list
 
 } # End of the ci_detect() function
-
