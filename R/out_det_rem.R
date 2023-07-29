@@ -13,7 +13,7 @@
 #' @import zoo
 #' @import stats
 #' @export
-å
+
 out_det_rem <- function(rwi,
                         min.win = 9,
                         max.win = 30,

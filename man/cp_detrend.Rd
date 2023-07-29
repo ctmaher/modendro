@@ -19,8 +19,7 @@ A list with the following elements:
 \item the residual detrended power transformed series.
 \item the curves fitted to the transformed series.
 \item the power transformed series (before detrending).
-\item messages for each series about the type of transformation applied.
-\item a list of output plots showing the power transformation and detrending processes for each series.
+\item a data.frame containing each series about the type of transformation applied.
 If no detrending is performed, then only elements 3-5 are in the output list.
 }
 }
@@ -53,17 +52,17 @@ check for any weirdness.
 }
 \examples{
 library(dplR)
-library(ggplot2)
 # Bristlecone pine tree ring collection from Campito mountain, White Mountains, CA
 # Many 0 value rings in this collection
 data("ca533")
 ca533_cp <- cp_detrend(rwl = ca533,
                        detrend.method = "AgeDepSpline",
                        nyrs = 50)
-# Use indexing to look at plots
-ca533_cp[[5]][[1]] # The plot of the first series
+ca533_cp[[1]][[1]] # The output of the first series
 
-# If you want, you can save the plots (they are ggplot objects)
+# You can conveniently make plots using the plot_cp_detrend() function
+ca533_cp_plots <- plot_cp_detrend(ca533_cp)
+# You can also save these plots (they are ggplot objects)
 # to disk with something like this:
 # Create a new directory for the plots (there could be a lot!)
 cp_plot_dir <- paste0(getwd(),"/CP_plots")
@@ -76,7 +75,7 @@ mapply(FUN = \(x, y) {
         width = 20,
         height = 14,
         units = "cm")
-}, x = ca533_cp[[5]], y = names(ca533_cp[[5]]))
+}, x = ca533_cp_plots, y = names(ca533_cp_plots))
 }
 \references{
 Cook, E. R., and Peters, K. (1997) Calculating unbiased tree-ring indices for the study of climatic and environmental change.

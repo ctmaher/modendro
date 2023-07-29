@@ -34,4 +34,9 @@
 #' ca533[1000:1358,] |> spag.plot()
 #' # after
 #' ca533[1000:1358,] |> p2yrsL() |> spag.plot()
-#'
+
+
+xd_check <- function(rwl = NULL, reference = NULL, standarization) {
+
+}
+

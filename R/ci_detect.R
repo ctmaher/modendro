@@ -1,28 +1,32 @@
-#' Curve intervention detection - statistical identification and removal of outliers in tree ring series
+#' Curve intervention detection - statistical identification and removal of disturbances in tree ring series
 #'
 #' @description
-#' This function implements an analysis based on the curve intervention detection techniques described by Druckenbrod et al,
-#' Rydval et al, and Rydval et al. The
+#' This function implements an analysis based on the curve intervention detection techniques described by Druckenbrod et al. 2013,
+#' Rydval et al. 2016, and Rydval et al. 2018. The modendro implementation differs from the version described by these authors. See Details for more information.
+#' The basic motivations for performing this analysis are to identify, quantify, & remove abrupt changes in radial growth. You might use
+#' this information to help make inferences about forest stand dynamics, insect outbreaks, or isolate a stronger climate signal, depending on your dendroecological or dendroclimatological tendencies.
 #'
 #'
 #' @param rwl A rwl object (read in by dplR's `read.rwl()`). Essentially a data.frame with columns names as series IDs and years as rownames.
 #' @param detrend.method A character vector specifying the detrending method to use. Passes to `dplR::detrend()`. Default is "AgeDepSpline".
 #' @param nyrs A numeric vector that determines the flexibility of the "AgeDepSpline" or the "Spline" detrending methods. Passes to `dplR::detrend()`. The default is 50 years.
-#' @param min.win The minimum outlier length in years (i.e., a moving window) to search for. The default is 9.
-#' @param max.win The maximum outlier length in years (i.e., a moving window) to search for. The default is 30.
-#' @param thresh The outlier detection threshold, corresponding to the number of devations from the mean. The default is 3.29, following Druckenbrod et al. 2013.
-#' @param out.span Parameter to determine the wiggliness of the loess splines fit to outlier periods. Higher numbers = more wiggles. Passes to `base::loess()`. The default is 1.
-#' @param max.iter The maximum number of iterations to run the outlier detection and removal processes. The default is 15.
+#' @param min.win The minimum disturbance length in years (i.e., a moving window) to search for. The default is 9.
+#' @param max.win The maximum disturbance length in years (i.e., a moving window) to search for. The default is the smallest of 30 years or 1/3 of the series length.
+#' @param thresh The disturbance detection threshold, corresponding to the number of deviations from the robust mean. The default is 3.29, following Druckenbrod et al. 2013.
+#' @param out.span Parameter to determine the wiggliness of the loess splines fit to disturbances periods. Higher numbers = less wiggles. Passes to `base::loess()`. The default is 1.25
+#' @param max.iter The maximum number of iterations to run the disturbance detection and removal processes. The default is 10
 #'
 #' @details
-#'
+#' Intervention detection is a statistical time series approach to identify and remove abrupt changes in radial growth. The "curve" part
+#' of curve intervention detection describes the type of line fitted to each period that is identified as a disturbance.
 #'
 #' @return A 3-element list containing the "disturbance-free" series, the disturbance index, and a record of the outlier
 #' detection and removal iterations.
 #'
 #' @references
-#' Larsson & Larsson (2023) \emph{CDendro and CooRecorder programs of the CDendro package},
-#'  Cybis Elektronik & Data AB. https://www.cybis.se/forfun/dendro/index.htm
+#' Druckenbrod, D. L., N. Pederson, J. Rentch, and E. R. Cook. 2013. A comparison of times series approaches for dendroecological reconstructions of past canopy disturbance events. Forest Ecology and Management 302:23–33.
+#' Rydval, M., D. Druckenbrod, K. J. Anchukaitis, and R. Wilson. 2016. Detection and removal of disturbance trends in tree-ring series for dendroclimatology. Canadian Journal of Forest Research 401:387–401.
+#' Rydval, M., D. L. Druckenbrod, M. Svoboda, V. Trotsiuk, P. Janda, M. Mikoláš, V. Čada, R. Bače, M. Teodosiu, and R. Wilson. 2018. Influence of sampling and disturbance history on climatic sensitivity of temperature limited conifers. The Holocene.
 #'
 #' @import dplR
 #' @import zoo
@@ -42,7 +46,7 @@ ci_detect <- function(rwl,
                       min.win = 9,
                       max.win = 30,
                       thresh = 3.29,
-                      out.span = 1,
+                      out.span = 1.25,
                       max.iter = 10) {
 
   ## Run cp_detrend to power transform and detrend the rwl
