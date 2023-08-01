@@ -2,7 +2,7 @@
 % Please edit documentation in R/plot_ci_detect.R
 \name{plot_ci_detect}
 \alias{plot_ci_detect}
-\title{Plot the \code{ci_detect()} processes}
+\title{Plot the \code{ci_detect()} processes & final results}
 \usage{
 plot_ci_detect(ci_output)
 }
@@ -17,5 +17,67 @@ for each tree ring series & the final result of the disturbance-free series afte
 Takes the nested output list from \code{ci_detect()} and makes a list of plots that show the process for each series.
 }
 \details{
-These plots are designed to give the user a window into how the \code{ci_detect()} process works.
+These plots are designed to illustrate how the \code{ci_detect()} process works & visualize the final results for each tree ring series.
+Correspondingly, there are two kinds of plots (if no disturbances were detected, the function returns a message instead of a plot).
+The 1st plot type demonstrates the iterative outlier detection and removal steps. The top
+panel of this plot shows the detection step for the current outlier (iteration number is displayed in the plot title).
+The grey rectangle underlies the time period corresponding to the disturbance, with the raw autoregressive residuals as the grey line,
+the moving window mean in orange, and the Tukey Biweight Robust Mean and detection thresholds as the horizontal black line and dotted lines, respectively.
+The bottom panel shows the disturbance removal steps of curve fitting and subtraction on the detrended & transformed ring width series.
+The blue (releases) or red (suppressions) line segment represents the fitted curve. The thin line segment represents the original series the curve was fitted to.
+The thicker black line is the resulting "disturbance-free" series after the fitted curve is subtracted. See \code{?ci_detect()} for more details on the processes.
+The shared x-axis for both panels marks evenly placed years and the estimated starting year of the disturbance.
+
+The second plot type shows the entire final "disturbance-free" series as a think black line, the original series as a thin grey line,
+and releases & disturbances as blue & red vertical lines, respectively. Only the estimated disturbance start years are shown on the x-axis.
+These results are shown in the original units (ring width), with the long term age/size trend reintroduced & the power transformation reversed.
+}
+\examples{
+library(dplR)
+data("ca533")
+Note that this will be somewhat slow, depending on your machine
+
+ca533_ci <- ci_detect(rwl = ca533)
+ca533_ci_plots <- plot_ci_detect(ca533_ci)
+names(ca533_ci_plots) # See what each list element contains
+# The first element contains the disturbance detection & removal processes & their iterations
+# this will display all iterations - scroll backward through your plotting window to see them all.
+ca533_ci_plots[[1]][['CAM011']]
+
+# The second element contains a plot of the final series compared to the original,
+with the disturbances indicated
+ca533_ci_plots[[2]][['CAM011']]
+
+# If you wanted to write these plots to pdf to browse them more freely,
+# you could do the following steps (will write to your working directory):
+
+library(gridExtra)
+
+# For the iteration plots:
+dir.create("ca533_ci_iter_plots") # create a folder first
+# Then make plot sheets for each series
+mapply(FUN = \(p, n) {
+ggsave(
+filename = paste0("ca533_ci_iter_plots/", n, "_ci_iter_plots.pdf"),
+plot = marrangeGrob(p, nrow = length(p), ncol = 1),
+width = 10, height = length(p)*4 # choose wise values here to make sure your plots aren't squished
+)
+}, p = ci_plots[[1]][sapply(ci_plots[[1]], FUN = \(x) !is.character(x))],
+n = names(ci_plots[[1]][sapply(ci_plots[[1]], FUN = \(x) !is.character(x))])
+)
+
+# For the final plots:
+ggsave(
+filename = "ca533_final_ci_plots.pdf",
+plot = marrangeGrob(ci_plots[[2]][sapply(ci_plots[[2]], FUN = \(x) !is.character(x))], nrow=1, ncol=1),
+width = 10, height = 4 # choose wise values here to make sure your plots aren't squished
+)
+
+# You can also use the `modendro` function `plot_cp_detrend()` to make plots of just intial detrending & transformaton steps.
+# The required input is the 4th element in the `ci_detect()` output.
+ca533_cp_plots <- plot_cp_detrend(ca533_ci[[5]])
+ca533_cp_plots[[1]]
+}
+\seealso{
+\code{\link[=ci_detect(), out_det_rem(), cp_detrend(), plot_cp_detrend]{ci_detect(), out_det_rem(), cp_detrend(), plot_cp_detrend()}}
 }

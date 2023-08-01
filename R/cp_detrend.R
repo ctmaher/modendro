@@ -44,6 +44,8 @@
 #' Cook, E. R., and Peters, K. (1997) Calculating unbiased tree-ring indices for the study of climatic and environmental change.
 #' \emph{The Holocene}, \strong{7}(3), 361-370.
 #'
+#' @seealso [pwr_t_rwl(), find_opt_pwr()]
+#'
 #' @import dplR
 #' @import tidyr
 #' @export

@@ -349,7 +349,7 @@ out_det_rem <- function(rwi,
       # It might also make more sense to weight the last value more so that the residual is minimized.
       # This would limit sharp jumps in the resulting series.
       wts <- rep(1, nrow(out_period))
-      wts[nrow(out_period)] <- 4
+      # wts[nrow(out_period)] <- 4
       curve <-
         loess(rwi ~ year,
               data = out_period,

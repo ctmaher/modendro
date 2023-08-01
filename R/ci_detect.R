@@ -49,6 +49,28 @@ ci_detect <- function(rwl,
                       out.span = 1.25,
                       max.iter = 10) {
 
+  # Error catching
+  stopifnot("rwl is not an object of class 'rwl', 'data.frame', or 'matrix'" =
+              data.class(rwl) %in% "rwl" |
+              data.class(rwl) %in% "data.frame" |
+              data.class(rwl) %in% "matrix"
+  )
+
+  stopifnot("rwl has no rownames (must be years only) or no colnames (must be series IDs only)" =
+              !is.null(rownames(rwl)) |
+              !is.null(colnames(rwl))
+  )
+
+  if (apply(rwl, MARGIN = 2, FUN = \(x) all(is.na(x))) |> any() == TRUE) {
+    these_are_NA <- colnames(rwl)[which(apply(rwl, MARGIN = 2, FUN = \(x) all(is.na(x))) == TRUE)]
+    stop("The following series have no values (all NAs): " , paste(these_are_NA, collapse = ", "))
+  }
+
+
+  stopifnot("min.win is too small for effective curve fitting. Choose a value of 5 years or larger." =
+              min.win < 5
+  )
+
   ## Run cp_detrend to power transform and detrend the rwl
   cp_out <- cp_detrend(rwl, detrend.method = detrend.method, nyrs = nyrs)
   # 1st element of cp_out is a rwl-data.frame of the residual transformed and detrended series-
@@ -130,8 +152,8 @@ ci_detect <- function(rwl,
   ## Last steps are to output the main results (disturbance-free, disturbance index, original series)
   # and all of the iterations of the outlier removal process, with the trend curves, etc.
   # all of these can then be plotted in the plot_ci_detect() function
-  ci_output_list <- list(untransformed_rwl, dis_index_rwl, out_iter, rwl)
-  names(ci_output_list) <- c("Disturbance-free series", "Disturbance index", "Outlier removal iterations", "Original series")
+  ci_output_list <- list(untransformed_rwl, dis_index_rwl, out_iter, cp_out, rwl)
+  names(ci_output_list) <- c("Disturbance-free series", "Disturbance index", "Outlier removal iterations", "Cook & Peters detrend", "Original series")
   ci_output_list
 
 } # End of the ci_detect() function

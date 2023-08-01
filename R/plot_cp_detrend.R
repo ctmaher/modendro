@@ -1,15 +1,25 @@
 #' Plot the `cp_detrend()` process
 #'
 #' @description
-#' Takes the output from `cp_detrend()` and makes a list of plots that show the process for each series.
+#' Takes the output from `cp_detrend()` and makes a list of plots that show the Cook & Peters (1997) process for each series.
 #'
 #'
 #' @param cp_out A list produced by the `cp_detrend()` function
 #'
 #' @return A list of output plots showing the power transformation and detrending processes for each series.
 #'
+#' @seealso [cp_detrend(), pwr_t_rwl(), find_opt_pwr()]
+#'
 #' @import ggplot2
 #' @export
+#'
+#' @examples
+#' # example code
+#' library(dplR)
+#' data("ca533")
+#' ca533_cp <- cp_detrend(ca533_cp, detrend.method = "AgeDepSpline")
+#' ca533_cp_plots <- plot_cp_detrend(ca533_cp)
+#'
 
 plot_cp_detrend <- function(cp_out) {
   # If we did full detrending

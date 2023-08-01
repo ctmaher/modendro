@@ -1,4 +1,4 @@
-#' Plot the `ci_detect()` processes
+#' Plot the `ci_detect()` processes & final results
 #'
 #' @description
 #' Takes the nested output list from `ci_detect()` and makes a list of plots that show the process for each series.
@@ -6,26 +6,100 @@
 #' @param ci_output A list produced by the `ci_detect()` function
 #'
 #' @details
-#' These plots are designed to give the user a window into how the `ci_detect()` process works.
+#' These plots are designed to illustrate how the `ci_detect()` process works & visualize the final results for each tree ring series.
+#' Correspondingly, there are two kinds of plots (if no disturbances were detected, the function returns a message instead of a plot).
+#' The 1st plot type demonstrates the iterative outlier detection and removal steps. The top
+#' panel of this plot shows the detection step for the current outlier (iteration number is displayed in the plot title).
+#' The grey rectangle underlies the time period corresponding to the disturbance, with the raw autoregressive residuals as the grey line,
+#' the moving window mean in orange, and the Tukey Biweight Robust Mean and detection thresholds as the horizontal black line and dotted lines, respectively.
+#' The bottom panel shows the disturbance removal steps of curve fitting and subtraction on the detrended & transformed ring width series.
+#' The blue (releases) or red (suppressions) line segment represents the fitted curve. The thin line segment represents the original series the curve was fitted to.
+#' The thicker black line is the resulting "disturbance-free" series after the fitted curve is subtracted. See `?ci_detect()` for more details on the processes.
+#' The shared x-axis for both panels marks evenly placed years and the estimated starting year of the disturbance.
+#'
+#' The second plot type shows the entire final "disturbance-free" series as a think black line, the original series as a thin grey line,
+#' and releases & disturbances as blue & red vertical lines, respectively. Only the estimated disturbance start years are shown on the x-axis.
+#' These results are shown in the original units (ring width), with the long term age/size trend reintroduced & the power transformation reversed.
+#'
 #'
 #' @return A nested list of output plots illustrating the disturbance detection & removal iterations (1st list element)
 #' for each tree ring series & the final result of the disturbance-free series after all iterations (2nd list element).
+#'
+#' @seealso [ci_detect(), out_det_rem(), cp_detrend(), plot_cp_detrend()]
 #'
 #' @import ggplot2
 #' @import cowplot
 #' @import tidyr
 #' @export
+#'
+#' @examples
+#' library(dplR)
+#' data("ca533")
+#' Note that this will be somewhat slow, depending on your machine
+#'
+#' ca533_ci <- ci_detect(rwl = ca533)
+#' ca533_ci_plots <- plot_ci_detect(ca533_ci)
+#' names(ca533_ci_plots) # See what each list element contains
+#' # The first element contains the disturbance detection & removal processes & their iterations
+#' # this will display all iterations - scroll backward through your plotting window to see them all.
+#' ca533_ci_plots[[1]][['CAM011']]
+#'
+#' # The second element contains a plot of the final series compared to the original,
+#'with the disturbances indicated
+#' ca533_ci_plots[[2]][['CAM011']]
+#'
+#' # If you wanted to write these plots to pdf to browse them more freely,
+#' # you could do the following steps (will write to your working directory):
+#'
+#' library(gridExtra)
+#'
+#' # For the iteration plots:
+#' dir.create("ca533_ci_iter_plots") # create a folder first
+#' # Then make plot sheets for each series
+#' mapply(FUN = \(p, n) {
+#' ggsave(
+#' filename = paste0("ca533_ci_iter_plots/", n, "_ci_iter_plots.pdf"),
+#' plot = marrangeGrob(p, nrow = length(p), ncol = 1),
+#' width = 10, height = length(p)*4 # choose wise values here to make sure your plots aren't squished
+#' )
+#' }, p = ci_plots[[1]][sapply(ci_plots[[1]], FUN = \(x) !is.character(x))],
+#' n = names(ci_plots[[1]][sapply(ci_plots[[1]], FUN = \(x) !is.character(x))])
+#' )
+#'
+#' # For the final plots:
+#' ggsave(
+#' filename = "ca533_final_ci_plots.pdf",
+#' plot = marrangeGrob(ci_plots[[2]][sapply(ci_plots[[2]], FUN = \(x) !is.character(x))], nrow=1, ncol=1),
+#' width = 10, height = 4 # choose wise values here to make sure your plots aren't squished
+#' )
+#'
+#' # You can also use the `modendro` function `plot_cp_detrend()` to make plots of just intial detrending & transformaton steps.
+#' # The required input is the 4th element in the `ci_detect()` output.
+#' ca533_cp_plots <- plot_cp_detrend(ca533_ci[[5]])
+#' ca533_cp_plots[[1]]
+
 
 plot_ci_detect <- function(ci_output) {
-
   # Split up the ci_detect output into parts
-  or_series <- apply(ci_output[["Original series"]], MARGIN = 2, FUN = \(x) {
-    data.frame(year = as.numeric(names(x)), rw = x, type = "Original") |> na.omit()
-  }, simplify = FALSE)
+  or_series <-
+    apply(ci_output[["Original series"]],
+          MARGIN = 2,
+          FUN = \(x) {
+            data.frame(year = as.numeric(names(x)),
+                       rw = x,
+                       type = "Original") |> na.omit()
+          },
+          simplify = FALSE)
 
-  ci_series <- apply(ci_output[["Disturbance-free series"]], MARGIN = 2, FUN = \(x) {
-    data.frame(year = as.numeric(names(x)), rw = x, type = "Disturb.-free") |> na.omit()
-  }, simplify = FALSE)
+  ci_series <-
+    apply(ci_output[["Disturbance-free series"]],
+          MARGIN = 2,
+          FUN = \(x) {
+            data.frame(year = as.numeric(names(x)),
+                       rw = x,
+                       type = "Disturb.-free") |> na.omit()
+          },
+          simplify = FALSE)
 
 
   # Map() applies the rbind action across the 2 lists. It is a wrapper for mapply().
@@ -37,7 +111,8 @@ plot_ci_detect <- function(ci_output) {
   # Take the outlier metadata dataframes for each series and add the iteration number, then bind all of them together
   # for each series ID.
 
-  outlier_iter_len <- length(ci_output[["Outlier removal iterations"]])
+  outlier_iter_len <-
+    length(ci_output[["Outlier removal iterations"]])
 
   whole_series <-
     lapply(ci_output[["Outlier removal iterations"]][2:outlier_iter_len], FUN = \(x) {
@@ -62,25 +137,38 @@ plot_ci_detect <- function(ci_output) {
   # use a list of the names to pass the iterations to the data
 
   out_curves_df <- Map(f = \(x, y) {
-
     # This inner Map() does
-    Map(f = \(i, e, y) {
-      if (is.character(i)){
-        # Skip the "No outliers detected" ones
-        i <- data.frame(rwi = NA, year = NA, curve = NA, rwi.cor = NA, dir = NA)
-        i$series <- e
-        i$iter <- y
-        i
+    Map(
+      f = \(i, e, y) {
+        if (is.character(i)) {
+          # Skip the "No outliers detected" ones
+          i <-
+            data.frame(
+              rwi = NA,
+              year = NA,
+              curve = NA,
+              rwi.cor = NA,
+              dir = NA
+            )
+          i$series <- e
+          i$iter <- y
+          i
 
-      } else {
-        i$series <- e
-        i$iter <- y
-        i
-      }
-    }, i = x, e = names(x), y = y) |>
+        } else {
+          i$series <- e
+          i$iter <- y
+          i
+        }
+      },
+      i = x,
+      e = names(x),
+      y = y
+    ) |>
       do.call(what = "rbind")
 
-  }, x = out_curves_only, y = names(out_curves_only)) |>
+  },
+  x = out_curves_only,
+  y = names(out_curves_only)) |>
     do.call(what = "rbind")
 
 
@@ -137,7 +225,8 @@ plot_ci_detect <- function(ci_output) {
 
   # Now split the dfs into lists by series.
   out_curves_split <- split(out_curves_df, out_curves_df$series)
-  out_detection_split <- split(out_detection_df, out_detection_df$series)
+  out_detection_split <-
+    split(out_detection_df, out_detection_df$series)
 
   ## The outlier detection & removal iteration plots
   out_det_rem_plots <- Map(f = \(det, rem) {
@@ -166,17 +255,21 @@ plot_ci_detect <- function(ci_output) {
     } else {
       Map(f = \(det_iter, rem_iter) {
         det_no_transRW <-
-          det_iter[!c(det_iter$type %in% "Transformed RW"),]
+          det_iter[!c(det_iter$type %in% "Transformed RW"), ]
         type_fac <- unique(det_no_transRW$type)
-        stable_lev <- c("AR residuals", "TBRM", "Detection thresh."," ")
-        det_no_transRW$type <- factor(det_no_transRW$type, levels = c(stable_lev, type_fac[!c(type_fac %in% stable_lev)]))
+        stable_lev <-
+          c("AR residuals", "TBRM", "Detection thresh.", " ")
+        det_no_transRW$type <-
+          factor(det_no_transRW$type, levels = c(stable_lev, type_fac[!c(type_fac %in% stable_lev)]))
 
         # set up x-axis breaks for the detection & removal plots:
         dist_year <- min(rem_iter$year, na.rm = TRUE)
         x_breaks <- c(dist_year,
-                      labeling::extended(range(det_no_transRW$year)[1],
-                                         range(det_no_transRW$year)[2],
-                                         m = 5))
+                      labeling::extended(
+                        range(det_no_transRW$year)[1],
+                        range(det_no_transRW$year)[2],
+                        m = 5
+                      ))
         # Remove any base breaks that are too near the disturbance start year
         take_out <- which(abs(dist_year - x_breaks) < 10 &
                             abs(dist_year - x_breaks) > 0)
@@ -216,7 +309,7 @@ plot_ci_detect <- function(ci_output) {
             legend.position = "top"
           ) +
           #coord_fixed(ratio = 45) +
-          facet_wrap(~ process, strip.position = "right") + # Use the single factor level to label the plot
+          facet_wrap( ~ process, strip.position = "right") + # Use the single factor level to label the plot
           ggtitle(paste0(
             "Core ID: ",
             det_iter$series,
@@ -228,28 +321,53 @@ plot_ci_detect <- function(ci_output) {
         ## The removal plots
         out_long <-
           pivot_longer(
-            rem_iter[, !c(colnames(rem_iter) %in% "rwi.cor")],
+            rem_iter[,!c(colnames(rem_iter) %in% "rwi.cor")],
             cols = c("curve", "rwi"),
             names_to = "type",
             values_to = "value"
           )
         # add 1 year each before and after to the rwi - this is for plotting aesthetics
         # without this, the outlier/disturbance section appears to float above/below the disturbance-free series.
-        cor_series_iter <- det_iter[det_iter$type %in% "Transformed RW",]
-        extra_years <- c(min(out_long$year, na.rm = TRUE) - 1,
-                         max(out_long$year, na.rm = TRUE) + 1)
-        extra_rwi <- cor_series_iter$value[cor_series_iter$year %in% extra_years]
+        # However, don't do this if the disturbance period reaches the beginning or end of the original series
+        cor_series_iter <-
+          det_iter[det_iter$type %in% "Transformed RW", ]
+        min_dist_year1 <- min(out_long$year, na.rm = TRUE) - 1
+        max_dist_year1 <- max(out_long$year, na.rm = TRUE) + 1
+        min_series_year <- min(cor_series_iter$year, na.rm = TRUE)
+        max_series_year <- max(cor_series_iter$year, na.rm = TRUE)
+        extra_years <-
+          c(
+            ifelse(min_dist_year1 < min_series_year, NA, min_dist_year1),
+            ifelse(max_dist_year1 > max_series_year, NA, max_dist_year1)
+          ) |>
+          na.omit() |>
+          as.numeric()
+
+        extra_rwi <-
+          cor_series_iter$value[cor_series_iter$year %in% extra_years]
 
         rem_series <-
-          rbind(out_long[, c("value", "type", "year", "series", "iter", "process")],
-                data.frame(value = extra_rwi, type = "rwi", year = extra_years,
-                           series = out_long$series[1:2], iter = out_long$iter[1:2], process = "Removal"),
-                det_iter[det_iter$type %in% "Transformed RW",])
+          rbind(
+            out_long[, c("value", "type", "year", "series", "iter", "process")],
+            data.frame(
+              value = extra_rwi,
+              type = "rwi",
+              year = extra_years,
+              series = out_long$series[1:2],
+              iter = out_long$iter[1:2],
+              process = "Removal"
+            ),
+            det_iter[det_iter$type %in% "Transformed RW", ]
+          )
         #rem_series
 
         # Code the curve fit label & color according to the direction of disturbance
-        curve_lab <- ifelse(rem_iter[,"dir"][1] %in% "pos", "Fitted release curve", "Fitted suppression curve")
-        curve_col <- ifelse(rem_iter[,"dir"][1] %in% "pos", "blue", "red")
+        curve_lab <-
+          ifelse(rem_iter[, "dir"][1] %in% "pos",
+                 "Fitted release curve",
+                 "Fitted suppression curve")
+        curve_col <-
+          ifelse(rem_iter[, "dir"][1] %in% "pos", "blue", "red")
 
         rem_series$type <-
           ifelse(
@@ -285,7 +403,7 @@ plot_ci_detect <- function(ci_output) {
             legend.position = "top"
           ) +
           #coord_fixed(ratio = 45) +
-          facet_wrap(~ process, strip.position = "right") # Use a single factor level to label the plot
+          facet_wrap( ~ process, strip.position = "right") # Use a single factor level to label the plot
 
         # Plot the two panels together
         plot_grid(
@@ -306,72 +424,88 @@ plot_ci_detect <- function(ci_output) {
   # output of this process is a list
   ## use the collapsed iterations in out_detection_split to derive the first year of each disturbance
 
-  out_start_dir <- lapply(out_curves_split, FUN = \(x){
+  out_start_dir <- lapply(out_curves_split, FUN = \(x) {
     # Control for the series with no detected disturbances
     # & only make lines for the iterations with detected disturbances
     xNA <- na.omit(x)
-    if (nrow(xNA) == 0){
-      data.frame(iter = numeric(0), dir = character(0), year = numeric(0))
+    if (nrow(xNA) == 0) {
+      data.frame(iter = numeric(0),
+                 dir = character(0),
+                 year = numeric(0))
     } else {
       aggregate(year ~ iter + dir, data = xNA, min)
     }
   })
 
-  final_plots <- Map(f = \(dat, ID, dist) {
+  final_plots <- Map(
+    f = \(dat, ID, dist) {
+      if (nrow(dist) == 0) {
+        # Just give a message if there are no disturbances.
+        "No disturbances detected"
+      } else {
+        dat$type <-
+          factor(dat$type,
+                 levels = c("Disturb.-free",
+                            "Original"))
 
-    if (nrow(dist) == 0) { # Just give a message if there are no disturbances.
-      "No disturbances detected"
-    } else {
+        dist <- dist[order(dist$year), ]
+        dist$dir <-
+          ifelse(dist$dir %in% "neg", "Suppresions", "Releases")
 
-      dat$type <-
-        factor(
-          dat$type,
-          levels = c(
-            "Disturb.-free",
-            "Original"
-          )
-        )
+        # add rw values (for yend) for the geom_segment data
+        dist_free <- dat[dat$type %in% "Disturb.-free", ]
+        dist <- merge(dist, dist_free[, c("year", "rw")], by = "year")
 
-      dist <- dist[order(dist$year),]
-      dist$dir <- ifelse(dist$dir %in% "neg", "Suppresions", "Releases")
+        # Make the plot
+        ggplot(dat, aes(year,
+                        rw,
+                        linewidth = type,)) +
+          geom_segment(
+            data = dist,
+            aes(
+              x = year,
+              xend = year,
+              y = -Inf,
+              yend = rw,
+              color = dir
+            ),
+            linewidth = 0.75,
+            inherit.aes = FALSE
+          ) +
+          scale_color_manual(name = "Disturb. type",
+                             values = c("blue", "red")) +
+          geom_line() +
+          scale_linewidth_manual(name = "Series", values = c(0.75, 0.25)) +
+          ylab("Ring width (mm)") +
+          scale_x_continuous(breaks = dist$year) +
+          theme(
+            panel.background = element_blank(),
+            panel.grid = element_blank(),
+            axis.title.x = element_blank(),
+            legend.position = "top",
+            legend.direction = "horizontal",
+            legend.key = element_blank(),
+            axis.text.x = element_text(angle = 45)
+          ) +
+          guides(
+            linewidth = guide_legend(title.position = "top"),
+            color = guide_legend(title.position = "top")
+          ) +
+          ggtitle(paste(ID, "intervention detection results"))
+      }
+    },
+    # To add here: some kind of coord_fixed() with dimensions based on Tufte's rule of thumb of a mean (median?)
+    # slope of 45° in the graph. coord_fixed() is not right, we want a relatively fixed ylim, but a flexible xlim
 
-      # add rw values (for yend) for the geom_segment data
-      dist_free <- dat[dat$type %in% "Disturb.-free",]
-      dist <- merge(dist, dist_free[,c("year","rw")], by = "year")
-
-      # Make the plot
-      ggplot(dat, aes(
-        year,
-        rw,
-        linewidth = type,
-      )) +
-        geom_segment(data = dist,
-                     aes(x = year, xend = year, y = -Inf, yend = rw, color = dir),
-                     linewidth = 0.75,
-                     inherit.aes = FALSE) +
-        scale_color_manual(name = "Disturb. type",
-                           values = c("blue","red")) +
-        geom_line() +
-        scale_linewidth_manual(name = element_blank(), values = c(0.75, 0.25)) +
-        ylab("Ring width (mm)") +
-        scale_x_continuous(breaks = dist$year) +
-        theme(
-          panel.background = element_blank(),
-          panel.grid = element_blank(),
-          axis.title.x = element_blank(),
-          legend.position = "top",
-          legend.direction = "horizontal",
-          legend.key = element_blank()
-        ) +
-        ggtitle(paste(ID, "intervention detection results"))
-    }
-  },
-  # To add here: some kind of coord_fixed() with dimensions based on Tufte's rule of thumb of a mean (median?)
-  # slope of 45° in the graph. coord_fixed() is not right, we want a relatively fixed ylim, but a flexible xlim
-
-  dat = combined_list, ID = names(combined_list), dist = out_start_dir)
+    dat = combined_list,
+    ID = names(combined_list),
+    dist = out_start_dir
+  )
 
   plot_list <- list(out_det_rem_plots, final_plots)
-  names(plot_list) <- c("Disturbance detection & removal plots", "Final disturbance-free series plots")
+  names(plot_list) <-
+    c("Disturbance detection & removal plots",
+      "Final disturbance-free series plots")
   plot_list
 }
+
