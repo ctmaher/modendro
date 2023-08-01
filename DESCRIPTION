@@ -1,6 +1,6 @@
 Package: modendro
 Title: More Dendro (Tree Ring) Functions
-Version: 0.0.0.9000
+Version: 0.0.1
 Authors@R: 
     person("Colin", "Maher", , "cmbristlecone@gmail.com", role = c("aut", "cre"),
            comment = c(ORCID = "https://orcid.org/0000-0001-8409-7775"))
@@ -13,4 +13,6 @@ Imports:
     dplR,
     ggplot2,
     plyr,
-    tidyr
+    tidyr,
+    cowplot,
+    stats
