@@ -15,4 +15,6 @@ Imports:
     plyr,
     tidyr,
     cowplot,
-    stats
+    stats,
+    zoo,
+    DescTools

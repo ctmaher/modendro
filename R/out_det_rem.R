@@ -12,6 +12,7 @@
 #' @import dplR
 #' @import zoo
 #' @import stats
+#' @import DescTools
 #' @export
 
 out_det_rem <- function(rwi,

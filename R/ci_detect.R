@@ -31,6 +31,7 @@
 #' @import dplR
 #' @import zoo
 #' @import stats
+#' @import DescTools
 #' @export
 #'
 #' @examples
