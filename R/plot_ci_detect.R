@@ -100,21 +100,19 @@ plot_ci_detect <- function(ci_output) {
   # Take the outlier metadata dataframes for each series and add the iteration number, then bind all of them together
   # for each series ID.
 
-  outlier_iter_len <- length(ci_output[["Outlier removal iterations"]])
-
   whole_series <-
-    lapply(ci_output[["Outlier removal iterations"]][2:outlier_iter_len], FUN = \(x) {
+    lapply(ci_output[["Outlier removal iterations"]], FUN = \(x) {
       x[[1]]
     })
 
   # This pulls out just the outlier removal iterations with the specific outlier metadata
   out_curves_only <-
-    lapply(ci_output[["Outlier removal iterations"]][2:outlier_iter_len], FUN = \(x) {
+    lapply(ci_output[["Outlier removal iterations"]], FUN = \(x) {
       x[[2]]
     })
 
   out_detection_only <-
-    lapply(ci_output[["Outlier removal iterations"]][2:outlier_iter_len], FUN = \(x) {
+    lapply(ci_output[["Outlier removal iterations"]], FUN = \(x) {
       x[[3]]
     })
   # The outermost layer of these lists represents the iterations. Within each of those inner lists,

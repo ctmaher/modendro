@@ -92,6 +92,8 @@ ci_detect <- function(rwl,
   for (i in 2:(max.iter+1)) {
     out_iter[[i]] <- out_det_rem(out_iter[[i-1]][[1]], min.win = min.win, max.win = max.win, span = out.span)
   }
+  # Remove the 0 iteration
+  out_iter <- out_iter[2:(max.iter+1)]
 
   ## Take the last element of out_iter as the final output series...
   # add back the detrend curve

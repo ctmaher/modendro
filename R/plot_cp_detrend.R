@@ -11,6 +11,7 @@
 #' @seealso [cp_detrend(), pwr_t_rwl(), find_opt_pwr()]
 #'
 #' @import ggplot2
+#' @import tidyr
 #' @export
 #'
 #' @examples
