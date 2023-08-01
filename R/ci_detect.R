@@ -111,7 +111,7 @@ ci_detect <- function(rwl,
         y
       }
     }
-  }, x = cp_out[["Metadata about transformations"]], y = retrended)
+  }, x = cp_out[["Transformation metadata"]], y = retrended)
 
   # Calculate the disturbance index -
   # this is the difference between the disturbance-free series & the original series

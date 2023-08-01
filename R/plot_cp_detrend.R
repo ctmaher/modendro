@@ -71,15 +71,16 @@ plot_cp_detrend <- function(cp_out) {
       na.omit() |> as.data.frame()
 
     all.df$year <- as.numeric(all.df$year)
-    all.df$label <- ifelse(
-      all.df$type %in% "rw",
-      paste("Raw ring widths - series ID:", all.df$series),
+    all.df$label <-
       ifelse(
-        all.df$type %in% "pwr.t_cu",
-        paste0("Transformed series with fitted trend (", detrend.method, ")"),
-        "Residual detrended series"
+        all.df$type %in% "rw",
+        "Ring width (mm)",
+        ifelse(
+          all.df$type %in% "pwr.t_cu",
+          "Transformed RW",
+          "Detrended resids."
+        )
       )
-    )
 
     # add factor and year to the long.curv data.frame
     long.curv$type <- factor(long.curv$type, levels = c("pwr.t_cu"))
@@ -87,24 +88,28 @@ plot_cp_detrend <- function(cp_out) {
 
     # merge the message data with the long.curv data.
     long.curv <-
-      merge(long.curv, cp_out[["Metadata about transformations"]], by = "series")
+      merge(long.curv,
+            do.call("rbind", cp_out[["Transformation metadata"]]),
+            by = "series")
+
+    long.curv$optimal.pwr <- as.numeric(long.curv$optimal.pwr)
 
     all.list <- split(all.df, f = as.factor(all.df$series))
     curv.list <- split(long.curv, f = as.factor(long.curv$series))
 
 
-    mapply(
-      FUN = \(x, y) {
+    Map(
+      f = \(x, y, d) {
         # Set up for the plot
         max.trans <-
           x[x[, "type"] %in% "pwr.t_cu", "value"] |> max(na.rm = TRUE)
         this.order <-
           c(unique(x[, "label"])[startsWith(unique(x[, "label"]),
-                                            prefix = "Ra")],
+                                            prefix = "Ri")],
             unique(x[, "label"])[startsWith(unique(x[, "label"]),
                                             prefix = "Tr")],
             unique(x[, "label"])[startsWith(unique(x[, "label"]),
-                                            prefix = "Re")])
+                                            prefix = "De")])
         x[, "type"] <- factor(x[, "label"],
                               levels = this.order)
         y[, "type"] <-
@@ -112,14 +117,23 @@ plot_cp_detrend <- function(cp_out) {
                                                  prefix = "Tr")],
                  levels = this.order)
 
+        # Set up the geom_text to use the same variables as the rest
         z <- y[1, ]
         z[, "value"] <- max.trans
-        z[, "year"] <- median(y[, "year"])
-        z$trans.message <- ifelse(
-          z$action %in% "Power transformed",
-          paste0(z$action, "; power = ", round(z$optimal.pwr, digits = 3)),
-          ifelse(z$action %in% "log10 transformed", "No transformation")
-        )
+        z[, "year"] <- mean(c(summary((y[, "year"]))[[3]], summary((y[, "year"]))[[5]]))
+        if (d[1,"method"][[1]] %in% "AgeDepSpline" | d[1,"method"][[1]] %in% "Spline") {
+          z$trans.message <- paste0(ifelse(
+            z$action %in% "Power transformed",
+            paste0(z$action, " (power = ", round(z$optimal.pwr, digits = 3),")"),
+            ifelse(z$action %in% "log10 transformed", "No transformation")
+          ), "; detrend method = ", d[1,"method"][[1]]," (nyrs = ", d[1,"nyrs"][[1]],")")
+        } else {
+          z$trans.message <- paste0(ifelse(
+            z$action %in% "Power transformed",
+            paste0(z$action, " (power = ", round(z$optimal.pwr, digits = 3),")"),
+            ifelse(z$action %in% "log10 transformed", "No transformation")
+          ), "; detrend method = ", d[1,"method"][[1]])
+        }
 
         x_axis_params <- seq(min(na.omit(x[, "year"])),
                              max(na.omit(x[, "year"])),
@@ -129,31 +143,34 @@ plot_cp_detrend <- function(cp_out) {
         ggplot2::ggplot(x, aes(year, value, color = type)) +
           scale_color_manual(values = c("black", "black", "blue"),
                              guide = "none") +
-          geom_line(linewidth = 0.25, na.rm = TRUE) +
+          geom_line(linewidth = 0.4, na.rm = TRUE) +
           facet_wrap( ~ type,
                       ncol = 1,
-                      scales = "free_y") +
+                      scales = "free_y",
+                      strip.position = "left") +
           geom_line(data = y,
                     color = "blue",
                     na.rm = TRUE) +
           geom_text(data = z,
                     size = 3,
                     aes(label = trans.message)) +
-          xlab("Year") +
           scale_x_continuous(breaks = x_axis_params,
                              limits = range(x_axis_params)) +
           theme(
+            strip.placement = "outside",
             strip.background = element_blank(),
-            strip.text = element_text(hjust = 0),
+            strip.text = element_text(size = 10),
             strip.clip = "off",
+            axis.title.x = element_blank(),
             axis.title.y = element_blank(),
             panel.grid = element_blank(),
             panel.background = element_blank()
-          )
+          ) +
+          ggtitle(paste0("C&P transform & detrend; series ID: ", x[1,"series"]))
       },
       x = all.list,
       y = curv.list,
-      SIMPLIFY = FALSE
+      d = cp_out[["Detrending metadata"]]
     )
 
 
@@ -188,13 +205,13 @@ plot_cp_detrend <- function(cp_out) {
     all.df$year <- as.numeric(all.df$year)
     all.df$label <- ifelse(
       all.df$type %in% "rw",
-      paste("Raw ring widths - series ID:", all.df$series),
-      "Transformed series"
+      "Ring width (mm)",
+      "Transformed RW"
     )
 
     # merge the message data with the rest of the data.
     all.df <-
-      merge(all.df, cp_out[["Metadata about transformations"]], by = c("series"))
+      merge(all.df, cp_out[["Transformation metadata"]], by = c("series"))
 
     all.list <- split(all.df, f = as.factor(all.df$series))
 
@@ -204,7 +221,7 @@ plot_cp_detrend <- function(cp_out) {
         x[x[, "type"] %in% "pwr.t", "value"] |> max(na.rm = TRUE)
       this.order <-
         c(unique(x[, "label"])[startsWith(unique(x[, "label"]),
-                                          prefix = "Ra")],
+                                          prefix = "Ri")],
           unique(x[, "label"])[startsWith(unique(x[, "label"]),
                                           prefix = "Tr")])
       x[, "type"] <- factor(x[, "label"],
@@ -225,24 +242,25 @@ plot_cp_detrend <- function(cp_out) {
         round(digits = -1)
 
       ggplot2::ggplot(x, aes(year, value)) +
-        geom_line(linewidth = 0.25, na.rm = TRUE) +
+        geom_line(linewidth = 0.4, na.rm = TRUE) +
         facet_wrap( ~ type,
                     ncol = 1,
                     scales = "free_y") +
         geom_text(data = z,
                   size = 2.5,
                   aes(label = trans.message)) +
-        xlab("Year") +
         scale_x_continuous(breaks = x_axis_params,
                            limits = range(x_axis_params)) +
         theme(
           strip.background = element_blank(),
-          strip.text = element_text(hjust = 0),
+          strip.text = element_text(size = 10),
           strip.clip = "off",
+          axis.title.x = element_blank(),
           axis.title.y = element_blank(),
           panel.grid = element_blank(),
           panel.background = element_blank()
-        )
+        ) +
+        ggtitle(paste0("C&P transform; series ID: ", x[1,"series"]))
     })
   }
 } ## End of function

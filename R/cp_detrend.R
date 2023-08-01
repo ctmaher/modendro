@@ -127,7 +127,7 @@ cp_detrend <-
     }
 
     if (any(rwl < 0, na.rm = TRUE)) {
-      rwl[which(rwl < 0),] <- NA
+      rwl[which(rwl < 0), ] <- NA
       warning(
         "One or more negative values detected in the rwl file. These were replaced with NAs.
               Check your data to make sure this is correct (e.g., sometimes -9999 is used as a place-holder value for 0 rings."
@@ -153,6 +153,18 @@ cp_detrend <-
           return.info = TRUE
         )
 
+      # Extract the detrending info.
+      detr.info <- detr.result[["model.info"]]
+      detr.info <- Map(f = \(d, n) {
+        df <- do.call("rbind", d) |> as.data.frame()
+        df[, "method"] <- names(d)
+        df[, "series"] <- n
+        df
+      },
+      d = detr.info,
+      n = names(detr.info))
+
+
       curv <- detr.result$curves
       detr <- detr.result$series
 
@@ -161,13 +173,15 @@ cp_detrend <-
                        curv,
                        trans,
                        mess.df,
+                       detr.info,
                        rwl)
       names(out.list) <-
         c(
           "Resid. detrended series",
           "Detrend curves",
           "Transformed ring widths",
-          "Metadata about transformations",
+          "Transformation metadata",
+          "Detrending metadata",
           "Raw ring widths"
         )
 
@@ -179,6 +193,6 @@ cp_detrend <-
     }
     out.list
 
-} ## End of function
+  } ## End of function
 
 
