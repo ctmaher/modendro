@@ -212,7 +212,7 @@ plot_cp_detrend <- function(cp_out) {
 
     # merge the message data with the rest of the data.
     all.df <-
-      merge(all.df, cp_out[["Transformation metadata"]], by = c("series"))
+      merge(all.df, do.call("rbind", cp_out[["Transformation metadata"]]), by = c("series"))
 
     all.list <- split(all.df, f = as.factor(all.df$series))
 
