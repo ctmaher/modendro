@@ -69,7 +69,7 @@ ci_detect <- function(rwl,
 
 
   stopifnot("min.win is too small for effective curve fitting. Choose a value of 5 years or larger." =
-              min.win < 5
+              min.win >= 5
   )
 
   ## Run cp_detrend to power transform and detrend the rwl
