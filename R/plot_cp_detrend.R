@@ -126,13 +126,13 @@ plot_cp_detrend <- function(cp_out) {
           z$trans.message <- paste0(ifelse(
             z$action %in% "Power transformed",
             paste0(z$action, " (power = ", round(z$optimal.pwr, digits = 3),")"),
-            ifelse(z$action %in% "log10 transformed", "No transformation")
+            ifelse(z$action %in% "log10 transformed", "log10 transformed", "No transformation")
           ), "; detrend method = ", d[1,"method"][[1]]," (nyrs = ", d[1,"nyrs"][[1]],")")
         } else {
           z$trans.message <- paste0(ifelse(
             z$action %in% "Power transformed",
             paste0(z$action, " (power = ", round(z$optimal.pwr, digits = 3),")"),
-            ifelse(z$action %in% "log10 transformed", "No transformation")
+            ifelse(z$action %in% "log10 transformed", "log10 transformed", "No transformation")
           ), "; detrend method = ", d[1,"method"][[1]])
         }
 
@@ -234,7 +234,7 @@ plot_cp_detrend <- function(cp_out) {
       z$trans.message <- ifelse(
         z$action %in% "Power transformed",
         paste0(z$action, "; power = ", round(z$optimal.pwr, digits = 3)),
-        ifelse(z$action %in% "log10 transformed", "No transformation")
+        ifelse(z$action %in% "log10 transformed", "log10 transformed", "No transformation")
       )
 
       x_axis_params <- seq(min(na.omit(x[, "year"])),
