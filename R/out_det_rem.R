@@ -107,7 +107,7 @@ out_det_rem <- function(rwi,
   # The threshold is by default 3.29 robust scales from the robust mean of each moving average series
   tbrms <- lapply(mov_avgs, FUN = \(x) {
     lapply(x, FUN = \(x) {
-      TukeyBiweight(x$value, const = 9, na.rm = TRUE)
+      DescTools::TukeyBiweight(x$value, const = 9, na.rm = TRUE)
       #tbrm(x$value, C = 9) # The dplR version
     })
   })
