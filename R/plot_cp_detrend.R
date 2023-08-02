@@ -118,22 +118,20 @@ plot_cp_detrend <- function(cp_out) {
                                                  prefix = "Tr")],
                  levels = this.order)
 
-        # Set up the geom_text to use the same variables as the rest
+        # Set up the messages about transformation & detrending
         z <- y[1, ]
-        z[, "value"] <- max.trans
-        z[, "year"] <- mean(c(summary((y[, "year"]))[[3]], summary((y[, "year"]))[[5]]))
         if (d[1,"method"][[1]] %in% "AgeDepSpline" | d[1,"method"][[1]] %in% "Spline") {
           z$trans.message <- paste0(ifelse(
             z$action %in% "Power transformed",
             paste0(z$action, " (power = ", round(z$optimal.pwr, digits = 3),")"),
             ifelse(z$action %in% "log10 transformed", "log10 transformed", "No transformation")
-          ), "; detrend method = ", d[1,"method"][[1]]," (nyrs = ", d[1,"nyrs"][[1]],")")
+          ), "\nDetrend method = ", d[1,"method"][[1]]," (nyrs = ", d[1,"nyrs"][[1]],")")
         } else {
           z$trans.message <- paste0(ifelse(
             z$action %in% "Power transformed",
             paste0(z$action, " (power = ", round(z$optimal.pwr, digits = 3),")"),
             ifelse(z$action %in% "log10 transformed", "log10 transformed", "No transformation")
-          ), "; detrend method = ", d[1,"method"][[1]])
+          ), "\nDetrend method = ", d[1,"method"][[1]])
         }
 
         x_axis_params <- seq(min(na.omit(x[, "year"])),
@@ -152,9 +150,6 @@ plot_cp_detrend <- function(cp_out) {
           geom_line(data = y,
                     color = "blue",
                     na.rm = TRUE) +
-          geom_text(data = z,
-                    size = 3,
-                    aes(label = trans.message)) +
           scale_x_continuous(breaks = x_axis_params,
                              limits = range(x_axis_params)) +
           theme(
@@ -167,7 +162,8 @@ plot_cp_detrend <- function(cp_out) {
             panel.grid = element_blank(),
             panel.background = element_blank()
           ) +
-          ggtitle(paste0("C&P transform & detrend; series ID: ", x[1,"series"]))
+          ggtitle(paste0("C&P transform & detrend; series ID: ", x[1,"series"]),
+                  subtitle = z$trans.message)
       },
       x = all.list,
       y = curv.list,
@@ -212,7 +208,7 @@ plot_cp_detrend <- function(cp_out) {
 
     # merge the message data with the rest of the data.
     all.df <-
-      merge(all.df, do.call("rbind", cp_out[["Transformation metadata"]]), by = c("series"))
+      merge(all.df, cp_out[["Transformation metadata"]], by = c("series"))
 
     all.list <- split(all.df, f = as.factor(all.df$series))
 
@@ -228,9 +224,8 @@ plot_cp_detrend <- function(cp_out) {
       x[, "type"] <- factor(x[, "label"],
                             levels = this.order)
 
+      # Set up the messages about transformation
       z <- x[startsWith(x[, "label"], prefix = "Tr"), ][1, ]
-      z[, "value"] <- max.trans
-      z[, "year"] <- median(x[, "year"])
       z$trans.message <- ifelse(
         z$action %in% "Power transformed",
         paste0(z$action, "; power = ", round(z$optimal.pwr, digits = 3)),
@@ -247,9 +242,6 @@ plot_cp_detrend <- function(cp_out) {
         facet_wrap( ~ type,
                     ncol = 1,
                     scales = "free_y") +
-        geom_text(data = z,
-                  size = 2.5,
-                  aes(label = trans.message)) +
         scale_x_continuous(breaks = x_axis_params,
                            limits = range(x_axis_params)) +
         theme(
@@ -261,7 +253,8 @@ plot_cp_detrend <- function(cp_out) {
           panel.grid = element_blank(),
           panel.background = element_blank()
         ) +
-        ggtitle(paste0("C&P transform; series ID: ", x[1,"series"]))
+        ggtitle(paste0("C&P transform; series ID: ", x[1,"series"]),
+                subtitle = z$trans.message)
     })
   }
 } ## End of function
