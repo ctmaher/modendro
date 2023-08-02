@@ -258,3 +258,4 @@ plot_cp_detrend <- function(cp_out) {
     })
   }
 } ## End of function
+
