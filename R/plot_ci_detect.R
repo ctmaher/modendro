@@ -35,7 +35,7 @@
 #' @examples
 #' library(dplR)
 #' data("ca533")
-#' Note that this will be somewhat slow, depending on your machine
+#' # Note that this will be somewhat slow, depending on your machine
 #'
 #' ca533_ci <- ci_detect(rwl = ca533)
 #' ca533_ci_plots <- plot_ci_detect(ca533_ci)
@@ -44,8 +44,7 @@
 #' # this will display all iterations - scroll backward through your plotting window to see them all.
 #' ca533_ci_plots[[1]][['CAM011']]
 #'
-#' # The second element contains a plot of the final series compared to the original,
-#'with the disturbances indicated
+#' # The second element contains a plot of the final series compared to the original, with the disturbances indicated
 #' ca533_ci_plots[[2]][['CAM011']]
 #'
 #' # If you wanted to write these plots to pdf to browse them more freely,

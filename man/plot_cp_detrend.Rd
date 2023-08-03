@@ -16,11 +16,12 @@ A list of output plots showing the power transformation and detrending processes
 Takes the output from \code{cp_detrend()} and makes a list of plots that show the Cook & Peters (1997) process for each series.
 }
 \examples{
-# example code
+
 library(dplR)
 data("ca533")
 ca533_cp <- cp_detrend(ca533_cp, detrend.method = "AgeDepSpline")
 ca533_cp_plots <- plot_cp_detrend(ca533_cp)
+ca533_cp_plots[[1]]
 
 }
 \seealso{

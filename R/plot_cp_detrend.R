@@ -15,11 +15,12 @@
 #' @export
 #'
 #' @examples
-#' # example code
+#'
 #' library(dplR)
 #' data("ca533")
 #' ca533_cp <- cp_detrend(ca533_cp, detrend.method = "AgeDepSpline")
 #' ca533_cp_plots <- plot_cp_detrend(ca533_cp)
+#' ca533_cp_plots[[1]]
 #'
 
 plot_cp_detrend <- function(cp_out) {
