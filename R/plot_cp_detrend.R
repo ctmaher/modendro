@@ -90,7 +90,7 @@ plot_cp_detrend <- function(cp_out) {
     # merge the message data with the long.curv data.
     long.curv <-
       merge(long.curv,
-            do.call("rbind", cp_out[["Transformation metadata"]]),
+            cp_out[["Transformation metadata"]],
             by = "series")
 
     long.curv$optimal.pwr <- as.numeric(long.curv$optimal.pwr)

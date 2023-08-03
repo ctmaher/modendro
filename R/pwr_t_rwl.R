@@ -101,7 +101,7 @@ pwr_t_rwl <- function(rwl) {
   out.list <- list(as.data.frame(rwl0), pwr.t.df, rwl)
   names(out.list) <-
     c("Transformed ring widths",
-      "Metadata about transformations",
+      "Transformation metadata",
       "Raw ring widths")
   out.list
 } # end of functions
