@@ -98,9 +98,14 @@ ci_detect <- function(rwl,
 
   ## Take the last element of out_iter as the final output series...
   # add back the detrend curve
-  retrended <- mapply(FUN = \(x, y) {
-    x + na.omit(y)
-  }, x = out_iter[[length(out_iter)]][[1]], y = cp_out[["Detrend curves"]])
+  # Control for dentrending or no detrending
+  if (length(cp_out) > 3) { # cp_out will have more than 3 elements if we detrended
+    retrended <- mapply(FUN = \(x, y) {
+      x + na.omit(y)
+    }, x = out_iter[[length(out_iter)]][["Corrected RWI"]], y = cp_out[["Detrend curves"]])
+  } else { # just pass the last iteration of corrected RWI
+    retrended <- out_iter[[length(out_iter)]][["Corrected RWI"]]
+  }
 
   # & undo any transformation - this results in a "disturbance-free" series in original units
   untransformed <- mapply(FUN = \(x, y) {
