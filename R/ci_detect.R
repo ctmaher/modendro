@@ -29,7 +29,7 @@
 #' Rydval, M., D. L. Druckenbrod, M. Svoboda, V. Trotsiuk, P. Janda, M. Mikoláš, V. Čada, R. Bače, M. Teodosiu, and R. Wilson. 2018. Influence of sampling and disturbance history on climatic sensitivity of temperature limited conifers. The Holocene.
 #'
 #' @import dplR
-#' @import zoo
+#' @importFrom zoo rollapply
 #' @import stats
 #' @import DescTools
 #' @export

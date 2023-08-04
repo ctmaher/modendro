@@ -10,7 +10,7 @@
 #' @param out.span Parameter to determine the wiggliness of the loess splines fit to outlier periods. Higher numbers = more wiggles. Passes to `stats::loess()`. The default is 1.
 #'
 #' @import dplR
-#' @import zoo
+#' @importFrom zoo rollapply
 #' @import stats
 #' @import DescTools
 #' @export
@@ -358,7 +358,9 @@ out_det_rem <- function(rwi,
               weights = wts)
       out_period$curve <- curve$fitted
       # "Correct" the rwi values for the outlier period by subtracting the fitted curve (aka, the residuals)
-      out_period$rwi.cor <- curve$residuals
+      # add back the 1st value of the outlier period
+      out_period$rwi.cor <-
+        curve$residuals + out_period$rwi[out_period$year %in% min(out_period$year, na.rm = FALSE)]
       out_period$dir <- y$out_dir
     }
     # Return the results
