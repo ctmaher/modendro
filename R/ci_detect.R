@@ -42,7 +42,7 @@
 
 
 ci_detect <- function(rwl,
-                      detrend.method = "AgeDepSpline",
+                      detrend.method = "None",
                       nyrs = NULL,
                       min.win = 9,
                       max.win = 30,
@@ -50,27 +50,55 @@ ci_detect <- function(rwl,
                       out.span = 1.25,
                       max.iter = 10) {
 
-  # Error catching
+  ## Error catching & warnings
+  #
   stopifnot("rwl is not an object of class 'rwl', 'data.frame', or 'matrix'" =
               data.class(rwl) %in% "rwl" |
               data.class(rwl) %in% "data.frame" |
               data.class(rwl) %in% "matrix"
   )
 
+  #
   stopifnot("rwl has no rownames (must be years only) or no colnames (must be series IDs only)" =
               !is.null(rownames(rwl)) |
               !is.null(colnames(rwl))
   )
 
+  #
   if (apply(rwl, MARGIN = 2, FUN = \(x) all(is.na(x))) |> any() == TRUE) {
     these_are_NA <- colnames(rwl)[which(apply(rwl, MARGIN = 2, FUN = \(x) all(is.na(x))) == TRUE)]
     stop("The following series have no values (all NAs): " , paste(these_are_NA, collapse = ", "))
   }
 
-
+  #
   stopifnot("min.win is too small for effective curve fitting. Choose a value of 5 years or larger." =
               min.win >= 5
   )
+
+  #
+  stopifnot(
+    "detrend.method is not a known option. See ?dplR::detrend.series for options" =
+      detrend.method %in% c(
+        "none",
+        "None",
+        "Spline",
+        "ModNegExp",
+        "Mean",
+        "Ar",
+        "Friedman",
+        "ModHugershoff",
+        "AgeDepSpline"
+      )
+  )
+
+  #
+  if (detrend.method %in% c("none", "None")) {
+    message(
+      "Proceding with the default of no detrending - series will be transformed only.
+            Make sure you want this, otherwise chose a detrending method wisely"
+    )
+  }
+
 
   ## Run cp_detrend to power transform and detrend the rwl
   cp_out <- cp_detrend(rwl, detrend.method = detrend.method, nyrs = nyrs)
