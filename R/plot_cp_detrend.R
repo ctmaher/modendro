@@ -33,7 +33,8 @@ plot_cp_detrend <- function(cp_out) {
     long.rw <- tidyr::pivot_longer(rw,
                                    cols = -year,
                                    names_to = "series" ,
-                                   values_to = "value")
+                                   values_to = "value") |>
+      as.data.frame()
     long.rw$type <- "rw"
 
     trans <- as.data.frame(cp_out[["Transformed ring widths"]])
@@ -55,7 +56,8 @@ plot_cp_detrend <- function(cp_out) {
       cols = -year,
       names_to = "series" ,
       values_to = "value"
-    )
+    ) |>
+      as.data.frame()
     long.curv$type <- "pwr.t_cu"
 
     detr <- as.data.frame(cp_out[["Resid. detrended series"]])
@@ -66,7 +68,8 @@ plot_cp_detrend <- function(cp_out) {
       cols = -year,
       names_to = "series" ,
       values_to = "value"
-    )
+    ) |>
+      as.data.frame()
     long.detr$type <- "de"
 
     all.df <- rbind(long.rw, long.trans, long.detr) |>
@@ -182,7 +185,8 @@ plot_cp_detrend <- function(cp_out) {
     long.rw <- tidyr::pivot_longer(rw,
                                    cols = -year,
                                    names_to = "series" ,
-                                   values_to = "value")
+                                   values_to = "value")  |>
+      as.data.frame()
     long.rw$type <- "rw"
 
     trans <- as.data.frame(cp_out[["Transformed ring widths"]])
@@ -209,7 +213,9 @@ plot_cp_detrend <- function(cp_out) {
 
     # merge the message data with the rest of the data.
     all.df <-
-      merge(all.df, cp_out[["Transformation metadata"]], by = c("series"))
+      merge(all.df,
+            cp_out[["Transformation metadata"]],
+            by = c("series"))
 
     all.list <- split(all.df, f = as.factor(all.df$series))
 

@@ -18,7 +18,7 @@
 out_det_rem <- function(rwi,
                         min.win = 9,
                         max.win = 30,
-                        span = 1) {
+                        out.span = 1.25) {
   ## Find the best AR model for each series
   ar_fits <-
     lapply(rwi, FUN = \(x) ar(
@@ -80,7 +80,7 @@ out_det_rem <- function(rwi,
 
   mov_avgs <- lapply(comp_resids, \(x) {
     # Cap max.win at 1/3 the series length. If not, detection becomes oversensitive for short series
-    max.win <- min(max.win, round(nrow(x) / 3))
+    max.win <- min(max.win, round(nrow(x)/3))
 
     win_lens <- min.win:max.win
     ma_list <- lapply(win_lens, \(w) {
@@ -107,7 +107,7 @@ out_det_rem <- function(rwi,
   # The threshold is by default 3.29 robust scales from the robust mean of each moving average series
   tbrms <- lapply(mov_avgs, FUN = \(x) {
     lapply(x, FUN = \(x) {
-      DescTools::TukeyBiweight(x$value, const = 9, na.rm = TRUE)
+      TukeyBiweight(x$value, const = 9, na.rm = TRUE)
       #tbrm(x$value, C = 9) # The dplR version
     })
   })
@@ -174,7 +174,7 @@ out_det_rem <- function(rwi,
           out_df <- data.frame(index_pos = index_pos, dev = dev)
 
           # return just the largest outlier within each window size
-          out_df[which.max(out_df$dev),]
+          out_df[which.max(out_df$dev), ]
 
         },
         a = x,
@@ -201,7 +201,7 @@ out_det_rem <- function(rwi,
           out_df <- data.frame(index_pos = index_pos, dev = dev)
 
           # return just the largest outlier within each window size
-          out_df[which.max(out_df$dev),]
+          out_df[which.max(out_df$dev), ]
 
         },
         a = x,
@@ -239,11 +239,11 @@ out_det_rem <- function(rwi,
 
   # Second the max among all window lengths (i.e., just 1 or no outlier for each series)
   max_pos_out <- lapply(max_pos_outs, FUN = \(x) {
-    x[which.max(x$dev),]
+    x[which.max(x$dev), ]
   })
 
   max_neg_out <- lapply(max_neg_outs, FUN = \(x) {
-    x[which.max(x$dev),]
+    x[which.max(x$dev), ]
   })
 
   # Third find which is the largest of the pos and neg outliers
@@ -340,9 +340,10 @@ out_det_rem <- function(rwi,
       series_df <- data.frame(x)
       colnames(series_df) <- "rwi"
       series_df$year <-
-        rownames(series_df) # keep this as a character for now
+        rownames(series_df) |>
+        as.numeric()
       out_period <-
-        series_df[y[, "index_pos"]:(y[, "index_pos"] + y$win_len - 1),]
+        series_df[y[, "index_pos"]:(y[, "index_pos"] + y$win_len - 1), ]
 
       # Fit loess splines
       # Note: you can adjust the weight of each point using the weights argument
@@ -354,13 +355,20 @@ out_det_rem <- function(rwi,
       curve <-
         loess(rwi ~ year,
               data = out_period,
-              span = span,
+              span = out.span,
               weights = wts)
       out_period$curve <- curve$fitted
       # "Correct" the rwi values for the outlier period by subtracting the fitted curve (aka, the residuals)
-      # add back the 1st value of the outlier period
+      # add back the recent value of the series before the outlier period - a robust mean of the period before
+      # the disturbance, or, if there is not an adequate period before, do the period after.
+      ba_dist <- (min(out_period$year, na.rm = TRUE) - nrow(out_period)):min(out_period$year, na.rm = TRUE)
+      if (min(ba_dist) < min(series_df$year)){
+        ba_dist <- max(out_period$year, na.rm = TRUE):(max(out_period$year, na.rm = TRUE) + nrow(out_period))
+      }
+      tbrm_recent_rwi <- series_df$rwi[series_df$year %in% ba_dist] |>
+        DescTools::TukeyBiweight()
       out_period$rwi.cor <-
-        curve$residuals + out_period$rwi[out_period$year %in% min(out_period$year, na.rm = FALSE)]
+        curve$residuals + tbrm_recent_rwi
       out_period$dir <- y$out_dir
     }
     # Return the results
@@ -374,7 +382,7 @@ out_det_rem <- function(rwi,
     if (is.character(y)) {
       x # return the original series
     } else {
-      x[y$year] <- y$rwi.cor # substitute the corrected section
+      x[which(names(x) %in% y$year)] <- y$rwi.cor # substitute the corrected section
       x # Return the series
     }
   }, x = rwi, y = out_curves)

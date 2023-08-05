@@ -379,9 +379,11 @@ plot_ci_detect <- function(ci_output) {
     # & only make lines for the iterations with detected disturbances
     xNA <- na.omit(x)
     if (nrow(xNA) == 0){
-      data.frame(iter = numeric(0), dir = character(0), year = numeric(0))
+      data.frame(iter = numeric(0), dir = character(0), year = numeric(0), dur = numeric(0))
     } else {
-      aggregate(year ~ iter + dir, data = xNA, min)
+      df <- aggregate(year ~ iter + dir, data = xNA, min)
+      df$dur <- nrow(xNA)
+      df
     }
   })
 
@@ -445,5 +447,4 @@ plot_ci_detect <- function(ci_output) {
   plot_list <- list(out_det_rem_plots, final_plots)
   names(plot_list) <- c("Disturbance detection & removal plots", "Final disturbance-free series plots")
   plot_list
-}
-
+} ## End of function

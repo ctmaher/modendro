@@ -126,18 +126,19 @@ cp_detrend <-
       )
     }
 
+    # catch any negative values here and set to 0
     if (any(rwl < 0, na.rm = TRUE)) {
-      rwl[which(rwl < 0), ] <- NA
+      rwl[which(rwl < 0), ] <- 0
       warning(
-        "One or more negative values detected in the rwl file. These were replaced with NAs.
+        "One or more negative values detected in the rwl file. These were replaced with 0s.
               Check your data to make sure this is correct (e.g., sometimes -9999 is used as a place-holder value for 0 rings."
       )
     }
 
     # Find the optimal power of transformation and transform the series
     trans.list <- pwr_t_rwl(rwl) # Returns a list
-    trans <- trans.list[[1]] # The transformed series
-    mess.df <- trans.list[[2]] # Info about transformations
+    trans <- trans.list[["Transformed ring widths"]] # The transformed series
+    mess.df <- trans.list[["Transformation metadata"]] # Info about transformations
 
     # detrend the transformed series -or- don't
     if (!c(is.null(detrend.method) |
@@ -194,5 +195,4 @@ cp_detrend <-
     out.list
 
   } ## End of function
-
 

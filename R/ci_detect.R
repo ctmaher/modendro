@@ -75,30 +75,6 @@ ci_detect <- function(rwl,
               min.win >= 5
   )
 
-  #
-  stopifnot(
-    "detrend.method is not a known option. See ?dplR::detrend.series for options" =
-      detrend.method %in% c(
-        "none",
-        "None",
-        "Spline",
-        "ModNegExp",
-        "Mean",
-        "Ar",
-        "Friedman",
-        "ModHugershoff",
-        "AgeDepSpline"
-      )
-  )
-
-  #
-  if (detrend.method %in% c("none", "None")) {
-    message(
-      "Proceding with the default of no detrending - series will be transformed only.
-            Make sure you want this, otherwise chose a detrending method wisely"
-    )
-  }
-
 
   ## Run cp_detrend to power transform and detrend the rwl
   cp_out <- cp_detrend(rwl, detrend.method = detrend.method, nyrs = nyrs)
@@ -119,7 +95,7 @@ ci_detect <- function(rwl,
   out_iter[[1]] <- start.list
   names(out_iter) <- 0:max.iter
   for (i in 2:(max.iter+1)) {
-    out_iter[[i]] <- out_det_rem(out_iter[[i-1]][[1]], min.win = min.win, max.win = max.win, span = out.span)
+    out_iter[[i]] <- out_det_rem(out_iter[[i-1]][[1]], min.win = min.win, max.win = max.win, out.span = out.span)
   }
   # Remove the 0 iteration
   out_iter <- out_iter[2:(max.iter+1)]
