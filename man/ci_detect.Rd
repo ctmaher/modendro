@@ -6,7 +6,7 @@
 \usage{
 ci_detect(
   rwl,
-  detrend.method = "AgeDepSpline",
+  detrend.method = "None",
   nyrs = NULL,
   min.win = 9,
   max.win = 30,

@@ -4,7 +4,7 @@
 \alias{out_det_rem}
 \title{Supporting function for \code{ci_detect()} - statistical identification and removal of outliers in tree ring series}
 \usage{
-out_det_rem(rwi, min.win = 9, max.win = 30, span = 1)
+out_det_rem(rwi, min.win = 9, max.win = 30, out.span = 1.25)
 }
 \arguments{
 \item{rwi}{A rwl object of detrended standardized series produced by \code{cp_detrend()}.}
