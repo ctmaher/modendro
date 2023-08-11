@@ -29,6 +29,9 @@ out_det_rem <- function(rwi,
               var.type %in% "s_bi" |
               var.type %in% "mad")
 
+  stopifnot("Value for thresh is not valid. Must be '>=1'." =
+              thresh < 1)
+
   ## Find the best AR model for each series
   ar_fits <-
     lapply(rwi, FUN = \(x) ar(
