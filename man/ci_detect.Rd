@@ -6,13 +6,15 @@
 \usage{
 ci_detect(
   rwl,
-  detrend.method = "None",
+  detrend.method = "Mean",
   nyrs = NULL,
   min.win = 9,
   max.win = 30,
+  var.type = "s_bi",
   thresh = 3.29,
   out.span = 1.25,
-  max.iter = 10
+  max.iter = 10,
+  add.recent.rwi = TRUE
 )
 }
 \arguments{

@@ -42,13 +42,16 @@
 
 
 ci_detect <- function(rwl,
-                      detrend.method = "None",
+                      detrend.method = "Mean",
                       nyrs = NULL,
                       min.win = 9,
                       max.win = 30,
+                      var.type = "s_bi",
                       thresh = 3.29,
                       out.span = 1.25,
-                      max.iter = 10) {
+                      max.iter = 10,
+                      add.recent.rwi = TRUE
+) {
 
   ## Error catching & warnings
   #
@@ -95,7 +98,14 @@ ci_detect <- function(rwl,
   out_iter[[1]] <- start.list
   names(out_iter) <- 0:max.iter
   for (i in 2:(max.iter+1)) {
-    out_iter[[i]] <- out_det_rem(out_iter[[i-1]][[1]], min.win = min.win, max.win = max.win, out.span = out.span)
+    out_iter[[i]] <- out_det_rem(out_iter[[i-1]][[1]],
+                                 min.win = min.win,
+                                 max.win = max.win,
+                                 thresh = thresh,
+                                 var.type = var.type,
+                                 out.span = out.span,
+                                 add.recent.rwi = add.recent.rwi
+    )
   }
   # Remove the 0 iteration
   out_iter <- out_iter[2:(max.iter+1)]

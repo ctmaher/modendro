@@ -4,6 +4,9 @@
 #' Compute variance-stabilized & residual detrended ring width indices that minimize the series end effect problems
 #' that can result from using ratios to derive detrended indices.
 #'
+#' @param rwl A rwl object (read in by dplR's `read.rwl()`)
+#' @param detrend.method Character string of the detrending method to use. Passes to dplR's `detrend()` function.
+#' @param nyrs Numeric vector, used in dplR's `detrend()` function for the "Spline" and "AgeDepSpline" methods.
 #'
 #' @details
 #' For decades, the default method of removing long-term size/age trends from tree ring width series has been to fit a curve
@@ -27,11 +30,6 @@
 #' with the minimum value possible given the resolution of the data, which for tree ring data is typically 0.01 or 0.001 mm.
 #' If you have many 0 ring width values in your data, make sure to take a look at the output plots (you should do this anyway) to
 #' check for any weirdness.
-#'
-#'
-#' @param rwl A rwl object (read in by dplR's `read.rwl()`)
-#' @param detrend.method Character string of the detrending method to use. Passes to dplR's `detrend()` function.
-#' @param nyrs Numeric vector, used in dplR's `detrend()` function for the "Spline" and "AgeDepSpline" methods.
 #'
 #' @return A list with the following elements:
 #' 1) the residual detrended power transformed series.
@@ -79,7 +77,7 @@
 
 cp_detrend <-
   function(rwl,
-           detrend.method = "none",
+           detrend.method = "Mean",
            nyrs = NULL) {
     # Power transform series prior to detrending using methods of Cook and Peters (1997)
 
@@ -119,9 +117,10 @@ cp_detrend <-
         )
     )
 
-    if (detrend.method %in% c("none", "None")) {
+    if (detrend.method %in% c("none", "None", "Mean")) {
+      detrend.method <- "Mean"
       message(
-        "Proceding with the default of no detrending - series will be transformed only.
+        "Proceding with the default of no detrending - series will be transformed and it's mean subtracted
             Make sure you want this, otherwise chose a detrending method wisely"
       )
     }
@@ -195,4 +194,3 @@ cp_detrend <-
     out.list
 
   } ## End of function
-

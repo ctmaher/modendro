@@ -18,7 +18,17 @@
 out_det_rem <- function(rwi,
                         min.win = 9,
                         max.win = 30,
-                        out.span = 1.25) {
+                        var.type = "s_bi",
+                        thresh = 3.29,
+                        out.span = 1.25,
+                        add.recent.rwi = TRUE
+) {
+
+  ## Error catching
+  stopifnot("var.type is not valid. Must be 's_bi' or 'mad'." =
+              var.type %in% "s_bi" |
+              var.type %in% "mad")
+
   ## Find the best AR model for each series
   ar_fits <-
     lapply(rwi, FUN = \(x) ar(
@@ -36,6 +46,19 @@ out_det_rem <- function(rwi,
 
   ## "Backcast" the NAs (due to the ar order lag) at the beginning of each series
   # Fit ar models of the same order as those above to the reversed data
+
+  # mapply(FUN = \(x,y){
+  #
+  #   mess <- any(is.na(y))
+  #   mess
+  # }, x = ar_fits,
+  # y = cp_rev)
+  #
+  # ar_fits[["2079"]]
+  # rwi[["2079"]]
+  # cp_rev
+  # gb["2079"]
+
   comp_resids <- mapply(
     FUN = \(x, y) {
       if (x$order > 0) {
@@ -112,18 +135,28 @@ out_det_rem <- function(rwi,
     })
   })
 
-  # The robust scale is from Hoaglin et al 1983, p417. Here I use the MAD as a simple substitute for now.
-  mads <- lapply(mov_avgs, FUN = \(x) {
-    lapply(x, FUN = \(x) {
-      mad(x$value, na.rm = TRUE)
+  # The robust scale is from Hoaglin et al 1983, p417.
+  if (var.type %in% "s_bi") {
+    var <- lapply(mov_avgs, FUN = \(x) {
+      lapply(x, FUN = \(x) {
+        s_bi(na.omit(x$value))$s_bi
+      })
     })
-  })
+  } else {
+    if (var.type %in% "mad") {
+      var <- lapply(mov_avgs, FUN = \(x) {
+        lapply(x, FUN = \(x) {
+          mad(x$value, na.rm = TRUE)
+        })
+      })
+    }
+  }
 
   lo_vals <- mapply(
     FUN = \(x, y) {
       mapply(
         FUN = \(a, b) {
-          a - b * 3.29
+          a - b * thresh
         },
         a = x,
         b = y,
@@ -131,7 +164,7 @@ out_det_rem <- function(rwi,
       )
     },
     x = tbrms,
-    y = mads,
+    y = var,
     SIMPLIFY = FALSE
   )
 
@@ -139,7 +172,7 @@ out_det_rem <- function(rwi,
     FUN = \(x, y) {
       mapply(
         FUN = \(a, b) {
-          a + b * 3.29
+          a + b * thresh
         },
         a = x,
         b = y,
@@ -147,7 +180,7 @@ out_det_rem <- function(rwi,
       )
     },
     x = tbrms,
-    y = mads,
+    y = var,
     SIMPLIFY = FALSE
   )
 
@@ -336,45 +369,101 @@ out_det_rem <- function(rwi,
     if (is.character(y)) {
       out_period <- y
     } else {
-      # extract the outlier period and fit a curve
-      series_df <- data.frame(x)
+
+      # Make a data.frame from the series
+      series_df <- as.data.frame(x)
       colnames(series_df) <- "rwi"
       series_df$year <-
         rownames(series_df) |>
         as.numeric()
+
+      # isolate just the outlier period
       out_period <-
         series_df[y[, "index_pos"]:(y[, "index_pos"] + y$win_len - 1), ]
 
-      # Fit loess splines
-      # Note: you can adjust the weight of each point using the weights argument
-      # This could help with mimicking the the Hugershoff-type curves (which are more flexible at the start).
-      # It might also make more sense to weight the last value more so that the residual is minimized.
-      # This would limit sharp jumps in the resulting series.
-      wts <- rep(1, nrow(out_period))
-      # wts[nrow(out_period)] <- 4
-      curve <-
-        loess(rwi ~ year,
-              data = out_period,
-              span = out.span,
-              weights = wts)
-      out_period$curve <- curve$fitted
+      # Add a rest of series if there is one
+      if ((max(out_period$year) + 1) < max(series_df$year)) {
+        rest_of_years <- (max(out_period$year) + 1) : max(series_df$year)
+        rest_of_series <- data.frame(rwi = series_df[series_df$year %in% rest_of_years, "rwi"],
+                                     year = rest_of_years
+        )
+        # Rbind it
+        out_period <- rbind(out_period, rest_of_series)
+      }
+
+      # Record the direction of the disturbance
+      out_period$dir <- y$out_dir
+
+      # Record the actual duration of the disturbance
+      out_period$dur <- y$win_len
+
+      ## Curve fitting
+
+      #if (fit.type == "Hugershoff") {
+      # Hugershoff - fits to the detected period and the reminder of the series too
+      # The formula is modified. z is an added parameter that controls how far above/below the
+      # initial fit can go beyond the asymptote. b = 1, always, to allow z to work. d = 0, always.
+      # d mainly controls the asymptote value. We get a better chance at a successful fit if
+      # we set these parameters here.
+      hug_form0 <- formula(rwi ~ a * ((x - z)^1) * exp(-c*(x - z)) + 0)
+
+      out_period$x <- 1:(nrow(out_period))
+
+      #hug_fit <- NULL
+      hug_fit <- try(
+        nls(hug_form0,
+            data = out_period,
+            start = list(a = ifelse(y$out_dir %in% "pos", 0.1, -0.1),
+                         c = 0.1,
+                         z = 1.5),
+            control = nls.control(maxiter = 100, minFactor = 1/4096, warnOnly = FALSE)),
+        silent = TRUE)
+
+      if (data.class(hug_fit) %in% "try-error") { # If the Hugershoff fit failed, fit a spline instead.
+        # if this option, we should only plot & subtract the disturbance period itself
+        out_period <- out_period[1:y$win_len,]
+        spline_fit <-
+          loess(rwi ~ year,
+                data = out_period,
+                span = out.span,
+                family = "symmetric")
+
+        out_period$curve <- spline_fit$fitted
+
+      } else {
+        out_period$curve <- predict(hug_fit, newdata = out_period)
+      }
+
       # "Correct" the rwi values for the outlier period by subtracting the fitted curve (aka, the residuals)
       # add back the recent value of the series before the outlier period - a robust mean of the period before
       # the disturbance, or, if there is not an adequate period before, do the period after.
-      ba_dist <- (min(out_period$year, na.rm = TRUE) - nrow(out_period)):min(out_period$year, na.rm = TRUE)
-      if (min(ba_dist) < min(series_df$year)){
-        ba_dist <- max(out_period$year, na.rm = TRUE):(max(out_period$year, na.rm = TRUE) + nrow(out_period))
+
+      if (add.recent.rwi == TRUE) {
+        ba_dist <- (min(out_period$year, na.rm = TRUE) - y$win_len):min(out_period$year, na.rm = TRUE)
+        if (min(ba_dist) < min(series_df$year) | # if there is no before or the before is < than the disturbance
+            length(ba_dist[ba_dist %in% series_df$year]) < y$win_len){
+          # select the period after
+          ba_dist <- (max(ba_dist)+1):(max(ba_dist) + y$win_len)
+          out_period$rwi.cor <- # or just use the raw difference for the mean of 0
+            out_period$rwi - out_period$curve
+        } else {# Otherwise, proceed with the before period already determined
+          tbrm_recent_rwi <- series_df$rwi[series_df$year %in% ba_dist] |>
+            TukeyBiweight()
+
+          out_period$rwi.cor <-
+            (out_period$rwi - out_period$curve) + tbrm_recent_rwi
+        }
+      } else {
+        out_period$rwi.cor <-
+          (out_period$rwi - out_period$curve)
       }
-      tbrm_recent_rwi <- series_df$rwi[series_df$year %in% ba_dist] |>
-        DescTools::TukeyBiweight()
-      out_period$rwi.cor <-
-        curve$residuals + tbrm_recent_rwi
-      out_period$dir <- y$out_dir
+
     }
     # Return the results
     out_period
 
   }, x = rwi, y = max_out)
+
 
   # Now the corrected rwi values can be inserted into the series to remove the outliers
   rwi2 <- mapply(FUN = \(x, y) {

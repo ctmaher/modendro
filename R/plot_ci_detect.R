@@ -127,7 +127,7 @@ plot_ci_detect <- function(ci_output) {
     Map(f = \(i, e, y) {
       if (is.character(i)){
         # Skip the "No outliers detected" ones
-        i <- data.frame(rwi = NA, year = NA, curve = NA, rwi.cor = NA, dir = NA)
+        i <- data.frame(rwi = NA, year = NA, dir = NA, dur = NA, x = NA, curve = NA, rwi.cor = NA)
         i$series <- e
         i$iter <- y
         i
@@ -259,7 +259,7 @@ plot_ci_detect <- function(ci_output) {
           annotate(
             geom = "rect",
             xmin = min(rem_iter$year, na.rm = TRUE),
-            xmax = max(rem_iter$year, na.rm = TRUE),
+            xmax = (rem_iter$dur - 1) + min(rem_iter$year, na.rm = TRUE),
             ymin = min(det_iter$value, na.rm = TRUE),
             ymax = max(det_iter$value, na.rm = TRUE),
             color = "grey30"
@@ -306,13 +306,18 @@ plot_ci_detect <- function(ci_output) {
           na.omit() |>
           as.numeric()
 
-        extra_rwi <- cor_series_iter$value[cor_series_iter$year %in% extra_years]
-
-        rem_series <-
-          rbind(out_long[, c("value", "type", "year", "series", "iter", "process")],
-                data.frame(value = extra_rwi, type = "rwi", year = extra_years,
-                           series = out_long$series[1:2], iter = out_long$iter[1:2], process = "Removal"),
-                det_iter[det_iter$type %in% "Detrended resids.",])
+        if (length(extra_years) == 0) {
+          rem_series <-
+            rbind(out_long[, c("value", "type", "year", "series", "iter", "process")],
+                  det_iter[det_iter$type %in% "Detrended resids.",])
+        } else {
+          extra_rwi <- cor_series_iter$value[cor_series_iter$year %in% extra_years]
+          rem_series <-
+            rbind(out_long[, c("value", "type", "year", "series", "iter", "process")],
+                  data.frame(value = extra_rwi, type = "rwi", year = extra_years,
+                             series = out_long$series[1], iter = out_long$iter[1], process = "Removal"),
+                  det_iter[det_iter$type %in% "Detrended resids.",])
+        }
         #rem_series
 
         # Code the curve fit label & color according to the direction of disturbance

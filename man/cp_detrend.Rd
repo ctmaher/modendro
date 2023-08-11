@@ -4,7 +4,7 @@
 \alias{cp_detrend}
 \title{Detrend raw ring widths using Cook & Peters' (1997) method.}
 \usage{
-cp_detrend(rwl, detrend.method = "none", nyrs = NULL)
+cp_detrend(rwl, detrend.method = "Mean", nyrs = NULL)
 }
 \arguments{
 \item{rwl}{A rwl object (read in by dplR's \code{read.rwl()})}
