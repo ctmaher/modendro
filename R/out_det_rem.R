@@ -1,19 +1,40 @@
-#' Supporting function for `ci_detect()` - statistical identification and removal of outliers in tree ring series
+#' Supporting function for `ci_detect()` - statistical detection and removal of disturbances in tree ring series
 #'
 #' @description
-#' This function implements the outlier detection and premoval steps for the curve intervention detection techniques described by Druckenbrod et al,
-#' Rydval et al, and Rydval et al.
+#' This function implements the disturbance detection and removal steps for the curve intervention detection techniques described by Druckenbrod et al. 2013,
+#' Rydval et al. 2016, and Rydval et al. 2018. The function works on a collection of transformed ring width series. Iterations
+#' are performed with `ci_detect`.
 #'
 #' @param rwi A rwl object of detrended standardized series produced by `cp_detrend()`.
-#' @param min.win The minimum outlier length in years (i.e., a moving window) to search for. The default is 9.
-#' @param max.win The maximum outlier length in years (i.e., a moving window) to search for. The default is 30.
-#' @param out.span Parameter to determine the wiggliness of the loess splines fit to outlier periods. Higher numbers = more wiggles. Passes to `stats::loess()`. The default is 1.
+#' @param min.win The minimum disturbance length in years (i.e., a moving window) to search for. The default is 9.
+#' @param max.win The maximum disturbance length in years (i.e., a moving window) to search for. The default is 30.
+#' @param thresh The disturbance detection threshold, corresponding to the number of deviations from the robust mean. The default is 3.29, following Druckenbrod et al. 2013.
+#' @param out.span Parameter to determine the wiggliness of the loess splines fit to outlier periods (when Hugershoff fits fail). Higher numbers = more wiggles. Passes to `stats::loess()`. The default is 1.25.
+#'
+#' @details
+#' Additional details...
+#'
+#'
+#'
+#' @return a 3-element list that contains the corrected RWI, the fitted disturbance curves, and data on disturbance detection iterations
+#'
+#' @references
+#' Druckenbrod, D. L., N. Pederson, J. Rentch, and E. R. Cook. 2013. A comparison of times series approaches for dendroecological reconstructions of past canopy disturbance events. Forest Ecology and Management 302:23–33.
+#'
+#' Rydval, M., D. Druckenbrod, K. J. Anchukaitis, and R. Wilson. 2016. Detection and removal of disturbance trends in tree-ring series for dendroclimatology. Canadian Journal of Forest Research 401:387–401.
+#'
+#' Rydval, M., D. L. Druckenbrod, M. Svoboda, V. Trotsiuk, P. Janda, M. Mikoláš, V. Čada, R. Bače, M. Teodosiu, and R. Wilson. 2018. Influence of sampling and disturbance history on climatic sensitivity of temperature limited conifers. The Holocene.
+#'
+#' Warren, W. G., and S. L. MacWilliam. 1981. Test of a new method for removing the growth trend from dendrochronological data. Tree Ring Bulletin 41:55–66.
 #'
 #' @import dplR
 #' @importFrom zoo rollapply
 #' @import stats
 #' @import DescTools
 #' @export
+#'
+#'
+#'
 
 out_det_rem <- function(rwi,
                         min.win = 9,
@@ -49,19 +70,6 @@ out_det_rem <- function(rwi,
 
   ## "Backcast" the NAs (due to the ar order lag) at the beginning of each series
   # Fit ar models of the same order as those above to the reversed data
-
-  # mapply(FUN = \(x,y){
-  #
-  #   mess <- any(is.na(y))
-  #   mess
-  # }, x = ar_fits,
-  # y = cp_rev)
-  #
-  # ar_fits[["2079"]]
-  # rwi[["2079"]]
-  # cp_rev
-  # gb["2079"]
-
   comp_resids <- mapply(
     FUN = \(x, y) {
       if (x$order > 0) {
@@ -103,7 +111,6 @@ out_det_rem <- function(rwi,
   ## Compute moving window averages of various lengths - the length of the window corresponds to outlier length
   # the min.win sets the smallest possible size, and tradition has it that 20 is the longest period. We can
   # reassess that later - maybe the user can just specify this, within reasonable limits (max = 1/3 of series?).
-
   mov_avgs <- lapply(comp_resids, \(x) {
     # Cap max.win at 1/3 the series length. If not, detection becomes oversensitive for short series
     max.win <- min(max.win, round(nrow(x)/3))
@@ -401,28 +408,25 @@ out_det_rem <- function(rwi,
       out_period$dur <- y$win_len
 
       ## Curve fitting
-
-      #if (fit.type == "Hugershoff") {
-      # Hugershoff - fits to the detected period and the reminder of the series too
-      # The formula is modified. z is an added parameter that controls how far above/below the
-      # initial fit can go beyond the asymptote. b = 1, always, to allow z to work. d = 0, always.
+      # Warren & MacWilliam - fits to the detected period and the reminder of the series too
+      # The formula is slightly different from the Hugershoff curve. t is a parameter that controls how far above/below the
+      # initial fit can go beyond the asymptote. b = 1, always, to allow fits above/below the asymptote. d = 0, always.
       # d mainly controls the asymptote value. We get a better chance at a successful fit if
       # we set these parameters here.
-      hug_form0 <- formula(rwi ~ a * ((x - z)^1) * exp(-c*(x - z)) + 0)
+      WM_form0 <- formula(rwi ~ a * ((x - t)^1) * exp(-c*(x - t)) + 0)
 
       out_period$x <- 1:(nrow(out_period))
 
-      #hug_fit <- NULL
-      hug_fit <- try(
-        nls(hug_form0,
+      WM_fit <- try(
+        nls(WM_form0,
             data = out_period,
             start = list(a = ifelse(y$out_dir %in% "pos", 0.1, -0.1),
                          c = 0.1,
-                         z = 1.5),
+                         t = 1.5),
             control = nls.control(maxiter = 100, minFactor = 1/4096, warnOnly = FALSE)),
         silent = TRUE)
 
-      if (data.class(hug_fit) %in% "try-error") { # If the Hugershoff fit failed, fit a spline instead.
+      if (data.class(WM_fit) %in% "try-error") { # If the Hugershoff fit failed, fit a spline instead.
         # if this option, we should only plot & subtract the disturbance period itself
         out_period <- out_period[1:y$win_len,]
         spline_fit <-
@@ -434,7 +438,7 @@ out_det_rem <- function(rwi,
         out_period$curve <- spline_fit$fitted
 
       } else {
-        out_period$curve <- predict(hug_fit, newdata = out_period)
+        out_period$curve <- predict(WM_fit, newdata = out_period)
       }
 
       # "Correct" the rwi values for the outlier period by subtracting the fitted curve (aka, the residuals)

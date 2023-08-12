@@ -4,7 +4,7 @@ Version: 0.1.0
 Authors@R: 
     person("Colin", "Maher", , "cmbristlecone@gmail.com", role = c("aut", "cre"),
            comment = c(ORCID = "https://orcid.org/0000-0001-8409-7775"))
-Description: What the package does (one paragraph).
+Description: A collection of functions to do a variety of tree ring analyses: power transformation & detrending, disturbance detection, & flexible climate-growth correlations. These functions represent methods that are not available in R elsewhere.
 License: MIT + file LICENSE
 Encoding: UTF-8
 Roxygen: list(markdown = TRUE)

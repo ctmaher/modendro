@@ -5,11 +5,12 @@
 #' that can result from using ratios to derive detrended indices.
 #'
 #' @param rwl A rwl object (read in by dplR's `read.rwl()`)
-#' @param detrend.method Character string of the detrending method to use. Passes to dplR's `detrend()` function.
+#' @param detrend.method Character string of the detrending method to use. Passes to `dplR::detrend()`.
 #' @param nyrs Numeric vector, used in dplR's `detrend()` function for the "Spline" and "AgeDepSpline" methods.
+#' @param pos.slope Should positive slopes be allowed in the detrending curves? Generally this should be FALSE (the default), but when used in `ci_detect()` it is TRUE to detect deviations from any long term trend. Passes to `dplR::detrend()`.
 #'
 #' @details
-#' For decades, the default method of removing long-term size/age trends from tree ring width series has been to fit a curve
+#' For decades, the most common method of removing long-term size/age trends from tree ring width series has been to fit a curve
 #' (e.g., a negative exponential equation) to the data, then divide the raw data by the predicted (trend) values.
 #' The resulting indices have ± stable variance for their duration and a mean of 1, and are ready to be aggregated
 #' together into chronologies with other series standardized via the same method. However, this method can introduce artificial
@@ -17,7 +18,7 @@
 #' This is common at the end of series. The risk is that the researcher might obtain biased estimates of growth trends - i.e., enhanced growth
 #' increases or decreases.
 #'
-#' Cook and Peters (1997) proposed the method employed here as a fix this problem.
+#' Cook & Peters (1997) proposed the method employed here as a fix this problem.
 #' The basic steps are to estimate the optimal power of transformation via the local spread versus level relationship of each series,
 #' where local spread is defined as the absolute value of the first
 #' differences, S, (|rwt - rwt-1|) and the local level is the arithmetic mean of each pair of adjacent values, M, (rwt + rwt-1)/2.
@@ -78,7 +79,8 @@
 cp_detrend <-
   function(rwl,
            detrend.method = "Mean",
-           nyrs = NULL) {
+           nyrs = NULL,
+           pos.slope = FALSE) {
     # Power transform series prior to detrending using methods of Cook and Peters (1997)
 
     # Error catching
@@ -145,12 +147,13 @@ cp_detrend <-
            detrend.method %in% "none")) {
       detr.result <-
         dplR::detrend(
-          trans,
+          trans + 1, # add 1 here so that fits are more likely to be positive values
           method = detrend.method,
           make.plot = FALSE,
           difference = TRUE,
           nyrs = nyrs,
-          return.info = TRUE
+          return.info = TRUE,
+          pos.slope = pos.slope
         )
 
       # Extract the detrending info.
@@ -165,7 +168,7 @@ cp_detrend <-
       n = names(detr.info))
 
 
-      curv <- detr.result$curves
+      curv <- detr.result$curves - 1 # subtract the 1 we added above
       detr <- detr.result$series
 
 

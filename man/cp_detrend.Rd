@@ -4,14 +4,16 @@
 \alias{cp_detrend}
 \title{Detrend raw ring widths using Cook & Peters' (1997) method.}
 \usage{
-cp_detrend(rwl, detrend.method = "Mean", nyrs = NULL)
+cp_detrend(rwl, detrend.method = "Mean", nyrs = NULL, pos.slope = FALSE)
 }
 \arguments{
 \item{rwl}{A rwl object (read in by dplR's \code{read.rwl()})}
 
-\item{detrend.method}{Character string of the detrending method to use. Passes to dplR's \code{detrend()} function.}
+\item{detrend.method}{Character string of the detrending method to use. Passes to \code{dplR::detrend()}.}
 
 \item{nyrs}{Numeric vector, used in dplR's \code{detrend()} function for the "Spline" and "AgeDepSpline" methods.}
+
+\item{pos.slope}{Should positive slopes be allowed in the detrending curves? Generally this should be FALSE (the default), but when used in \code{ci_detect()} it is TRUE to detect deviations from any long term trend. Passes to \code{dplR::detrend()}.}
 }
 \value{
 A list with the following elements:
@@ -28,7 +30,7 @@ Compute variance-stabilized & residual detrended ring width indices that minimiz
 that can result from using ratios to derive detrended indices.
 }
 \details{
-For decades, the default method of removing long-term size/age trends from tree ring width series has been to fit a curve
+For decades, the most common method of removing long-term size/age trends from tree ring width series has been to fit a curve
 (e.g., a negative exponential equation) to the data, then divide the raw data by the predicted (trend) values.
 The resulting indices have ± stable variance for their duration and a mean of 1, and are ready to be aggregated
 together into chronologies with other series standardized via the same method. However, this method can introduce artificial
@@ -36,7 +38,7 @@ trends in locations along the series where the trend line has a poor fit with th
 This is common at the end of series. The risk is that the researcher might obtain biased estimates of growth trends - i.e., enhanced growth
 increases or decreases.
 
-Cook and Peters (1997) proposed the method employed here as a fix this problem.
+Cook & Peters (1997) proposed the method employed here as a fix this problem.
 The basic steps are to estimate the optimal power of transformation via the local spread versus level relationship of each series,
 where local spread is defined as the absolute value of the first
 differences, S, (|rwt - rwt-1|) and the local level is the arithmetic mean of each pair of adjacent values, M, (rwt + rwt-1)/2.

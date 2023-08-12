@@ -2,7 +2,7 @@
 % Please edit documentation in R/out_det_rem.R
 \name{out_det_rem}
 \alias{out_det_rem}
-\title{Supporting function for \code{ci_detect()} - statistical identification and removal of outliers in tree ring series}
+\title{Supporting function for \code{ci_detect()} - statistical detection and removal of disturbances in tree ring series}
 \usage{
 out_det_rem(
   rwi,
@@ -17,13 +17,31 @@ out_det_rem(
 \arguments{
 \item{rwi}{A rwl object of detrended standardized series produced by \code{cp_detrend()}.}
 
-\item{min.win}{The minimum outlier length in years (i.e., a moving window) to search for. The default is 9.}
+\item{min.win}{The minimum disturbance length in years (i.e., a moving window) to search for. The default is 9.}
 
-\item{max.win}{The maximum outlier length in years (i.e., a moving window) to search for. The default is 30.}
+\item{max.win}{The maximum disturbance length in years (i.e., a moving window) to search for. The default is 30.}
 
-\item{out.span}{Parameter to determine the wiggliness of the loess splines fit to outlier periods. Higher numbers = more wiggles. Passes to \code{stats::loess()}. The default is 1.}
+\item{thresh}{The disturbance detection threshold, corresponding to the number of deviations from the robust mean. The default is 3.29, following Druckenbrod et al. 2013.}
+
+\item{out.span}{Parameter to determine the wiggliness of the loess splines fit to outlier periods (when Hugershoff fits fail). Higher numbers = more wiggles. Passes to \code{stats::loess()}. The default is 1.25.}
+}
+\value{
+a 3-element list that contains the corrected RWI, the fitted disturbance curves, and data on disturbance detection iterations
 }
 \description{
-This function implements the outlier detection and premoval steps for the curve intervention detection techniques described by Druckenbrod et al,
-Rydval et al, and Rydval et al.
+This function implements the disturbance detection and removal steps for the curve intervention detection techniques described by Druckenbrod et al. 2013,
+Rydval et al. 2016, and Rydval et al. 2018. The function works on a collection of transformed ring width series. Iterations
+are performed with \code{ci_detect}.
+}
+\details{
+Additional details...
+}
+\references{
+Druckenbrod, D. L., N. Pederson, J. Rentch, and E. R. Cook. 2013. A comparison of times series approaches for dendroecological reconstructions of past canopy disturbance events. Forest Ecology and Management 302:23–33.
+
+Rydval, M., D. Druckenbrod, K. J. Anchukaitis, and R. Wilson. 2016. Detection and removal of disturbance trends in tree-ring series for dendroclimatology. Canadian Journal of Forest Research 401:387–401.
+
+Rydval, M., D. L. Druckenbrod, M. Svoboda, V. Trotsiuk, P. Janda, M. Mikoláš, V. Čada, R. Bače, M. Teodosiu, and R. Wilson. 2018. Influence of sampling and disturbance history on climatic sensitivity of temperature limited conifers. The Holocene.
+
+Warren, W. G., and S. L. MacWilliam. 1981. Test of a new method for removing the growth trend from dendrochronological data. Tree Ring Bulletin 41:55–66.
 }
