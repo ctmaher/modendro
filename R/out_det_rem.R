@@ -28,7 +28,7 @@
 #' Warren, W. G., and S. L. MacWilliam. 1981. Test of a new method for removing the growth trend from dendrochronological data. Tree Ring Bulletin 41:55–66.
 #'
 #' @import dplR
-#' @importFrom zoo rollapply
+#' @importFrom zoo rollmean
 #' @import stats
 #' @import DescTools
 #' @export
