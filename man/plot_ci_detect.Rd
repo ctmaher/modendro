@@ -28,7 +28,7 @@ The blue (releases) or red (suppressions) line segment represents the fitted cur
 The thicker black line is the resulting "disturbance-free" series after the fitted curve is subtracted. See \code{?ci_detect()} for more details on the processes.
 The shared x-axis for both panels marks evenly placed years and the estimated starting year of the disturbance.
 
-The second plot type shows the entire final "disturbance-free" series as a think black line, the original series as a thin grey line,
+The second plot type shows the entire final "disturbance-free" series as a thick black line, the original series as a thin grey line,
 and releases & disturbances as blue & red vertical lines, respectively. Only the estimated disturbance start years are shown on the x-axis.
 These results are shown in the original units (ring width), with the long term age/size trend reintroduced & the power transformation reversed.
 }
