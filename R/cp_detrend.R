@@ -141,10 +141,7 @@ cp_detrend <-
     trans <- trans.list[["Transformed ring widths"]] # The transformed series
     mess.df <- trans.list[["Transformation metadata"]] # Info about transformations
 
-    # detrend the transformed series -or- don't
-    if (!c(is.null(detrend.method) |
-           detrend.method %in% "None" |
-           detrend.method %in% "none")) {
+    # detrend the transformed series
       detr.result <-
         dplR::detrend(
           trans + 1, # add 1 here so that fits are more likely to be positive values
@@ -187,11 +184,6 @@ cp_detrend <-
           "Detrending metadata",
           "Raw ring widths"
         )
-
-    } else {
-      # i.e., no detrending
-
-      out.list <- trans.list
 
     }
     out.list
