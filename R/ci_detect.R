@@ -42,7 +42,7 @@
 #'
 #'
 #' @import dplR
-#' @importFrom zoo rollapply
+#' @importFrom zoo rollmean
 #' @import stats
 #' @import DescTools
 #' @export
