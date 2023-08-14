@@ -166,7 +166,7 @@ cp_detrend <-
 
 
       curv <- detr.result$curves - 1 # subtract the 1 we added above
-      detr <- detr.result$series - 1
+      detr <- detr.result$series
 
 
       out.list <- list(detr,
