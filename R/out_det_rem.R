@@ -36,7 +36,6 @@
 #'
 #'
 
-## The outlier detection and removal process
 out_det_rem <- function(rwi,
                         min.win = 9,
                         max.win = 30,
@@ -71,18 +70,6 @@ out_det_rem <- function(rwi,
 
   ## "Backcast" the NAs (due to the ar order lag) at the beginning of each series
   # Fit ar models of the same order as those above to the reversed data
-
-  # mapply(FUN = \(x,y){
-  #
-  #   mess <- any(is.na(y))
-  #   mess
-  # }, x = ar_fits,
-  # y = cp_rev)
-  #
-  # ar_fits[["2079"]]
-  # rwi[["2079"]]
-  # cp_rev
-  # gb["2079"]
 
   comp_resids <- mapply(
     FUN = \(x, y) {
