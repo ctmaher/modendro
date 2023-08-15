@@ -142,50 +142,49 @@ cp_detrend <-
     mess.df <- trans.list[["Transformation metadata"]] # Info about transformations
 
     # detrend the transformed series
-      detr.result <-
-        dplR::detrend(
-          trans + 1, # add 1 here so that fits are more likely to be positive values
-          method = detrend.method,
-          make.plot = FALSE,
-          difference = TRUE,
-          nyrs = nyrs,
-          return.info = TRUE,
-          pos.slope = pos.slope
-        )
+    detr.result <-
+      dplR::detrend(
+        trans + 1, # add 1 here so that fits are more likely to be positive values
+        method = detrend.method,
+        make.plot = FALSE,
+        difference = TRUE,
+        nyrs = nyrs,
+        return.info = TRUE,
+        pos.slope = pos.slope
+      )
 
-      # Extract the detrending info.
-      detr.info <- detr.result[["model.info"]]
-      detr.info <- Map(f = \(d, n) {
-        df <- do.call("rbind", d) |> as.data.frame()
-        df[, "method"] <- names(d)
-        df[, "series"] <- n
-        df
-      },
-      d = detr.info,
-      n = names(detr.info))
-
-
-      curv <- detr.result$curves - 1 # subtract the 1 we added above
-      detr <- detr.result$series
+    # Extract the detrending info.
+    detr.info <- detr.result[["model.info"]]
+    detr.info <- Map(f = \(d, n) {
+      df <- do.call("rbind", d) |> as.data.frame()
+      df[, "method"] <- names(d)
+      df[, "series"] <- n
+      df
+    },
+    d = detr.info,
+    n = names(detr.info))
 
 
-      out.list <- list(detr,
-                       curv,
-                       trans,
-                       mess.df,
-                       detr.info,
-                       rwl)
-      names(out.list) <-
-        c(
-          "Resid. detrended series",
-          "Detrend curves",
-          "Transformed ring widths",
-          "Transformation metadata",
-          "Detrending metadata",
-          "Raw ring widths"
-        )
+    curv <- detr.result$curves - 1 # subtract the 1 we added above
+    detr <- detr.result$series
 
-    }
+
+    out.list <- list(detr,
+                     curv,
+                     trans,
+                     mess.df,
+                     detr.info,
+                     rwl)
+    names(out.list) <-
+      c(
+        "Resid. detrended series",
+        "Detrend curves",
+        "Transformed ring widths",
+        "Transformation metadata",
+        "Detrending metadata",
+        "Raw ring widths"
+      )
+
     out.list
 
   } ## End of function
