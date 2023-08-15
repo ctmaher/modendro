@@ -36,6 +36,7 @@
 #'
 #'
 
+## The outlier detection and removal process
 out_det_rem <- function(rwi,
                         min.win = 9,
                         max.win = 30,
@@ -70,6 +71,19 @@ out_det_rem <- function(rwi,
 
   ## "Backcast" the NAs (due to the ar order lag) at the beginning of each series
   # Fit ar models of the same order as those above to the reversed data
+
+  # mapply(FUN = \(x,y){
+  #
+  #   mess <- any(is.na(y))
+  #   mess
+  # }, x = ar_fits,
+  # y = cp_rev)
+  #
+  # ar_fits[["2079"]]
+  # rwi[["2079"]]
+  # cp_rev
+  # gb["2079"]
+
   comp_resids <- mapply(
     FUN = \(x, y) {
       if (x$order > 0) {
@@ -111,6 +125,7 @@ out_det_rem <- function(rwi,
   ## Compute moving window averages of various lengths - the length of the window corresponds to outlier length
   # the min.win sets the smallest possible size, and tradition has it that 20 is the longest period. We can
   # reassess that later - maybe the user can just specify this, within reasonable limits (max = 1/3 of series?).
+
   mov_avgs <- lapply(comp_resids, \(x) {
     # Cap max.win at 1/3 the series length. If not, detection becomes oversensitive for short series
     max.win <- min(max.win, round(nrow(x)/3))
@@ -408,17 +423,20 @@ out_det_rem <- function(rwi,
       out_period$dur <- y$win_len
 
       ## Curve fitting
-      # Warren & MacWilliam - fits to the detected period and the reminder of the series too
-      # The formula is slightly different from the Hugershoff curve. t is a parameter that controls how far above/below the
-      # initial fit can go beyond the asymptote. b = 1, always, to allow fits above/below the asymptote. d = 0, always.
+
+      #if (fit.type == "Hugershoff") {
+      # Hugershoff - fits to the detected period and the reminder of the series too
+      # The formula is modified. z is an added parameter that controls how far above/below the
+      # initial fit can go beyond the asymptote. b = 1, always, to allow z to work. d = 0, always.
       # d mainly controls the asymptote value. We get a better chance at a successful fit if
       # we set these parameters here.
-      WM_form0 <- formula(rwi ~ a * ((x - t)^1) * exp(-c*(x - t)) + 0)
+      hug_form0 <- formula(rwi ~ a * ((x - t)^1) * exp(-c*(x - t)) + 0)
 
       out_period$x <- 1:(nrow(out_period))
 
-      WM_fit <- try(
-        nls(WM_form0,
+      #hug_fit <- NULL
+      hug_fit <- try(
+        nls(hug_form0,
             data = out_period,
             start = list(a = ifelse(y$out_dir %in% "pos", 0.1, -0.1),
                          c = 0.1,
@@ -426,7 +444,7 @@ out_det_rem <- function(rwi,
             control = nls.control(maxiter = 100, minFactor = 1/4096, warnOnly = FALSE)),
         silent = TRUE)
 
-      if (data.class(WM_fit) %in% "try-error") { # If the Hugershoff fit failed, fit a spline instead.
+      if (data.class(hug_fit) %in% "try-error") { # If the Hugershoff fit failed, fit a spline instead.
         # if this option, we should only plot & subtract the disturbance period itself
         out_period <- out_period[1:y$win_len,]
         spline_fit <-
@@ -438,7 +456,7 @@ out_det_rem <- function(rwi,
         out_period$curve <- spline_fit$fitted
 
       } else {
-        out_period$curve <- predict(WM_fit, newdata = out_period)
+        out_period$curve <- predict(hug_fit, newdata = out_period)
       }
 
       # "Correct" the rwi values for the outlier period by subtracting the fitted curve (aka, the residuals)
@@ -483,7 +501,6 @@ out_det_rem <- function(rwi,
     }
   }, x = rwi, y = out_curves)
 
-  #rwi2
 
   det_rem_out_list <- list(rwi2, out_curves, out_mov_avgs)
   names(det_rem_out_list) <-
