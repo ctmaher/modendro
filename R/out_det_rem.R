@@ -410,8 +410,6 @@ out_det_rem <- function(rwi,
       out_period$dur <- y$win_len
 
       ## Curve fitting
-
-      #if (fit.type == "Hugershoff") {
       # Hugershoff - fits to the detected period and the reminder of the series too
       # The formula is modified. z is an added parameter that controls how far above/below the
       # initial fit can go beyond the asymptote. b = 1, always, to allow z to work. d = 0, always.
@@ -421,7 +419,6 @@ out_det_rem <- function(rwi,
 
       out_period$x <- 1:(nrow(out_period))
 
-      #hug_fit <- NULL
       hug_fit <- try(
         nls(hug_form0,
             data = out_period,
@@ -441,9 +438,16 @@ out_det_rem <- function(rwi,
                 family = "symmetric")
 
         out_period$curve <- spline_fit$fitted
+        out_period$eq <- "loess spline"
 
       } else {
         out_period$curve <- predict(hug_fit, newdata = out_period)
+        hug_coef <- coef(hug_fit) |> round(4)
+
+        out_period$eq <- paste0('y == ', hug_coef[[1]],
+                                ' * (x - ', hug_coef[[3]], ')',
+                                ' * e^(-', hug_coef[[2]],
+                                ' * (x - ', hug_coef[[3]], '))')
       }
 
       # "Correct" the rwi values for the outlier period by subtracting the fitted curve (aka, the residuals)

@@ -127,7 +127,7 @@ plot_ci_detect <- function(ci_output) {
     Map(f = \(i, e, y) {
       if (is.character(i)){
         # Skip the "No outliers detected" ones
-        i <- data.frame(rwi = NA, year = NA, dir = NA, dur = NA, x = NA, curve = NA, rwi.cor = NA)
+        i <- data.frame(rwi = NA, year = NA, dir = NA, dur = NA, x = NA, curve = NA, eq = NA, rwi.cor = NA)
         i$series <- e
         i$iter <- y
         i
@@ -306,6 +306,9 @@ plot_ci_detect <- function(ci_output) {
           na.omit() |>
           as.numeric()
 
+        # Have to add an eq variable for the det_iter data.frame
+        #eq <- out_long$eq[[1]]
+
         if (length(extra_years) == 0) {
           rem_series <-
             rbind(out_long[, c("value", "type", "year", "series", "iter", "process")],
@@ -315,10 +318,10 @@ plot_ci_detect <- function(ci_output) {
           rem_series <-
             rbind(out_long[, c("value", "type", "year", "series", "iter", "process")],
                   data.frame(value = extra_rwi, type = "rwi", year = extra_years,
-                             series = out_long$series[1], iter = out_long$iter[1], process = "Removal"),
+                             series = out_long$series[1], iter = out_long$iter[1],
+                             process = "Removal"),
                   det_iter[det_iter$type %in% "Detrended resids.",])
         }
-        #rem_series
 
         # Code the curve fit label & color according to the direction of disturbance
         curve_lab <- ifelse(rem_iter[,"dir"][1] %in% "pos", "Fitted release curve", "Fitted suppression curve")
@@ -357,6 +360,9 @@ plot_ci_detect <- function(ci_output) {
             legend.key = element_blank(),
             legend.position = "top"
           ) +
+          labs(subtitle = ifelse(substr(out_long$eq[[1]], start = 1, stop = 1) %in% "l",
+                                 out_long$eq[[1]],
+                                 parse(text = out_long$eq[[1]]))) +
           #coord_fixed(ratio = 45) +
           facet_wrap(~ process, strip.position = "right") # Use a single factor level to label the plot
 
