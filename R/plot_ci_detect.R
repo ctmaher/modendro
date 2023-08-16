@@ -385,7 +385,7 @@ plot_ci_detect <- function(ci_output) {
   # output of this process is a list
   ## use the collapsed iterations in out_detection_split to derive the first year of each disturbance
 
-  out_start_dir <- lapply(out_curves_split, FUN = \(x){
+  dist_start_dir <- lapply(out_curves_split, FUN = \(x){
     # Control for the series with no detected disturbances
     # & only make lines for the iterations with detected disturbances
     xNA <- na.omit(x)
@@ -453,7 +453,7 @@ plot_ci_detect <- function(ci_output) {
   # To add here: some kind of coord_fixed() with dimensions based on Tufte's rule of thumb of a mean (median?)
   # slope of 45° in the graph. coord_fixed() is not right, we want a relatively fixed ylim, but a flexible xlim
 
-  dat = combined_list, ID = names(combined_list), dist = out_start_dir)
+  dat = combined_list, ID = names(combined_list), dist = dist_start_dir)
 
   plot_list <- list(out_det_rem_plots, final_plots)
   names(plot_list) <- c("Disturbance detection & removal plots", "Final disturbance-free series plots")

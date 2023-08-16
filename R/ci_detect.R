@@ -173,7 +173,7 @@ ci_detect <- function(rwl,
 
   dis_index_rwl <- Reduce(f = \(x, y) merge(x, y, by = "year", all = TRUE), dis_index_rwl0)
 
-  # Make years as rownames
+  # Make years as rownames & then remove the year column
   rownames(untransformed_rwl) <- untransformed_rwl$year
   untransformed_rwl <- untransformed_rwl[,!c(colnames(untransformed_rwl) %in% "year")]
 
