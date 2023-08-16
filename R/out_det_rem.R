@@ -419,12 +419,24 @@ out_det_rem <- function(rwi,
 
       out_period$x <- 1:(nrow(out_period))
 
+      # Set up some start values & constraints for a
+      a_start <- ifelse(y$out_dir %in% "pos", 0.1, -0.1)
+      a_const <- ifelse(y$out_dir %in% "pos", c(0.005, 5), c(-5, -0.005))
+      lower_const <- list(a = a_const[1],
+                          c = -5,
+                          t = -10)
+      upper_const <- list(a = a_const[2],
+                          c = 5,
+                          t = 10)
+
       hug_fit <- try(
         nls(hug_form0,
             data = out_period,
-            start = list(a = ifelse(y$out_dir %in% "pos", 0.1, -0.1),
+            start = list(a = a_start,
                          c = 0.1,
                          t = 1.5),
+            lower = lower_const,
+            upper = upper_const,
             control = nls.control(maxiter = 100, minFactor = 1/4096, warnOnly = FALSE)),
         silent = TRUE)
 
