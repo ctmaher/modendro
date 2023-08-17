@@ -81,7 +81,7 @@
 plot_ci_detect <- function(ci_output) {
   # Split up the ci_detect output into parts
   or_series <-
-    apply(ci_output[["Original series"]],
+    apply(ci_output[["Cook & Peters detrend"]][["Raw ring widths"]],
           MARGIN = 2,
           FUN = \(x) {
             data.frame(year = as.numeric(names(x)),
