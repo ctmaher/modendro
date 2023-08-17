@@ -465,7 +465,7 @@ out_det_rem <- function(rwi,
         out_period$eq <- paste0("y == ", hug_coef[[1]],
                                 " * (x ", plus_minus, " ", abs(hug_coef[[3]]), ")",
                                 " * e^(", -1*hug_coef[[2]],
-                                " * (x ", abs(hug_coef[[3]]), "))")
+                                " * (x ", plus_minus, " ", abs(hug_coef[[3]]), "))")
       }
 
       # "Correct" the rwi values for the outlier period by subtracting the fitted curve (aka, the residuals)
