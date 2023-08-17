@@ -93,7 +93,7 @@ pwr_t_rwl <- function(rwl) {
   # split back into a list
   pwr.t.list <- split(pwr.t.df, f = pwr.t.df$series)
 
-  out.list <- list(as.data.frame(rwl0), pwr.t.df, rwl)
+  out.list <- list(as.data.frame(rwl0), pwr.t.list, rwl)
   names(out.list) <- c("Transformed ring widths", "Transformation metadata", "Raw ring widths")
   out.list
 
