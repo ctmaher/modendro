@@ -19,8 +19,8 @@ Takes the nested output list from \code{ci_detect()} and makes a list of plots t
 \details{
 These plots are designed to illustrate how the \code{ci_detect()} process works & visualize the final results for each tree ring series.
 Correspondingly, there are two kinds of plots (if no disturbances were detected, the function returns a message instead of a plot).
-The 1st plot type demonstrates the iterative outlier detection and removal steps. The top
-panel of this plot shows the detection step for the current outlier (iteration number is displayed in the plot title).
+The 1st plot type demonstrates the iterative disturbance detection and removal steps. The top
+panel of this plot shows the detection step for the current disturbance (iteration number is displayed in the plot title).
 The grey rectangle underlies the time period corresponding to the disturbance, with the raw autoregressive residuals as the grey line,
 the moving window mean in orange, and the Tukey Biweight Robust Mean and detection thresholds as the horizontal black line and dotted lines, respectively.
 The bottom panel shows the disturbance removal steps of curve fitting and subtraction on the detrended & transformed ring width series.

@@ -8,8 +8,8 @@
 #' @details
 #' These plots are designed to illustrate how the `ci_detect()` process works & visualize the final results for each tree ring series.
 #' Correspondingly, there are two kinds of plots (if no disturbances were detected, the function returns a message instead of a plot).
-#' The 1st plot type demonstrates the iterative outlier detection and removal steps. The top
-#' panel of this plot shows the detection step for the current outlier (iteration number is displayed in the plot title).
+#' The 1st plot type demonstrates the iterative disturbance detection and removal steps. The top
+#' panel of this plot shows the detection step for the current disturbance (iteration number is displayed in the plot title).
 #' The grey rectangle underlies the time period corresponding to the disturbance, with the raw autoregressive residuals as the grey line,
 #' the moving window mean in orange, and the Tukey Biweight Robust Mean and detection thresholds as the horizontal black line and dotted lines, respectively.
 #' The bottom panel shows the disturbance removal steps of curve fitting and subtraction on the detrended & transformed ring width series.
@@ -104,25 +104,25 @@ plot_ci_detect <- function(ci_output) {
   # Map() applies the rbind action across the 2 lists. It is a wrapper for mapply().
   combined_list <- Map(rbind.data.frame, or_series, ci_series)
 
-  # Now to extract the relevant information about the outliers
-  # The structure of the outlier iterations list is 1) the iterations, 2a) the entire corrected rwi series for all IDs,
-  # 2b) the dataframes of outlier metadata (for just the outlier period) for all IDs or a message that says "No outliers detected".
-  # Take the outlier metadata dataframes for each series and add the iteration number, then bind all of them together
+  # Now to extract the relevant information about the disturbances
+  # The structure of the disturbance iterations list is 1) the iterations, 2a) the entire corrected rwi series for all IDs,
+  # 2b) the dataframes of disturbance metadata (for just the disturbance period) for all IDs or a message that says "No disturbances detected".
+  # Take the disturbance metadata dataframes for each series and add the iteration number, then bind all of them together
   # for each series ID.
 
   whole_series <-
-    lapply(ci_output[["Outlier removal iterations"]], FUN = \(x) {
+    lapply(ci_output[["Disturbance removal iterations"]], FUN = \(x) {
       x[[1]]
     })
 
-  # This pulls out just the outlier removal iterations with the specific outlier metadata
-  out_curves_only <-
-    lapply(ci_output[["Outlier removal iterations"]], FUN = \(x) {
+  # This pulls out just the disturbance removal iterations with the specific disturbance metadata
+  dist_curves_only <-
+    lapply(ci_output[["Disturbance removal iterations"]], FUN = \(x) {
       x[[2]]
     })
 
-  out_detection_only <-
-    lapply(ci_output[["Outlier removal iterations"]], FUN = \(x) {
+  dist_detection_only <-
+    lapply(ci_output[["Disturbance removal iterations"]], FUN = \(x) {
       x[[3]]
     })
   # The outermost layer of these lists represents the iterations. Within each of those inner lists,
@@ -132,12 +132,12 @@ plot_ci_detect <- function(ci_output) {
 
   # use a list of the names to pass the iterations to the data
 
-  out_curves_df <- Map(f = \(x, y) {
+  dist_curves_df <- Map(f = \(x, y) {
     # This inner Map() does
     Map(
       f = \(i, e, y) {
         if (is.character(i)) {
-          # Skip the "No outliers detected" ones
+          # Skip the "No disturbances detected" ones
           i <-
             data.frame(
               rwi = NA,
@@ -166,20 +166,20 @@ plot_ci_detect <- function(ci_output) {
       do.call(what = "rbind")
 
   },
-  x = out_curves_only,
-  y = names(out_curves_only)) |>
+  x = dist_curves_only,
+  y = names(dist_curves_only)) |>
     do.call(what = "rbind")
 
 
-  # The detection & removal iterations must contain the specific outlier periods
+  # The detection & removal iterations must contain the specific disturbance periods
   # (curves & dist-free series) and the entire series as it was at the start of this iteration.
   # This is included in the whole_series list.
-  out_detection_df <- Map(
+  dist_detection_df <- Map(
     f = \(x, y, z) {
       Map(
         f = \(i, e, y, z) {
           if (is.character(i)) {
-            # Skip the "No outliers detected" ones
+            # Skip the "No disturbances detected" ones
             years <- as.numeric(names(z))
             z <-
               data.frame(value = z,
@@ -213,22 +213,22 @@ plot_ci_detect <- function(ci_output) {
         do.call(what = "rbind")
 
     },
-    x = out_detection_only,
-    y = names(out_detection_only),
+    x = dist_detection_only,
+    y = names(dist_detection_only),
     z = whole_series
   ) |>
     do.call(what = "rbind")
 
   # Convert year var in the curves df to numeric for plotting (already numeric for detection df)
-  out_curves_df$year <- out_curves_df$year |> as.numeric()
+  dist_curves_df$year <- dist_curves_df$year |> as.numeric()
 
   # Now split the dfs into lists by series.
-  out_curves_split <- split(out_curves_df, out_curves_df$series)
-  out_detection_split <-
-    split(out_detection_df, out_detection_df$series)
+  dist_curves_split <- split(dist_curves_df, dist_curves_df$series)
+  dist_detection_split <-
+    split(dist_detection_df, dist_detection_df$series)
 
-  ## The outlier detection & removal iteration plots
-  out_det_rem_plots <- Map(f = \(det, rem) {
+  ## The disturbance detection & removal iteration plots
+  dist_det_rem_plots <- Map(f = \(det, rem) {
     # Add a single faceting variable to make the process labels
     det$process <- "Detection"
     rem$process <- "Removal"
@@ -279,7 +279,7 @@ plot_ci_detect <- function(ci_output) {
         }
 
         ## Detection plots
-        out_det_plot <-
+        dist_det_plot <-
           ggplot(na.omit(det_no_transRW),
                  aes(year, value, color = type, linetype = type)) +
           scale_color_manual(
@@ -318,7 +318,7 @@ plot_ci_detect <- function(ci_output) {
 
 
         ## The removal plots
-        out_long <-
+        dist_long <-
           pivot_longer(
             rem_iter[,!c(colnames(rem_iter) %in% "rwi.cor")],
             cols = c("curve", "rwi"),
@@ -326,12 +326,12 @@ plot_ci_detect <- function(ci_output) {
             values_to = "value"
           )
         # add 1 year each before and after to the rwi - this is for plotting aesthetics
-        # without this, the outlier/disturbance section appears to float above/below the disturbance-free series.
+        # without this, the disturbance section appears to float above/below the disturbance-free series.
         # However, don't do this if the disturbance period reaches the beginning or end of the original series
         cor_series_iter <-
           det_iter[det_iter$type %in% "Detrended resids.", ]
-        min_dist_year1 <- min(out_long$year, na.rm = TRUE) - 1
-        max_dist_year1 <- max(out_long$year, na.rm = TRUE) + 1
+        min_dist_year1 <- min(dist_long$year, na.rm = TRUE) - 1
+        max_dist_year1 <- max(dist_long$year, na.rm = TRUE) + 1
         min_series_year <- min(cor_series_iter$year, na.rm = TRUE)
         max_series_year <- max(cor_series_iter$year, na.rm = TRUE)
         extra_years <-
@@ -342,25 +342,22 @@ plot_ci_detect <- function(ci_output) {
           na.omit() |>
           as.numeric()
 
-        # Have to add an eq variable for the det_iter data.frame
-        #eq <- out_long$eq[[1]]
-
         if (length(extra_years) == 0) {
           rem_series <-
-            rbind(out_long[, c("value", "type", "year", "series", "iter", "process")],
+            rbind(dist_long[, c("value", "type", "year", "series", "iter", "process")],
                   det_iter[det_iter$type %in% "Detrended resids.", ])
         } else {
           extra_rwi <-
             cor_series_iter$value[cor_series_iter$year %in% extra_years]
           rem_series <-
             rbind(
-              out_long[, c("value", "type", "year", "series", "iter", "process")],
+              dist_long[, c("value", "type", "year", "series", "iter", "process")],
               data.frame(
                 value = extra_rwi,
                 type = "rwi",
                 year = extra_years,
-                series = out_long$series[1],
-                iter = out_long$iter[1],
+                series = dist_long$series[1],
+                iter = dist_long$iter[1],
                 process = "Removal"
               ),
               det_iter[det_iter$type %in% "Detrended resids.", ]
@@ -391,7 +388,7 @@ plot_ci_detect <- function(ci_output) {
         rem_series$process <-
           "Removal"
 
-        out_rem_plot <-
+        dist_rem_plot <-
           ggplot(na.omit(rem_series),
                  aes(year, value, color = type, linewidth = type)) +
           scale_color_manual(name = element_blank(),
@@ -409,17 +406,17 @@ plot_ci_detect <- function(ci_output) {
             legend.position = "top"
           ) +
           labs(subtitle = ifelse(
-            substr(out_long$eq[[1]], start = 1, stop = 1) %in% "l",
-            out_long$eq[[1]],
-            parse(text = out_long$eq[[1]])
+            substr(dist_long$eq[[1]], start = 1, stop = 1) %in% "l",
+            dist_long$eq[[1]],
+            parse(text = dist_long$eq[[1]])
           )) +
           #coord_fixed(ratio = 45) +
           facet_wrap( ~ process, strip.position = "right") # Use a single factor level to label the plot
 
         # Plot the two panels together
         plot_grid(
-          out_det_plot,
-          out_rem_plot,
+          dist_det_plot,
+          dist_rem_plot,
           align = "v",
           axis = "lr",
           ncol = 1
@@ -428,14 +425,14 @@ plot_ci_detect <- function(ci_output) {
       det_iter = det_split,
       rem_iter = rem_split)
     }
-  }, det = out_detection_split, rem = out_curves_split)
+  }, det = dist_detection_split, rem = dist_curves_split)
 
   ###
   ## The final output plots (after all iterations)
   # output of this process is a list
-  ## use the collapsed iterations in out_detection_split to derive the first year of each disturbance
+  ## use the collapsed iterations in dist_detection_split to derive the first year of each disturbance
 
-  dist_start_dir <- lapply(out_curves_split, FUN = \(x) {
+  dist_start_dir <- lapply(dist_curves_split, FUN = \(x) {
     # Control for the series with no detected disturbances
     # & only make lines for the iterations with detected disturbances
     xNA <- na.omit(x)
@@ -522,7 +519,7 @@ plot_ci_detect <- function(ci_output) {
     dist = dist_start_dir
   )
 
-  plot_list <- list(out_det_rem_plots, final_plots)
+  plot_list <- list(dist_det_rem_plots, final_plots)
   names(plot_list) <-
     c("Disturbance detection & removal plots",
       "Final disturbance-free series plots")
