@@ -435,6 +435,7 @@ out_det_rem <- function(rwi,
             start = list(a = a_start,
                          c = 0.1,
                          t = 1.5),
+            algorithm = "port",
             lower = lower_const,
             upper = upper_const,
             control = nls.control(maxiter = 100, minFactor = 1/4096, warnOnly = FALSE)),
@@ -455,11 +456,11 @@ out_det_rem <- function(rwi,
       } else {
         out_period$curve <- predict(hug_fit, newdata = out_period)
         hug_coef <- coef(hug_fit) |> round(4)
-
-        out_period$eq <- paste0('y == ', hug_coef[[1]],
-                                ' * (x - ', hug_coef[[3]], ')',
-                                ' * e^(-', hug_coef[[2]],
-                                ' * (x - ', hug_coef[[3]], '))')
+        plus_minus <- ifelse(hug_coef[[3]] > 0, "-", "+")
+        out_period$eq <- paste0("y == ", hug_coef[[1]],
+                                " * (x ", plus_minus, " ", abs(hug_coef[[3]]), ")",
+                                " * e^(", -1*hug_coef[[2]],
+                                " * (x ", abs(hug_coef[[3]]), "))")
       }
 
       # "Correct" the rwi values for the outlier period by subtracting the fitted curve (aka, the residuals)
