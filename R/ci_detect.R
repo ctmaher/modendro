@@ -28,8 +28,9 @@
 #'
 #' \code{\link{function}}
 #'
-#' @return A 3-element list containing the "disturbance-free" series, the disturbance index, and a record of the outlier
-#' detection and removal iterations.
+#' @return A 5-element list containing the "disturbance-free" series, the disturbance index,
+#' a data.frame containing basic data on all the detected disturbances,
+#' a record of the outlier detection and removal iterations, and the output from the cp_detrend() process.
 #'
 #' @references
 #' Druckenbrod, D. L., N. Pederson, J. Rentch, and E. R. Cook. 2013. A comparison of times series approaches for dendroecological reconstructions of past canopy disturbance events. \emph{Forest Ecology and Management}, \strong{302}, 23–33.
@@ -180,11 +181,28 @@ ci_detect <- function(rwl,
   rownames(dis_index_rwl) <- dis_index_rwl$year
   dis_index_rwl <- dis_index_rwl[,!c(colnames(dis_index_rwl) %in% "year")]
 
+  # Collapse the detection & removal iterations into a data.frame that contains all the detected disturbances
+  dist_det <- lapply(out_iter, FUN = \(x) {
+    x1 <- x[["Outlier curves"]]
+
+    x2 <- lapply(x1, FUN = \(y) {
+      if (!is.character(y)){
+        y[1, c("year", "dir", "dur", "eq")]
+      }
+    }) |> do.call(what = "rbind")
+
+    x2$series <- rownames(x2)
+    x2[, c("series", "year", "dir", "dur", "eq")]
+
+  }) |> do.call(what = "rbind")
+
   ## Last steps are to output the main results (disturbance-free, disturbance index, original series)
   # and all of the iterations of the outlier removal process, with the trend curves, etc.
   # all of these can then be plotted in the plot_ci_detect() function
-  ci_output_list <- list(untransformed_rwl, dis_index_rwl, out_iter, cp_out, rwl)
-  names(ci_output_list) <- c("Disturbance-free series", "Disturbance index", "Outlier removal iterations", "Cook & Peters detrend", "Original series")
+  ci_output_list <- list(untransformed_rwl, dis_index_rwl, dist_det, out_iter, cp_out)
+  names(ci_output_list) <- c("Disturbance-free series", "Disturbance index",
+                             "Detected disturbances", "Disturbance removal iterations",
+                             "Cook & Peters detrend")
   ci_output_list
 
 } # End of the ci_detect() function

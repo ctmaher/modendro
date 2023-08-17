@@ -35,8 +35,9 @@ ci_detect(
 \item{max.iter}{The maximum number of iterations to run the disturbance detection and removal processes. The default is 10.}
 }
 \value{
-A 3-element list containing the "disturbance-free" series, the disturbance index, and a record of the outlier
-detection and removal iterations.
+A 5-element list containing the "disturbance-free" series, the disturbance index,
+a data.frame containing basic data on all the detected disturbances,
+a record of the outlier detection and removal iterations, and the output from the cp_detrend() process.
 }
 \description{
 This function implements an analysis based on the curve intervention detection techniques described by Druckenbrod et al. 2013,

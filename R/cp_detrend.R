@@ -144,7 +144,7 @@ cp_detrend <-
     # detrend the transformed series
     detr.result <-
       dplR::detrend(
-        trans + 1, # add 1 here so that fits are more likely to be positive values
+        trans + 2, # add 2 here so that fits are more likely to be positive values
         method = detrend.method,
         make.plot = FALSE,
         difference = TRUE,
@@ -165,7 +165,7 @@ cp_detrend <-
     n = names(detr.info))
 
 
-    curv <- detr.result$curves - 1 # subtract the 1 we added above
+    curv <- detr.result$curves - 2 # subtract the 2 we added above
     detr <- detr.result$series
 
 
