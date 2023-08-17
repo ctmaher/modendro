@@ -90,7 +90,8 @@ pwr_t_rwl <- function(rwl) {
                             ifelse(optimal.pwr.t > 1, "No transformation",
                                    "Power transformed"))
 
-  #pwr.t.list <- apply(pwr.t.df, MARGIN = 1, FUN = \(x){x}, simplify = F)
+  # split back into a list
+  pwr.t.list <- split(pwr.t.df, f = pwr.t.df$series)
 
   out.list <- list(as.data.frame(rwl0), pwr.t.df, rwl)
   names(out.list) <- c("Transformed ring widths", "Transformation metadata", "Raw ring widths")
