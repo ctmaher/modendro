@@ -421,7 +421,12 @@ out_det_rem <- function(rwi,
 
       # Set up some start values & constraints for a
       a_start <- ifelse(y$out_dir %in% "pos", 0.1, -0.1)
-      a_const <- ifelse(y$out_dir %in% "pos", c(0.005, 5), c(-5, -0.005))
+      if (y$out_dir %in% "pos") {
+        a_const <- c(0.005, 5)
+      } else {
+        a_const <- c(-5, -0.005)
+      }
+
       lower_const <- list(a = a_const[1],
                           c = -5,
                           t = -10)
