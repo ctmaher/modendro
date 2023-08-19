@@ -122,7 +122,7 @@ cp_detrend <-
     if (detrend.method %in% c("none", "None", "Mean")) {
       detrend.method <- "Mean"
       message(
-        "Proceding with the default of no detrending - series will be transformed and it's mean subtracted
+        "Proceding with the default of no detrending - series will be transformed and their means subtracted.
             Make sure you want this, otherwise chose a detrending method wisely"
       )
     }

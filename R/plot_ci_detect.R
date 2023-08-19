@@ -310,7 +310,7 @@ plot_ci_detect <- function(ci_output) {
           #coord_fixed(ratio = 45) +
           facet_wrap( ~ process, strip.position = "right") + # Use the single factor level to label the plot
           ggtitle(paste0(
-            "Core ID: ",
+            "Series ID: ",
             det_iter$series,
             ", Iteration: ",
             det_iter$iter
@@ -510,7 +510,7 @@ plot_ci_detect <- function(ci_output) {
             linewidth = guide_legend(title.position = "top", order = 1),
             color = guide_legend(title.position = "top", order = 2)
           ) +
-          ggtitle(paste(ID, "intervention detection results"))
+          ggtitle(paste("Intervention detection results for series ID:", ID))
       }
     },
 
