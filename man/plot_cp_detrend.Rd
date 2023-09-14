@@ -21,6 +21,7 @@ library(dplR)
 data("ca533")
 ca533_cp <- cp_detrend(ca533_cp, detrend.method = "AgeDepSpline")
 ca533_cp_plots <- plot_cp_detrend(ca533_cp)
+# View the first plot
 ca533_cp_plots[[1]]
 
 }

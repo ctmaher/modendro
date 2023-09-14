@@ -17,4 +17,5 @@ Imports:
     cowplot,
     stats,
     zoo,
-    DescTools
+    DescTools,
+    corTESTsrd

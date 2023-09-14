@@ -13,6 +13,7 @@ n_mon_corr(
   chrono.col = "std",
   agg.fun = "mean",
   max.lag = 2,
+  auto.cor = TRUE,
   corr.method = "pearson",
   chrono.name = NULL,
   plots = TRUE
@@ -38,8 +39,11 @@ Options are "mean" or "sum", e.g., for temperature or precipitation data, respec
 
 \item{max.lag}{numeric vector specifying how many years of lag to calculate calculations for. Default is 2 years.}
 
+\item{auto.cor}{logical vector specifying whether there is temporal autocorrelation in either your tree ring chronology or climate time series (there typically is autocorrelation, unless both are "prewhitened").
+If TRUE (the default), & corr.method is "spearman" or "kendall", then the \code{corTESTsrd()} function is used to compute modified significance testing to account for autocorrelation (From Lun et al. 2022).}
+
 \item{corr.method}{character vector specifying which correlation method to use. Options are \code{c("pearson", "kendall", "spearman")}.
-Passes to \code{cor.test()}.}
+Passes to \code{cor.test()} or to \code{corTESTsrd()}.}
 
 \item{chrono.name}{character vector - the name of your chronology (optional). This is used in the title of your plot.
 If you produce many plots, this helps keep them identifiable.}
@@ -108,4 +112,6 @@ Will add some later
 }
 \references{
 Schulman, E. (1956) \emph{Dendroclimatic changes in semiarid America}, University of Arizona Press.
+
+Lun, D., S. Fischer, A. Viglione, and G. Blöschl. (2022). Significance testing of rank cross-correlations between autocorrelated time series with short-range dependence, \emph{Journal of Applied Statistics}:1–17.
 }

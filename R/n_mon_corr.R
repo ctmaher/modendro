@@ -36,7 +36,9 @@
 #' Options are "mean" or "sum", e.g., for temperature or precipitation data, respectively. Default is "mean".
 #' @param max.lag numeric vector specifying how many years of lag to calculate calculations for. Default is 2 years.
 #' @param corr.method character vector specifying which correlation method to use. Options are `c("pearson", "kendall", "spearman")`.
-#'  Passes to `cor.test()`.
+#'  Passes to `cor.test()` or to `corTESTsrd()`.
+#' @param auto.cor logical vector specifying whether there is temporal autocorrelation in either your tree ring chronology or climate time series (there typically is autocorrelation, unless both are "prewhitened").
+#' If TRUE (the default), & corr.method is "spearman" or "kendall", then the `corTESTsrd()` function is used to compute modified significance testing to account for autocorrelation (From Lun et al. 2022).
 #' @param chrono.name character vector - the name of your chronology (optional). This is used in the title of your plot.
 #' If you produce many plots, this helps keep them identifiable.
 #' @param plots logical vector indicating whether or not to produce plots. Default is TRUE.
@@ -77,8 +79,11 @@
 #' @references
 #' Schulman, E. (1956) \emph{Dendroclimatic changes in semiarid America}, University of Arizona Press.
 #'
+#' Lun, D., S. Fischer, A. Viglione, and G. Blöschl. (2022). Significance testing of rank cross-correlations between autocorrelated time series with short-range dependence, \emph{Journal of Applied Statistics}:1–17.
+#'
 #' @import plyr
 #' @import ggplot2
+#' @import corTESTsrd
 #'
 #' @export
 #'
@@ -91,7 +96,8 @@ n_mon_corr <- function(chrono = NULL, clim = NULL,
                        var = NULL, rel.per.begin = NULL,
                        hemisphere = NULL,
                        chrono.col = "std", agg.fun = "mean",
-                       max.lag = 2, corr.method = "pearson",
+                       max.lag = 2, auto.cor = TRUE,
+                       corr.method = "pearson",
                        chrono.name = NULL, plots = TRUE){
 
 
@@ -253,11 +259,8 @@ n_mon_corr <- function(chrono = NULL, clim = NULL,
   # Hold the data.frame of results in a list, with the length of the list being equal to
   # 1 + the max lag
   lag.seq <- 0:max.lag
-  #lag.list <- vector("list", length(lag.seq))
-  #for (y in seq_along(lag.seq)){
+
   lag.list <- ldply(lag.seq, .fun = function(l){
-    # Challenge: vectorize the code below. The order of month groupings doesn't really matter,
-    # So I could make this a lot faster by not doing a loop.
 
     # calendar year
     cor.results <- ldply(mos, .fun = \(x){
@@ -265,18 +268,46 @@ n_mon_corr <- function(chrono = NULL, clim = NULL,
       clim.mo <- aggregate(formula(paste(var, "growyear", sep = "~")),
                            data = clim[clim$month %in% x, ],
                            FUN = \(z){ifelse(agg.fun %in% "mean", mean(z), sum(z))})
+
       # attach the chronology to the climate data - enter the current lag before this step
       chrono.new <- chrono
       chrono.new$year <- chrono.new$year - l
       clim.mo <- merge(clim.mo, chrono.new, by.x = "growyear", by.y = "year")
+
+      # Remove any ties from the data
+      clim.mo <- clim.mo[which(!duplicated(clim.mo[,var])),]
+      clim.mo <- clim.mo[which(!duplicated(clim.mo[,chrono.col])),]
+
       # Run the correlation test between climate and the chronology
+      if (auto.cor == TRUE) {
+        if (corr.method %in% "pearson") {
+        ct <- cor.test(clim.mo[,var], clim.mo[, chrono.col],
+                       method = corr.method, alternative = "two.sided")
+        # put the results together in a data.frame
+        result <- data.frame(months = ifelse(length(x) > 1,
+                                             paste(x[1], x[length(x)], sep = ":"),
+                                             paste(x)),
+                             coef = round(ct$estimate[[1]], 4),
+                             p = ct$p.value[[1]],
+                             ci.lo = ct$conf.int[1],
+                             ci.hi = ct$conf.int[2])
+        } else { # if spearman or kendall
+          ct <- corTESTsrd(clim.mo[,var], clim.mo[, chrono.col],
+                           method = corr.method,
+                           iid = FALSE, alternative = "two.sided")
+          # put the results together in a data.frame
+          result <- data.frame(months = ifelse(length(x) > 1,
+                                               paste(x[1], x[length(x)], sep = ":"),
+                                               paste(x)),
+                               coef = round(ct[["rho"]], 4),
+                               p = ct[["pval"]])
+        }
+      } else {
       ct <- cor.test(clim.mo[,var], clim.mo[, chrono.col], method = corr.method)
+
       # put the results together in a data.frame
       if (corr.method %in% "pearson") {
 
-        # which.months <- if (x[1] > x[length(x)]) {
-        #   paste(x[1], x[length(x)], sep = ":")
-        # }
         result <- data.frame(months = ifelse(length(x) > 1,
                                              paste(x[1], x[length(x)], sep = ":"),
                                              paste(x)),
@@ -290,6 +321,7 @@ n_mon_corr <- function(chrono = NULL, clim = NULL,
                                              paste(x)),
                              coef = round(ct$estimate[[1]], 3),
                              p = ct$p.value[[1]])
+      }
       }
       # return the result
       result
