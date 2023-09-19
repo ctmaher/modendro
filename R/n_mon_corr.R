@@ -37,8 +37,9 @@
 #' @param max.lag numeric vector specifying how many years of lag to calculate calculations for. Default is 2 years.
 #' @param corr.method character vector specifying which correlation method to use. Options are `c("pearson", "kendall", "spearman")`.
 #'  Passes to `cor.test()` or to `corTESTsrd()`.
-#' @param auto.cor logical vector specifying whether there is temporal autocorrelation in either your tree ring chronology or climate time series (there typically is autocorrelation, unless both are "prewhitened").
+#' @param auto.corr logical vector specifying whether there is temporal autocorrelation in either your tree ring chronology or climate time series (there typically is autocorrelation, unless both are "prewhitened").
 #' If TRUE (the default), & corr.method is "spearman" or "kendall", then the `corTESTsrd()` function is used to compute modified significance testing to account for autocorrelation (From Lun et al. 2022).
+#' Caution! Currently auto.corr = TRUE & corr.method = "Pearson" doesn't make any adjustments. This will be included soon.
 #' @param chrono.name character vector - the name of your chronology (optional). This is used in the title of your plot.
 #' If you produce many plots, this helps keep them identifiable.
 #' @param plots logical vector indicating whether or not to produce plots. Default is TRUE.
@@ -48,7 +49,8 @@
 #' a collection of cross-dated tree ring series and have properly detrended them, standardized them, and dealt
 #' with temporal autocorrelation.
 #'
-#' The default correlation test method is Pearson product moment correlation coefficient.
+#' The default correlation test method is Pearson product moment correlation coefficient, although this might
+#' not be appropriate for your analysis.
 #'
 #' A note on tree ring analyses based in the Southern hemisphere:
 #' `n_mon_corr()` is designed to work in both the Northern and Southern hemispheres. Hemisphere matters
@@ -96,7 +98,7 @@ n_mon_corr <- function(chrono = NULL, clim = NULL,
                        var = NULL, rel.per.begin = NULL,
                        hemisphere = NULL,
                        chrono.col = "std", agg.fun = "mean",
-                       max.lag = 2, auto.cor = TRUE,
+                       max.lag = 2, auto.corr = TRUE,
                        corr.method = "pearson",
                        chrono.name = NULL, plots = TRUE){
 
@@ -178,13 +180,24 @@ n_mon_corr <- function(chrono = NULL, clim = NULL,
   clim[,"year"] <- as.integer(clim[,"year"])
   clim[,"month"] <- as.integer(clim[,"month"])
 
-  # Get the year from row names - but this may not work
+  # Get the year from row names
   if (any(substr(colnames(chrono), 1, 1) %in% c("Y","y")) == FALSE) {
     chrono[,"year"] <- rownames(chrono) |> as.numeric()
   } else {
     colnames(chrono)[which((substr(colnames(chrono), start = 1, stop = 1)
                             %in% c("Y","y")) == T)] <- "year"
     chrono[,"year"] <- as.numeric(chrono[,"year"])
+  }
+
+
+  # Give a warning & maybe stop the function if there is autocorrelation in the tree ring series
+  # There should be a prompt (verbal or otherwise)
+  ac.test <- ar(x = na.omit(chrono[order(chrono[,"year"]), "chrono.col"]))
+  if (ac.test$order > 0 & auto.corr == FALSE) {
+    cat("Autocorrelation detected in your chronology, recommend choose auto.corr = TRUE &
+        corr.method = c('spearman', 'kendall') to avoid spurious correlation results")
+    auto.corr <- readline(prompt = "Enter auto.corr (TRUE or FALSE) = ")
+    corr.method <- readline(prompt = "Enter corr.method ('spearman' or 'kendall') = ")
   }
 
   # Clean up the hemisphere argument if needed
@@ -279,7 +292,7 @@ n_mon_corr <- function(chrono = NULL, clim = NULL,
       clim.mo <- clim.mo[which(!duplicated(clim.mo[,chrono.col])),]
 
       # Run the correlation test between climate and the chronology
-      if (auto.cor == TRUE) {
+      if (auto.corr == TRUE) {
         if (corr.method %in% "pearson") {
         ct <- cor.test(clim.mo[,var], clim.mo[, chrono.col],
                        method = corr.method, alternative = "two.sided")
