@@ -248,11 +248,12 @@ n_mon_corr <- function(chrono = NULL, clim = NULL,
   # Create a vector of all possible combinations of months
   # Regular calendar year first
   mos.mat <- expand.grid(mon.seq, mon.seq)
+
   mos <- apply(mos.mat, MARGIN = 1, FUN = \(x){
     seq(from = which(mon.seq %in% x[1]),
         to = which(mon.seq %in% x[2]))
   })
-  # remove the non-ascending sequences - these are not sensical in this analysis
+  # remove the non-ascending sequences - these are nonsensical in this analysis
   mos <- lapply(mos, FUN = \(x) {
     if (x[1] > x[length(x)]) {
       x <- NA
@@ -267,6 +268,11 @@ n_mon_corr <- function(chrono = NULL, clim = NULL,
   mos <- lapply(mos, FUN = \(x) {
     mon.seq[x]
   })
+
+
+  # mos.mat$len <- apply(mos.mat, MARGIN = 1, FUN = \(x) {
+  #   length(which(mon.seq %in% x["Var1"]) : which(mon.seq %in% x["Var2"]))
+  # })
 
   # Annual lags
   # Hold the data.frame of results in a list, with the length of the list being equal to
@@ -336,7 +342,8 @@ n_mon_corr <- function(chrono = NULL, clim = NULL,
                              p = ct$p.value[[1]])
       }
       }
-      # return the result
+      # order the months as a factor (aspirational) & return the result
+      #result$months <- factor(result$months, levels = )
       result
     })
 
