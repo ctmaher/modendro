@@ -269,6 +269,12 @@ n_mon_corr <- function(chrono = NULL, clim = NULL,
     mon.seq[x]
   })
 
+  # Get the 1st month of each
+  mon1 <- lapply(mos, FUN = \(x) {
+    x[1]
+  }) |> unlist()
+
+  mos <- mos[order(lengths(mos), decreasing = TRUE)]
 
   # mos.mat$len <- apply(mos.mat, MARGIN = 1, FUN = \(x) {
   #   length(which(mon.seq %in% x["Var1"]) : which(mon.seq %in% x["Var2"]))
@@ -297,15 +303,18 @@ n_mon_corr <- function(chrono = NULL, clim = NULL,
       clim.mo <- clim.mo[which(!duplicated(clim.mo[,var])),]
       clim.mo <- clim.mo[which(!duplicated(clim.mo[,chrono.col])),]
 
+      # The months vector in the desired order.
+      month.vec <- ifelse(length(x) > 1,
+                          paste(x[1], x[length(x)], sep = ":"),
+                          paste(x))
+
       # Run the correlation test between climate and the chronology
       if (auto.corr == TRUE) {
         if (corr.method %in% "pearson") {
         ct <- cor.test(clim.mo[,var], clim.mo[, chrono.col],
                        method = corr.method, alternative = "two.sided")
         # put the results together in a data.frame
-        result <- data.frame(months = ifelse(length(x) > 1,
-                                             paste(x[1], x[length(x)], sep = ":"),
-                                             paste(x)),
+        result <- data.frame(months = month.vec,
                              coef = round(ct$estimate[[1]], 4),
                              p = ct$p.value[[1]],
                              ci.lo = ct$conf.int[1],
@@ -315,9 +324,7 @@ n_mon_corr <- function(chrono = NULL, clim = NULL,
                            method = corr.method,
                            iid = FALSE, alternative = "two.sided")
           # put the results together in a data.frame
-          result <- data.frame(months = ifelse(length(x) > 1,
-                                               paste(x[1], x[length(x)], sep = ":"),
-                                               paste(x)),
+          result <- data.frame(months = month.vec,
                                coef = round(ct[["rho"]], 4),
                                p = ct[["pval"]])
         }
@@ -327,23 +334,19 @@ n_mon_corr <- function(chrono = NULL, clim = NULL,
       # put the results together in a data.frame
       if (corr.method %in% "pearson") {
 
-        result <- data.frame(months = ifelse(length(x) > 1,
-                                             paste(x[1], x[length(x)], sep = ":"),
-                                             paste(x)),
+        result <- data.frame(months = month.vec,
                              coef = round(ct$estimate[[1]], 3),
                              p = ct$p.value[[1]],
                              ci.lo = ct$conf.int[1],
                              ci.hi = ct$conf.int[2])
       } else {
-        result <- data.frame(months = ifelse(length(x) > 1,
-                                             paste(x[1], x[length(x)], sep = ":"),
-                                             paste(x)),
+        result <- data.frame(months = month.vec,
                              coef = round(ct$estimate[[1]], 3),
                              p = ct$p.value[[1]])
       }
       }
       # order the months as a factor (aspirational) & return the result
-      #result$months <- factor(result$months, levels = )
+      result$months <- factor(result$months, levels = month.vec)
       result
     })
 
