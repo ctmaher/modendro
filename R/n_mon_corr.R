@@ -192,7 +192,7 @@ n_mon_corr <- function(chrono = NULL, clim = NULL,
 
   # Give a warning & maybe stop the function if there is autocorrelation in the tree ring series
   # There should be a prompt (verbal or otherwise)
-  ac.test <- ar(x = na.omit(chrono[order(chrono[,"year"]), "chrono.col"]))
+  ac.test <- ar(x = na.omit(chrono[order(chrono[,"year"]), chrono.col]))
   if (ac.test$order > 0 & auto.corr == FALSE) {
     cat("Autocorrelation detected in your chronology, recommend choose auto.corr = TRUE &
         corr.method = c('spearman', 'kendall') to avoid spurious correlation results")
