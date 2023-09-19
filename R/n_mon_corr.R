@@ -276,6 +276,12 @@ n_mon_corr <- function(chrono = NULL, clim = NULL,
 
   mos <- mos[order(lengths(mos), decreasing = TRUE)]
 
+  mos.fac <- lapply(mos, FUN = \(x) {
+    ifelse(length(x) > 1,
+    paste(x[1], x[length(x)], sep = ":"),
+    paste(x))
+    }) |> unlist()
+
   # mos.mat$len <- apply(mos.mat, MARGIN = 1, FUN = \(x) {
   #   length(which(mon.seq %in% x["Var1"]) : which(mon.seq %in% x["Var2"]))
   # })
@@ -345,8 +351,7 @@ n_mon_corr <- function(chrono = NULL, clim = NULL,
                              p = ct$p.value[[1]])
       }
       }
-      # order the months as a factor (aspirational) & return the result
-      result$months <- factor(result$months, levels = month.vec)
+      # return the result
       result
     })
 
@@ -355,6 +360,9 @@ n_mon_corr <- function(chrono = NULL, clim = NULL,
                                      ifelse(cor.results$p <= 0.001, "***", "**")))
 
     cor.results$lag <- ifelse(l == 0, paste(l), paste0("-", l))
+
+    # order the months as a factor
+    cor.results$months <- factor(cor.results$months, levels = mos.fac)
     cor.results
   })
 
