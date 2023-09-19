@@ -293,7 +293,7 @@ n_mon_corr <- function(chrono = NULL, clim = NULL,
 
   lag.list <- ldply(lag.seq, .fun = function(l){
 
-    # calendar year
+    # Run through all the month aggregates
     cor.results <- ldply(mos, .fun = \(x){
       # Aggregate the variable of interest for the given month sequence
       clim.mo <- aggregate(formula(paste(var, "growyear", sep = "~")),
@@ -363,6 +363,8 @@ n_mon_corr <- function(chrono = NULL, clim = NULL,
 
     # order the months as a factor
     cor.results$months <- factor(cor.results$months, levels = mos.fac)
+
+    # Return all the results
     cor.results
   })
 
