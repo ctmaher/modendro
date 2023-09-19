@@ -98,7 +98,7 @@ n_mon_corr <- function(chrono = NULL, clim = NULL,
                        var = NULL, rel.per.begin = NULL,
                        hemisphere = NULL,
                        chrono.col = "std", agg.fun = "mean",
-                       max.lag = 2, auto.corr = TRUE,
+                       max.lag = 2, auto.corr = FALSE,
                        corr.method = "pearson",
                        chrono.name = NULL, plots = TRUE){
 
@@ -278,9 +278,9 @@ n_mon_corr <- function(chrono = NULL, clim = NULL,
 
   mos.fac <- lapply(mos, FUN = \(x) {
     ifelse(length(x) > 1,
-    paste(x[1], x[length(x)], sep = ":"),
-    paste(x))
-    }) |> unlist()
+           paste(x[1], x[length(x)], sep = ":"),
+           paste(x))
+  }) |> unlist()
 
   # mos.mat$len <- apply(mos.mat, MARGIN = 1, FUN = \(x) {
   #   length(which(mon.seq %in% x["Var1"]) : which(mon.seq %in% x["Var2"]))
@@ -317,14 +317,14 @@ n_mon_corr <- function(chrono = NULL, clim = NULL,
       # Run the correlation test between climate and the chronology
       if (auto.corr == TRUE) {
         if (corr.method %in% "pearson") {
-        ct <- cor.test(clim.mo[,var], clim.mo[, chrono.col],
-                       method = corr.method, alternative = "two.sided")
-        # put the results together in a data.frame
-        result <- data.frame(months = month.vec,
-                             coef = round(ct$estimate[[1]], 4),
-                             p = ct$p.value[[1]],
-                             ci.lo = ct$conf.int[1],
-                             ci.hi = ct$conf.int[2])
+          ct <- cor.test(clim.mo[,var], clim.mo[, chrono.col],
+                         method = corr.method, alternative = "two.sided")
+          # put the results together in a data.frame
+          result <- data.frame(months = month.vec,
+                               coef = round(ct$estimate[[1]], 4),
+                               p = ct$p.value[[1]],
+                               ci.lo = ct$conf.int[1],
+                               ci.hi = ct$conf.int[2])
         } else { # if spearman or kendall
           ct <- corTESTsrd(clim.mo[,var], clim.mo[, chrono.col],
                            method = corr.method,
@@ -335,21 +335,21 @@ n_mon_corr <- function(chrono = NULL, clim = NULL,
                                p = ct[["pval"]])
         }
       } else {
-      ct <- cor.test(clim.mo[,var], clim.mo[, chrono.col], method = corr.method)
+        ct <- cor.test(clim.mo[,var], clim.mo[, chrono.col], method = corr.method)
 
-      # put the results together in a data.frame
-      if (corr.method %in% "pearson") {
+        # put the results together in a data.frame
+        if (corr.method %in% "pearson") {
 
-        result <- data.frame(months = month.vec,
-                             coef = round(ct$estimate[[1]], 3),
-                             p = ct$p.value[[1]],
-                             ci.lo = ct$conf.int[1],
-                             ci.hi = ct$conf.int[2])
-      } else {
-        result <- data.frame(months = month.vec,
-                             coef = round(ct$estimate[[1]], 3),
-                             p = ct$p.value[[1]])
-      }
+          result <- data.frame(months = month.vec,
+                               coef = round(ct$estimate[[1]], 3),
+                               p = ct$p.value[[1]],
+                               ci.lo = ct$conf.int[1],
+                               ci.hi = ct$conf.int[2])
+        } else {
+          result <- data.frame(months = month.vec,
+                               coef = round(ct$estimate[[1]], 3),
+                               p = ct$p.value[[1]])
+        }
       }
       # return the result
       result
@@ -361,9 +361,6 @@ n_mon_corr <- function(chrono = NULL, clim = NULL,
 
     cor.results$lag <- ifelse(l == 0, paste(l), paste0("-", l))
 
-    # order the months as a factor
-    cor.results$months <- factor(cor.results$months, levels = mos.fac)
-
     # Return all the results
     cor.results
   })
@@ -373,18 +370,21 @@ n_mon_corr <- function(chrono = NULL, clim = NULL,
   # sort by correlation coef
   lag.list <- lag.list[order(lag.list$coef, decreasing = T),]
 
+  # order the months as a factor
+  lag.list$months <- factor(lag.list$months, levels = mos.fac)
+
   # Set up a data.frame for the plots - add some variables that are useful for plotting, but not
   # for the main output.
   if (plots == TRUE) {
 
     plot.df <- lag.list
     for (i in 1:nrow(plot.df)){
-      plot.df$start.mo[i] <- as.numeric(strsplit(plot.df$months, ":")[[i]][1])
+      plot.df$start.mo[i] <- as.numeric(strsplit(as.character(plot.df$months), ":")[[i]][1])
     }
     for (i in 1:nrow(plot.df)){
-      plot.df$end.mo[i] <- as.numeric(ifelse(length(strsplit(plot.df$months, ":")[[i]]) == 2,
-                                             strsplit(plot.df$months, ":")[[i]][2],
-                                             strsplit(plot.df$months, ":")[[i]][1]))
+      plot.df$end.mo[i] <- as.numeric(ifelse(length(strsplit(as.character(plot.df$months), ":")[[i]]) == 2,
+                                             strsplit(as.character(plot.df$months), ":")[[i]][2],
+                                             strsplit(as.character(plot.df$months), ":")[[i]][1]))
     }
 
     # Unlist these and make sure they are numeric.
