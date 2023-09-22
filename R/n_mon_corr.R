@@ -203,7 +203,8 @@ n_mon_corr <- function(chrono = NULL,
   ac.test <- ar(x = na.omit(chrono[order(chrono[,"year"]), chrono.col]))
   if (ac.test$order > 0 & auto.corr == FALSE) {
     cat("Autocorrelation detected in your chronology, recommend choose auto.corr = TRUE &
-        corr.method = c('spearman', 'kendall') to avoid spurious correlation results")
+        corr.method = c('spearman', 'kendall') to avoid spurious correlation results.
+        You can also construct a chronology of AR residuals (aka prewhitening).")
     auto.corr <- readline(prompt = "Enter auto.corr (TRUE or FALSE) = ")
     corr.method <- readline(prompt = "Enter corr.method ('spearman' or 'kendall') = ")
   }
@@ -317,13 +318,16 @@ n_mon_corr <- function(chrono = NULL,
       }
 
       # attach the chronology to the climate data - enter the current lag before this step
-      chrono.new <- chrono
-      chrono.new$year <- chrono.new$year - l
-      clim.mo <- merge(clim.mo, chrono.new, by.x = "growyear", by.y = "year")
+
+      clim.mo.test <- merge(clim.mo, chrono, by.x = "growyear", by.y = "year")
+      clim.mo.new <- clim.mo
+      clim.mo.new$growyear <- clim.mo.new$growyear + l
+      clim.mo.new <- merge(clim.mo.new, chrono, by.x = "growyear", by.y = "year")
+      clim.mo.new$lag <- ifelse(l == 0, paste(l), paste0("-", l))
 
       # Remove any ties from the data
-      clim.mo <- clim.mo[which(!duplicated(clim.mo[,var])),]
-      clim.mo <- clim.mo[which(!duplicated(clim.mo[,chrono.col])),]
+      clim.mo.new <- clim.mo.new[which(!duplicated(clim.mo.new[,var])),]
+      clim.mo.new <- clim.mo.new[which(!duplicated(clim.mo.new[,chrono.col])),]
 
       # The months vector in the desired order.
       month.vec <- ifelse(length(x) > 1,
@@ -333,7 +337,7 @@ n_mon_corr <- function(chrono = NULL,
       # Run the correlation test between climate and the chronology
       if (auto.corr == TRUE) {
         if (corr.method %in% "pearson") {
-          ct <- cor.test(clim.mo[,var], clim.mo[, chrono.col],
+          ct <- cor.test(clim.mo.new[,var], clim.mo.new[, chrono.col],
                          method = corr.method, alternative = "two.sided")
           # put the results together in a data.frame
           result <- data.frame(months = month.vec,
@@ -342,7 +346,7 @@ n_mon_corr <- function(chrono = NULL,
                                ci.lo = ct$conf.int[1],
                                ci.hi = ct$conf.int[2])
         } else { # if spearman or kendall
-          ct <- corTESTsrd(clim.mo[,var], clim.mo[, chrono.col],
+          ct <- corTESTsrd(clim.mo.new[,var], clim.mo.new[, chrono.col],
                            method = corr.method,
                            iid = FALSE, alternative = "two.sided")
           # put the results together in a data.frame
@@ -351,7 +355,7 @@ n_mon_corr <- function(chrono = NULL,
                                p = ct[["pval"]])
         }
       } else {
-        ct <- cor.test(clim.mo[,var], clim.mo[, chrono.col], method = corr.method)
+        ct <- cor.test(clim.mo.new[,var], clim.mo.new[, chrono.col], method = corr.method)
 
         # put the results together in a data.frame
         if (corr.method %in% "pearson") {
