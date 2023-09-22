@@ -35,11 +35,13 @@
 #' @param agg.fun character vector specifying the function to use for aggregating monthly climate combinations.
 #' Options are "mean" or "sum", e.g., for temperature or precipitation data, respectively. Default is "mean".
 #' @param max.lag numeric vector specifying how many years of lag to calculate calculations for. Default is 2 years.
-#' @param corr.method character vector specifying which correlation method to use. Options are `c("pearson", "kendall", "spearman")`.
-#'  Passes to `cor.test()` or to `corTESTsrd()`.
+#' @param ar.clim logical vector specifying whether or not to convert climate time series to AR residuals (aka "prewhitening").
+#' This removes autocorrelation in a time series, leaving only the high-frequency variation. If you are doing this, you should also construct your chronology from AR residuals/prewhitened series. Default is FALSE.
 #' @param auto.corr logical vector specifying whether there is temporal autocorrelation in either your tree ring chronology or climate time series (there typically is autocorrelation, unless both are "prewhitened").
 #' If TRUE (the default), & corr.method is "spearman" or "kendall", then the `corTESTsrd()` function is used to compute modified significance testing to account for autocorrelation (From Lun et al. 2022).
 #' Caution! Currently auto.corr = TRUE & corr.method = "Pearson" doesn't make any adjustments. This will be included soon.
+#' @param corr.method character vector specifying which correlation method to use. Options are `c("pearson", "kendall", "spearman")`.
+#'  Passes to `cor.test()` or to `corTESTsrd()`.
 #' @param chrono.name character vector - the name of your chronology (optional). This is used in the title of your plot.
 #' If you produce many plots, this helps keep them identifiable.
 #' @param plots logical vector indicating whether or not to produce plots. Default is TRUE.
@@ -94,13 +96,19 @@
 #'
 
 
-n_mon_corr <- function(chrono = NULL, clim = NULL,
-                       var = NULL, rel.per.begin = NULL,
+n_mon_corr <- function(chrono = NULL,
+                       clim = NULL,
+                       var = NULL,
+                       rel.per.begin = NULL,
                        hemisphere = NULL,
-                       chrono.col = "std", agg.fun = "mean",
-                       max.lag = 2, auto.corr = FALSE,
+                       chrono.col = "std",
+                       agg.fun = "mean",
+                       max.lag = 2,
+                       ar.clim = FALSE,
+                       auto.corr = FALSE,
                        corr.method = "pearson",
-                       chrono.name = NULL, plots = TRUE){
+                       chrono.name = NULL,
+                       plots = TRUE){
 
 
   ## Initial error catching and interactive prompts
@@ -300,6 +308,14 @@ n_mon_corr <- function(chrono = NULL, clim = NULL,
                            data = clim[clim$month %in% x, ],
                            FUN = \(z){ifelse(agg.fun %in% "mean", mean(z), sum(z))})
 
+      # If we want to convert climate to AR residuals (aka, "prewhitening"), do it here
+      # This follows what dplR's detrend.series(method = "Ar) does for tree ring series
+      if (ar.clim == TRUE) {
+        ar.mod <- ar(clim.mo[,var])
+        ar.mean.resid <- ar.mod$resid + ar.mod$x.mean
+        clim.mo[,var] <- ar.mean.resid/mean(ar.mean.resid, na.rm = TRUE)
+      }
+
       # attach the chronology to the climate data - enter the current lag before this step
       chrono.new <- chrono
       chrono.new$year <- chrono.new$year - l
@@ -395,8 +411,13 @@ n_mon_corr <- function(chrono = NULL, clim = NULL,
     plot.df$simp.sig <- ifelse(plot.df$sig %in% c("*","**","***"), "Sig.","Not sig.")
 
     # Build a nice title for the plots
-    title <- ifelse(is.null(chrono.name), paste0("Chronology correlations with ",var),
-                    paste0(chrono.name, " chronology correlations with ",var))
+    if (ar.clim == TRUE) {
+      title <- ifelse(is.null(chrono.name), paste0("Chronology correlations with AR residuals of ", var),
+                      paste0(chrono.name, " chronology correlations with AR residuals of ", var))
+    } else {
+      title <- ifelse(is.null(chrono.name), paste0("Chronology correlations with ", var),
+                      paste0(chrono.name, " chronology correlations with ", var))
+    }
 
     # Make the plot
     out.plot <- ggplot(plot.df) +
