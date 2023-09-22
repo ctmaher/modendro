@@ -312,9 +312,9 @@ n_mon_corr <- function(chrono = NULL,
       # If we want to convert climate to AR residuals (aka, "prewhitening"), do it here
       # This follows what dplR's detrend.series(method = "Ar) does for tree ring series
       if (ar.clim == TRUE) {
-        ar.mod <- ar(clim.mo[,var])
+        ar.mod <- ar(clim.mo[!is.na(clim.mo[,var]),var])
         ar.mean.resid <- ar.mod$resid + ar.mod$x.mean
-        clim.mo[,var] <- ar.mean.resid/mean(ar.mean.resid, na.rm = TRUE)
+        clim.mo[!is.na(clim.mo[,var]),var] <- ar.mean.resid/mean(ar.mean.resid, na.rm = TRUE)
       }
 
       # attach the chronology to the climate data - enter the current lag before this step
