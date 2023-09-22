@@ -35,7 +35,7 @@
 #' @param agg.fun character vector specifying the function to use for aggregating monthly climate combinations.
 #' Options are "mean" or "sum", e.g., for temperature or precipitation data, respectively. Default is "mean".
 #' @param max.lag numeric vector specifying how many years of lag to calculate calculations for. Default is 2 years.
-#' @param ar.clim logical vector specifying whether or not to convert climate time series to AR residuals (aka "prewhitening").
+#' @param prewhiten logical vector specifying whether or not to convert climate time series to AR residuals (aka "prewhitening").
 #' This removes autocorrelation in a time series, leaving only the high-frequency variation. If you are doing this, you should also construct your chronology from AR residuals/prewhitened series. Default is FALSE.
 #' @param auto.corr logical vector specifying whether there is temporal autocorrelation in either your tree ring chronology or climate time series (there typically is autocorrelation, unless both are "prewhitened").
 #' If TRUE (the default), & corr.method is "spearman" or "kendall", then the `corTESTsrd()` function is used to compute modified significance testing to account for autocorrelation (From Lun et al. 2022).
@@ -104,7 +104,7 @@ n_mon_corr <- function(chrono = NULL,
                        chrono.col = "std",
                        agg.fun = "mean",
                        max.lag = 2,
-                       ar.clim = FALSE,
+                       prewhiten = FALSE,
                        auto.corr = FALSE,
                        corr.method = "pearson",
                        chrono.name = NULL,
@@ -201,12 +201,12 @@ n_mon_corr <- function(chrono = NULL,
   # Give a warning & maybe stop the function if there is autocorrelation in the tree ring series
   # There should be a prompt (verbal or otherwise)
   ac.test <- ar(x = na.omit(chrono[order(chrono[,"year"]), chrono.col]))
-  if (ac.test$order > 0 & auto.corr == FALSE) {
+  if (ac.test$order > 0 & auto.corr == FALSE & prewhiten == FALSE) {
     cat("Autocorrelation detected in your chronology, recommend choose auto.corr = TRUE &
         corr.method = c('spearman', 'kendall') to avoid spurious correlation results.
         You can also construct a chronology of AR residuals (aka prewhitening).")
-    auto.corr <- readline(prompt = "Enter auto.corr (TRUE or FALSE) = ")
-    corr.method <- readline(prompt = "Enter corr.method ('spearman' or 'kendall') = ")
+    # auto.corr <- readline(prompt = "Enter auto.corr (TRUE or FALSE) = ")
+    # corr.method <- readline(prompt = "Enter corr.method ('spearman' or 'kendall') = ")
   }
 
   # Clean up the hemisphere argument if needed
@@ -309,17 +309,20 @@ n_mon_corr <- function(chrono = NULL,
                            data = clim[clim$month %in% x, ],
                            FUN = \(z){ifelse(agg.fun %in% "mean", mean(z), sum(z))})
 
-      # If we want to convert climate to AR residuals (aka, "prewhitening"), do it here
+      # If we want to convert climate & chrono to AR residuals (aka, "prewhitening"), do it here
       # This follows what dplR's detrend.series(method = "Ar) does for tree ring series
-      if (ar.clim == TRUE) {
+      if (prewhiten == TRUE) {
         ar.mod <- ar(clim.mo[!is.na(clim.mo[,var]),var])
         ar.mean.resid <- ar.mod$resid + ar.mod$x.mean
         clim.mo[!is.na(clim.mo[,var]),var] <- ar.mean.resid/mean(ar.mean.resid, na.rm = TRUE)
+        ar.mod2 <- ar(chrono[!is.na(chrono[,chrono.col]),chrono.col])
+        ar.mean2.resid <- ar.mod2$resid + ar.mod2$x.mean
+        chrono[!is.na(chrono[,chrono.col]),chrono.col] <- ar.mean2.resid/mean(ar.mean2.resid, na.rm = TRUE)
       }
 
       # attach the chronology to the climate data - enter the current lag before this step
 
-      clim.mo.test <- merge(clim.mo, chrono, by.x = "growyear", by.y = "year")
+      #clim.mo.test <- merge(clim.mo, chrono, by.x = "growyear", by.y = "year")
       clim.mo.new <- clim.mo
       clim.mo.new$growyear <- clim.mo.new$growyear + l
       clim.mo.new <- merge(clim.mo.new, chrono, by.x = "growyear", by.y = "year")
@@ -415,9 +418,9 @@ n_mon_corr <- function(chrono = NULL,
     plot.df$simp.sig <- ifelse(plot.df$sig %in% c("*","**","***"), "Sig.","Not sig.")
 
     # Build a nice title for the plots
-    if (ar.clim == TRUE) {
-      title <- ifelse(is.null(chrono.name), paste0("Chronology correlations with AR residuals of ", var),
-                      paste0(chrono.name, " chronology correlations with AR residuals of ", var))
+    if (prewhiten == TRUE) {
+      title <- ifelse(is.null(chrono.name), paste0("Chronology correlations with ", var, " (both vars prewhitened)"),
+                      paste0(chrono.name, " chronology correlations with ", var, " (both vars prewhitened)"))
     } else {
       title <- ifelse(is.null(chrono.name), paste0("Chronology correlations with ", var),
                       paste0(chrono.name, " chronology correlations with ", var))
