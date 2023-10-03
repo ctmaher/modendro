@@ -13,7 +13,8 @@ n_mon_corr(
   chrono.col = "std",
   agg.fun = "mean",
   max.lag = 2,
-  auto.cor = TRUE,
+  prewhiten = FALSE,
+  auto.corr = FALSE,
   corr.method = "pearson",
   chrono.name = NULL,
   plots = TRUE
@@ -39,8 +40,12 @@ Options are "mean" or "sum", e.g., for temperature or precipitation data, respec
 
 \item{max.lag}{numeric vector specifying how many years of lag to calculate calculations for. Default is 2 years.}
 
-\item{auto.cor}{logical vector specifying whether there is temporal autocorrelation in either your tree ring chronology or climate time series (there typically is autocorrelation, unless both are "prewhitened").
-If TRUE (the default), & corr.method is "spearman" or "kendall", then the \code{corTESTsrd()} function is used to compute modified significance testing to account for autocorrelation (From Lun et al. 2022).}
+\item{prewhiten}{logical vector specifying whether or not to convert climate time series to AR residuals (aka "prewhitening").
+This removes autocorrelation in a time series, leaving only the high-frequency variation. If you are doing this, you should also construct your chronology from AR residuals/prewhitened series. Default is FALSE.}
+
+\item{auto.corr}{logical vector specifying whether there is temporal autocorrelation in either your tree ring chronology or climate time series (there typically is autocorrelation, unless both are "prewhitened").
+If TRUE (the default), & corr.method is "spearman" or "kendall", then the \code{corTESTsrd()} function is used to compute modified significance testing to account for autocorrelation (From Lun et al. 2022).
+Caution! Currently auto.corr = TRUE & corr.method = "Pearson" doesn't make any adjustments. This will be included soon.}
 
 \item{corr.method}{character vector specifying which correlation method to use. Options are \code{c("pearson", "kendall", "spearman")}.
 Passes to \code{cor.test()} or to \code{corTESTsrd()}.}
@@ -81,7 +86,8 @@ Exploring a wide range of plausible growth-climate relationships can be a useful
 a collection of cross-dated tree ring series and have properly detrended them, standardized them, and dealt
 with temporal autocorrelation.
 
-The default correlation test method is Pearson product moment correlation coefficient.
+The default correlation test method is Pearson product moment correlation coefficient, although this might
+not be appropriate for your analysis.
 
 A note on tree ring analyses based in the Southern hemisphere:
 \code{n_mon_corr()} is designed to work in both the Northern and Southern hemispheres. Hemisphere matters
