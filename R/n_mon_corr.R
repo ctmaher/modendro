@@ -25,13 +25,13 @@
 #'
 #'
 #' @param chrono a `chron` object (such as that produced by dplR's `chron()`). Make sure this has a `year` variable.
+#' @param chrono.col character vector - the colname of the chronology series (default is "std", which is the defualt produced by dplR's `chron()`).
 #' @param clim a `data.frame` with at least 3 columns: year, month (numeric), and a climate variable.
 #' @param var character vector - the colname of the climate variable of interest in the `clim` data.frame.
 #' @param rel.per.begin an integer month representing the beginning of the climatically relevant period to the growth year (always a 12 month period).
 #' This will include the "water year" of the calendar year before growth. E.g., 10 for N hemisphere, 4 for S hemisphere. See details below for more info.
 #' @param hemisphere a character vector specifying which hemisphere your chronology - & climate data - comes from ("N" or "S").
 #' Conventions for assigning growth years - and thus aligning tree ring and climate data - are different for N and S hemisphere.
-#' @param chrono.col character vector - the colname of the chronology series (default is "std", which is the defualt produced by dplR's `chron()`).
 #' @param agg.fun character vector specifying the function to use for aggregating monthly climate combinations.
 #' Options are "mean" or "sum", e.g., for temperature or precipitation data, respectively. Default is "mean".
 #' @param max.lag numeric vector specifying how many years of lag to calculate calculations for. Default is 2 years.
@@ -97,11 +97,11 @@
 
 
 n_mon_corr <- function(chrono = NULL,
+                       chrono.col = "std",
                        clim = NULL,
                        var = NULL,
                        rel.per.begin = NULL,
                        hemisphere = NULL,
-                       chrono.col = "std",
                        agg.fun = "mean",
                        max.lag = 2,
                        prewhiten = FALSE,
@@ -130,11 +130,13 @@ n_mon_corr <- function(chrono = NULL,
               length(match.test[match.test == TRUE]) == 1
   )
 
-  match.test <- chrono.col %in% colnames(chrono)
+  match.test <- colnames(chrono) %in% chrono.col
   stopifnot("Arg chrono.col must match the name
          of the growth variable in the chrono data.frame" =
               length(match.test[match.test == TRUE]) == 1
   )
+
+
 
   if (is.null(rel.per.begin)) {
     cat("You haven't specified the beginning month of the relevant climate period -\n",
@@ -197,6 +199,38 @@ n_mon_corr <- function(chrono = NULL,
     chrono[,"year"] <- as.numeric(chrono[,"year"])
   }
 
+  # n_mon_corr assumes that all years have all 12 months! If even one month is missing somewhere, this will
+  # mess up everything that follows.
+
+  mon.count <- aggregate(month ~ year, data = clim, length)
+
+  stopifnot("Not all years in climate data have all 12 months represented. n_mon_corr() requires that all years have all 12 months." =
+              all(mon.count$month == 12)
+  )
+  if (all(mon.count$month != 12)) {
+    paste("Year", mon.count$year[mon.count$month < 12],
+          "does not have all 12 months represented.")
+  }
+
+  # n_mon_corr also assumes absolute regularity (this is true for some of the correlation tests too) in both chrono & clim
+  chron.year.seq <- chrono[,"year"]
+  chron.year.seq.diff <- chron.year.seq[order(chron.year.seq)] |> diff()
+  clim.year.seq <- unique(clim[,"year"])
+  clim.year.seq.diff <- clim.year.seq[order(clim.year.seq)] |> diff()
+  if (any(chron.year.seq.diff != 1)) {
+    paste("Year", chron.year.seq[which(chron.year.seq.diff > 1)], "is missing from chronology.")
+  }
+  stopifnot("Chronology does not have complete continuous years." =
+              all(chron.year.seq.diff == 1)
+  )
+
+  if (any(clim.year.seq.diff != 1)) {
+    paste("Year", clim.year.seq[which(clim.year.seq.diff > 1)], "is missing from climate data.")
+  }
+  stopifnot("Climate data does not have complete continuous years." =
+              all(clim.year.seq.diff == 1)
+  )
+
 
   # Give a warning & maybe stop the function if there is autocorrelation in the tree ring series
   # There should be a prompt (verbal or otherwise)
@@ -224,6 +258,9 @@ n_mon_corr <- function(chrono = NULL,
   cat("You have specified the following months for your relevant climate period in the\n",
       hemisphere, "hemisphere:", mon.seq)
 
+  # The operations below assume that the climate data is arranged by month, then year.
+  # Let's ensure this is the case.
+  clim <- clim[order(clim$year, clim$month),]
 
   # Define the "growth year" based on the hemisphere argument
   if (hemisphere %in% "S") {

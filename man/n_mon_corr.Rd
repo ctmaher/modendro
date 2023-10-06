@@ -6,11 +6,11 @@
 \usage{
 n_mon_corr(
   chrono = NULL,
+  chrono.col = "std",
   clim = NULL,
   var = NULL,
   rel.per.begin = NULL,
   hemisphere = NULL,
-  chrono.col = "std",
   agg.fun = "mean",
   max.lag = 2,
   prewhiten = FALSE,
@@ -23,6 +23,8 @@ n_mon_corr(
 \arguments{
 \item{chrono}{a \code{chron} object (such as that produced by dplR's \code{chron()}). Make sure this has a \code{year} variable.}
 
+\item{chrono.col}{character vector - the colname of the chronology series (default is "std", which is the defualt produced by dplR's \code{chron()}).}
+
 \item{clim}{a \code{data.frame} with at least 3 columns: year, month (numeric), and a climate variable.}
 
 \item{var}{character vector - the colname of the climate variable of interest in the \code{clim} data.frame.}
@@ -32,8 +34,6 @@ This will include the "water year" of the calendar year before growth. E.g., 10 
 
 \item{hemisphere}{a character vector specifying which hemisphere your chronology - & climate data - comes from ("N" or "S").
 Conventions for assigning growth years - and thus aligning tree ring and climate data - are different for N and S hemisphere.}
-
-\item{chrono.col}{character vector - the colname of the chronology series (default is "std", which is the defualt produced by dplR's \code{chron()}).}
 
 \item{agg.fun}{character vector specifying the function to use for aggregating monthly climate combinations.
 Options are "mean" or "sum", e.g., for temperature or precipitation data, respectively. Default is "mean".}
