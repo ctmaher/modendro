@@ -381,7 +381,7 @@ n_mon_corr <- function(chrono = NULL,
                          method = corr.method, alternative = "two.sided")
           # put the results together in a data.frame
           result <- data.frame(months = month.vec,
-                               coef = round(ct$estimate[[1]], 4),
+                               coef = ct$estimate[[1]],
                                p = ct$p.value[[1]],
                                ci.lo = ct$conf.int[1],
                                ci.hi = ct$conf.int[2])
@@ -391,7 +391,7 @@ n_mon_corr <- function(chrono = NULL,
                            iid = FALSE, alternative = "two.sided")
           # put the results together in a data.frame
           result <- data.frame(months = month.vec,
-                               coef = round(ct[["rho"]], 4),
+                               coef = ct[["rho"]],
                                p = ct[["pval"]])
         }
       } else {
@@ -401,13 +401,13 @@ n_mon_corr <- function(chrono = NULL,
         if (corr.method %in% "pearson") {
 
           result <- data.frame(months = month.vec,
-                               coef = round(ct$estimate[[1]], 3),
+                               coef = ct$estimate[[1]],
                                p = ct$p.value[[1]],
                                ci.lo = ct$conf.int[1],
                                ci.hi = ct$conf.int[2])
         } else {
           result <- data.frame(months = month.vec,
-                               coef = round(ct$estimate[[1]], 3),
+                               coef = ct$estimate[[1]],
                                p = ct$p.value[[1]])
         }
       }
