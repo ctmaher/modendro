@@ -8,16 +8,17 @@ n_mon_corr(
   chrono = NULL,
   chrono.col = "std",
   clim = NULL,
-  var = NULL,
+  clim.var = NULL,
   rel.per.begin = NULL,
   hemisphere = NULL,
   agg.fun = "mean",
-  max.lag = 2,
+  max.lag = 1,
   prewhiten = FALSE,
   auto.corr = FALSE,
   corr.method = "pearson",
   chrono.name = NULL,
-  plots = TRUE
+  plots = TRUE,
+  silent = FALSE
 )
 }
 \arguments{
@@ -27,7 +28,7 @@ n_mon_corr(
 
 \item{clim}{a \code{data.frame} with at least 3 columns: year, month (numeric), and a climate variable.}
 
-\item{var}{character vector - the colname of the climate variable of interest in the \code{clim} data.frame.}
+\item{clim.var}{character vector - the colname of the climate variable of interest in the \code{clim} data.frame.}
 
 \item{rel.per.begin}{an integer month representing the beginning of the climatically relevant period to the growth year (always a 12 month period).
 This will include the "water year" of the calendar year before growth. E.g., 10 for N hemisphere, 4 for S hemisphere. See details below for more info.}
@@ -38,7 +39,7 @@ Conventions for assigning growth years - and thus aligning tree ring and climate
 \item{agg.fun}{character vector specifying the function to use for aggregating monthly climate combinations.
 Options are "mean" or "sum", e.g., for temperature or precipitation data, respectively. Default is "mean".}
 
-\item{max.lag}{numeric vector specifying how many years of lag to calculate calculations for. Default is 2 years.}
+\item{max.lag}{numeric vector specifying how many years of lag to calculate calculations for. Default is 1 year.}
 
 \item{prewhiten}{logical vector specifying whether or not to convert climate time series to AR residuals (aka "prewhitening").
 This removes autocorrelation in a time series, leaving only the high-frequency variation. If you are doing this, you should also construct your chronology from AR residuals/prewhitened series. Default is FALSE.}
@@ -54,9 +55,11 @@ Passes to \code{cor.test()} or to \code{corTESTsrd()}.}
 If you produce many plots, this helps keep them identifiable.}
 
 \item{plots}{logical vector indicating whether or not to produce plots. Default is TRUE.}
+
+\item{silent}{logical vector indicating whether messages about relevant period and hemisphere conventions will be printed. Default is FALSE.}
 }
 \value{
-A 1-2 element list containing data.frames of the correlation results and the default plots of the same data.
+A 2-3 element list containing data.frames of the correlation results, the data used in the correlations, and the default plots of the same data.
 }
 \description{
 Exploratory data analysis (EDA) function to compute correlations between a tree ring chronology and a monthly climate variable

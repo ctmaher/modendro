@@ -23,18 +23,17 @@
 #' If you don't know what this means or you just took a chronology directly from the ITRDB without knowing how it was made,
 #'  you have some homework to do. There aren't universal answers to these tasks - each dataset is somewhat unique.
 #'
-#'
 #' @param chrono a `chron` object (such as that produced by dplR's `chron()`). Make sure this has a `year` variable.
 #' @param chrono.col character vector - the colname of the chronology series (default is "std", which is the defualt produced by dplR's `chron()`).
 #' @param clim a `data.frame` with at least 3 columns: year, month (numeric), and a climate variable.
-#' @param var character vector - the colname of the climate variable of interest in the `clim` data.frame.
+#' @param clim.var character vector - the colname of the climate variable of interest in the `clim` data.frame.
 #' @param rel.per.begin an integer month representing the beginning of the climatically relevant period to the growth year (always a 12 month period).
 #' This will include the "water year" of the calendar year before growth. E.g., 10 for N hemisphere, 4 for S hemisphere. See details below for more info.
 #' @param hemisphere a character vector specifying which hemisphere your chronology - & climate data - comes from ("N" or "S").
 #' Conventions for assigning growth years - and thus aligning tree ring and climate data - are different for N and S hemisphere.
 #' @param agg.fun character vector specifying the function to use for aggregating monthly climate combinations.
 #' Options are "mean" or "sum", e.g., for temperature or precipitation data, respectively. Default is "mean".
-#' @param max.lag numeric vector specifying how many years of lag to calculate calculations for. Default is 2 years.
+#' @param max.lag numeric vector specifying how many years of lag to calculate calculations for. Default is 1 year.
 #' @param prewhiten logical vector specifying whether or not to convert climate time series to AR residuals (aka "prewhitening").
 #' This removes autocorrelation in a time series, leaving only the high-frequency variation. If you are doing this, you should also construct your chronology from AR residuals/prewhitened series. Default is FALSE.
 #' @param auto.corr logical vector specifying whether there is temporal autocorrelation in either your tree ring chronology or climate time series (there typically is autocorrelation, unless both are "prewhitened").
@@ -45,6 +44,7 @@
 #' @param chrono.name character vector - the name of your chronology (optional). This is used in the title of your plot.
 #' If you produce many plots, this helps keep them identifiable.
 #' @param plots logical vector indicating whether or not to produce plots. Default is TRUE.
+#' @param silent logical vector indicating whether messages about relevant period and hemisphere conventions will be printed. Default is FALSE.
 #'
 #' @details
 #' Exploring a wide range of plausible growth-climate relationships can be a useful first step once you have
@@ -77,15 +77,13 @@
 #' in black, no significant ones in grey. Plot panel labels (right-hand side of plots) indicate lag years: 0 = current year,
 #' -1 = previous year, -2 = 2 years back.
 #'
-#'
-#' @return A 1-2 element list containing data.frames of the correlation results and the default plots of the same data.
+#' @return A 2-3 element list containing data.frames of the correlation results, the data used in the correlations, and the default plots of the same data.
 #'
 #' @references
 #' Schulman, E. (1956) \emph{Dendroclimatic changes in semiarid America}, University of Arizona Press.
 #'
 #' Lun, D., S. Fischer, A. Viglione, and G. Blöschl. (2022). Significance testing of rank cross-correlations between autocorrelated time series with short-range dependence, \emph{Journal of Applied Statistics}:1–17.
 #'
-#' @import plyr
 #' @import ggplot2
 #' @import corTESTsrd
 #'
@@ -99,16 +97,17 @@
 n_mon_corr <- function(chrono = NULL,
                        chrono.col = "std",
                        clim = NULL,
-                       var = NULL,
+                       clim.var = NULL,
                        rel.per.begin = NULL,
                        hemisphere = NULL,
                        agg.fun = "mean",
-                       max.lag = 2,
+                       max.lag = 1,
                        prewhiten = FALSE,
                        auto.corr = FALSE,
                        corr.method = "pearson",
                        chrono.name = NULL,
-                       plots = TRUE){
+                       plots = TRUE,
+                       silent = FALSE){
 
 
   ## Initial error catching and interactive prompts
@@ -125,8 +124,8 @@ n_mon_corr <- function(chrono = NULL,
   #             substr(colnames(chrono), 1, 1) %in% c("Y","y")
   #           )
 
-  match.test <- var %in% colnames(clim)
-  stopifnot("Arg var must match one unique column name in clim" =
+  match.test <- clim.var %in% colnames(clim)
+  stopifnot("Arg clim.var must match one unique column name in clim" =
               length(match.test[match.test == TRUE]) == 1
   )
 
@@ -135,8 +134,6 @@ n_mon_corr <- function(chrono = NULL,
          of the growth variable in the chrono data.frame" =
               length(match.test[match.test == TRUE]) == 1
   )
-
-
 
   if (is.null(rel.per.begin)) {
     cat("You haven't specified the beginning month of the relevant climate period -\n",
@@ -166,6 +163,15 @@ n_mon_corr <- function(chrono = NULL,
               agg.fun %in% "sum"
   )
 
+  stopifnot("Arg max.lag must be a numeric vector of length = 1" =
+              length(max.lag) == 1 |
+              is.numeric(max.lag)
+  )
+
+  # accept max.lag inputs that have a negative in front
+  if (max.lag < 0) {
+    max.lag <- as.numeric(max.lag) |> abs()
+  }
 
   stopifnot("Arg corr.method must be an exact match of one of these: c('pearson','kendall','spearman')" =
               corr.method %in% c("pearson", "kendall", "spearman")
@@ -255,8 +261,10 @@ n_mon_corr <- function(chrono = NULL,
   # growth year is the later calendar year. In the S hemisphere, it is the earlier calendar year.
 
   # Print the relevant climate period
-  cat("You have specified the following months for your relevant climate period in the\n",
-      hemisphere, "hemisphere:", mon.seq)
+  if (silent == FALSE) {
+    cat("You have specified the following months for your relevant climate period in the\n",
+        hemisphere, "hemisphere:", mon.seq)
+  }
 
   # The operations below assume that the climate data is arranged by month, then year.
   # Let's ensure this is the case.
@@ -264,14 +272,18 @@ n_mon_corr <- function(chrono = NULL,
 
   # Define the "growth year" based on the hemisphere argument
   if (hemisphere %in% "S") {
-    message("\nAssuming Southern hemisphere conventions for linking growth years
+    if (silent == FALSE) {
+      message("\nAssuming Southern hemisphere conventions for linking growth years
     and climate years (see ?n_mon_corr for details)")
+    }
     offset <- rel.per.begin - 1
     clim$growyear <- c(rep(min(clim[,"year"]) - 1, offset), clim[,"year"][1:(length(clim[,"year"]) - offset)])
 
   } else {
-    message("\nAssuming Northern hemisphere conventions for linking growth years
+    if (silent == FALSE) {
+      message("\nAssuming Northern hemisphere conventions for linking growth years
     and climate years (see ?n_mon_corr for details)")
+    }
     offset <- 12 - rel.per.begin + 1
     clim$growyear <- c(clim[,"year"][(offset + 1):length(clim[,"year"])], rep(max(clim[,"year"]) + 1, offset))
 
@@ -328,56 +340,51 @@ n_mon_corr <- function(chrono = NULL,
            paste(x))
   }) |> unlist()
 
-  # mos.mat$len <- apply(mos.mat, MARGIN = 1, FUN = \(x) {
-  #   length(which(mon.seq %in% x["Var1"]) : which(mon.seq %in% x["Var2"]))
-  # })
-
   # Annual lags
   # Hold the data.frame of results in a list, with the length of the list being equal to
   # 1 + the max lag
   lag.seq <- 0:max.lag
 
-  lag.list <- ldply(lag.seq, .fun = function(l){
+  lag.list <- lapply(lag.seq, FUN = function(l){
 
     # Run through all the month aggregates
-    cor.results <- ldply(mos, .fun = \(x){
+    cor.res.df <- lapply(mos, FUN = \(x){
       # Aggregate the variable of interest for the given month sequence
-      clim.mo <- aggregate(formula(paste(var, "growyear", sep = "~")),
+      clim.mo <- aggregate(formula(paste(clim.var, "growyear", sep = "~")),
                            data = clim[clim$month %in% x, ],
                            FUN = \(z){ifelse(agg.fun %in% "mean", mean(z), sum(z))})
 
       # If we want to convert climate & chrono to AR residuals (aka, "prewhitening"), do it here
       # This follows what dplR's detrend.series(method = "Ar) does for tree ring series
       if (prewhiten == TRUE) {
-        ar.mod <- ar(clim.mo[!is.na(clim.mo[,var]),var])
+        ar.mod <- ar(clim.mo[!is.na(clim.mo[,clim.var]),clim.var])
         ar.mean.resid <- ar.mod$resid + ar.mod$x.mean
-        clim.mo[!is.na(clim.mo[,var]),var] <- ar.mean.resid/mean(ar.mean.resid, na.rm = TRUE)
+        clim.mo[!is.na(clim.mo[,clim.var]),clim.var] <- ar.mean.resid/mean(ar.mean.resid, na.rm = TRUE)
         ar.mod2 <- ar(chrono[!is.na(chrono[,chrono.col]),chrono.col])
         ar.mean2.resid <- ar.mod2$resid + ar.mod2$x.mean
         chrono[!is.na(chrono[,chrono.col]),chrono.col] <- ar.mean2.resid/mean(ar.mean2.resid, na.rm = TRUE)
       }
-
-      # attach the chronology to the climate data - enter the current lag before this step
-
-      #clim.mo.test <- merge(clim.mo, chrono, by.x = "growyear", by.y = "year")
-      clim.mo.new <- clim.mo
-      clim.mo.new$growyear <- clim.mo.new$growyear + l
-      clim.mo.new <- merge(clim.mo.new, chrono, by.x = "growyear", by.y = "year")
-      clim.mo.new$lag <- ifelse(l == 0, paste(l), paste0("-", l))
-
-      # Remove any ties from the data
-      clim.mo.new <- clim.mo.new[which(!duplicated(clim.mo.new[,var])),]
-      clim.mo.new <- clim.mo.new[which(!duplicated(clim.mo.new[,chrono.col])),]
 
       # The months vector in the desired order.
       month.vec <- ifelse(length(x) > 1,
                           paste(x[1], x[length(x)], sep = ":"),
                           paste(x))
 
+      # attach the chronology to the climate data
+      clim.mo.new <- clim.mo
+      clim.mo.new$growyear <- clim.mo.new$growyear + l
+      clim.mo.new <- merge(clim.mo.new, chrono, by.x = "growyear", by.y = "year")
+      clim.mo.new$lag <- ifelse(l == 0, paste(l), paste0("-", l))
+      clim.mo.new$months <- month.vec
+
+      # Remove any ties from the data
+      clim.mo.new <- clim.mo.new[which(!duplicated(clim.mo.new[,clim.var])),]
+      clim.mo.new <- clim.mo.new[which(!duplicated(clim.mo.new[,chrono.col])),]
+
       # Run the correlation test between climate and the chronology
       if (auto.corr == TRUE) {
         if (corr.method %in% "pearson") {
-          ct <- cor.test(clim.mo.new[,var], clim.mo.new[, chrono.col],
+          ct <- cor.test(clim.mo.new[, clim.var], clim.mo.new[, chrono.col],
                          method = corr.method, alternative = "two.sided")
           # put the results together in a data.frame
           result <- data.frame(months = month.vec,
@@ -386,7 +393,7 @@ n_mon_corr <- function(chrono = NULL,
                                ci.lo = ct$conf.int[1],
                                ci.hi = ct$conf.int[2])
         } else { # if spearman or kendall
-          ct <- corTESTsrd(clim.mo.new[,var], clim.mo.new[, chrono.col],
+          ct <- corTESTsrd(clim.mo.new[,clim.var], clim.mo.new[, chrono.col],
                            method = corr.method,
                            iid = FALSE, alternative = "two.sided")
           # put the results together in a data.frame
@@ -395,7 +402,7 @@ n_mon_corr <- function(chrono = NULL,
                                p = ct[["pval"]])
         }
       } else {
-        ct <- cor.test(clim.mo.new[,var], clim.mo.new[, chrono.col], method = corr.method)
+        ct <- cor.test(clim.mo.new[,clim.var], clim.mo.new[, chrono.col], method = corr.method)
 
         # put the results together in a data.frame
         if (corr.method %in% "pearson") {
@@ -411,33 +418,53 @@ n_mon_corr <- function(chrono = NULL,
                                p = ct$p.value[[1]])
         }
       }
-      # return the result
-      result
+      # return the correlation results and the data.frame of the merged climate and chronology data
+      list(result, clim.mo.new)
     })
+
+    cor.results <- lapply(cor.res.df, FUN = \(x) {
+      x[[1]]
+    }) |> do.call(what = "rbind")
+
+    cor.df <- lapply(cor.res.df, FUN = \(x) {
+      x[[2]]
+    }) |> do.call(what = "rbind")
 
     cor.results$sig <- ifelse(cor.results$p > 0.05, "",
                               ifelse(cor.results$p <= 0.05 & cor.results$p >= 0.01, "*",
                                      ifelse(cor.results$p <= 0.001, "***", "**")))
 
     cor.results$lag <- ifelse(l == 0, paste(l), paste0("-", l))
+    cor.df$lag <- ifelse(l == 0, paste(l), paste0("-", l))
 
     # Return all the results
-    cor.results
+    list(cor.results, cor.df)
   })
 
-  # Make the lag a factor
-  lag.list$lag <- factor(lag.list$lag, levels = lag.seq*-1)
-  # sort by correlation coef
-  lag.list <- lag.list[order(lag.list$coef, decreasing = T),]
+  lag.res <- lapply(lag.list, FUN = \(x) {
+    x[[1]]
+  }) |> do.call(what = "rbind")
 
-  # order the months as a factor
-  lag.list$months <- factor(lag.list$months, levels = mos.fac)
+  lag.df <- lapply(lag.list, FUN = \(x) {
+    x[[2]]
+  }) |> do.call(what = "rbind")
+
+  # Make the lag a factor in both data.frames
+  lag.res$lag <- factor(lag.res$lag, levels = lag.seq*-1)
+  lag.df$lag <- factor(lag.df$lag, levels = lag.seq*-1)
+
+  # sort correlation results by correlation coef
+  lag.res <- lag.res[order(lag.res$coef, decreasing = T),]
+
+  # order the months as a factor in both data.frames
+  lag.res$months <- factor(lag.res$months, levels = mos.fac)
+  lag.df$months <- factor(lag.df$months, levels = mos.fac)
 
   # Set up a data.frame for the plots - add some variables that are useful for plotting, but not
   # for the main output.
   if (plots == TRUE) {
 
-    plot.df <- lag.list
+    plot.df <- lag.res
     for (i in 1:nrow(plot.df)){
       plot.df$start.mo[i] <- as.numeric(strsplit(as.character(plot.df$months), ":")[[i]][1])
     }
@@ -456,11 +483,11 @@ n_mon_corr <- function(chrono = NULL,
 
     # Build a nice title for the plots
     if (prewhiten == TRUE) {
-      title <- ifelse(is.null(chrono.name), paste0("Chronology correlations with ", var, " (both vars prewhitened)"),
-                      paste0(chrono.name, " chronology correlations with ", var, " (both vars prewhitened)"))
+      title <- ifelse(is.null(chrono.name), paste0("Chronology correlations with ", clim.var, " (prewhitened)"),
+                      paste0(chrono.name, " chronology correlations with ", clim.var, " (prewhitened)"))
     } else {
-      title <- ifelse(is.null(chrono.name), paste0("Chronology correlations with ", var),
-                      paste0(chrono.name, " chronology correlations with ", var))
+      title <- ifelse(is.null(chrono.name), paste0("Chronology correlations with ", clim.var),
+                      paste0(chrono.name, " chronology correlations with ", clim.var))
     }
 
     # Make the plot
@@ -486,10 +513,13 @@ n_mon_corr <- function(chrono = NULL,
                                 agg.fun, "s with annual lag 0:",
                                 max.lag, " (overlapping years ", min.y, "-", max.y, ")"))
 
-    out.list <- list(lag.list, out.plot)
+    out.list <- list(lag.res, lag.df, out.plot)
+    names(out.list) <- c("Correlation results", "Correlation data", "Results plots")
     return(out.list)
   } else {
-    return(lag.list)
+    out.list <- list(lag.res, lag.df)
+    names(out.list) <- c("Correlation results", "Correlation data")
+    return(out.list)
   }
 
 } # End of function
