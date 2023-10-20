@@ -12,7 +12,7 @@ ci_detect(
   max.win = 30,
   var.type = "s_bi",
   thresh = 3.29,
-  out.span = 1.25,
+  dist.span = 1.25,
   max.iter = 10,
   add.recent.rwi = TRUE
 )
@@ -22,7 +22,7 @@ ci_detect(
 
 \item{detrend.method}{A character vector specifying the detrending method to use. Passes to \code{\link[dplR]{detrend}}. Default is "Mean".}
 
-\item{nyrs}{A numeric vector that determines the flexibility of the "AgeDepSpline" or the "Spline" detrending methods. Passes to \code{\link[dplR]{detrend}}. The default is 50 years or 1/3 the series length.}
+\item{nyrs}{A numeric vector that determines the flexibility of the \code{"AgeDepSpline"} or the \code{"Spline"} detrending methods. Passes to \code{\link[dplR]{detrend}}. The default is 50 years or 1/3 the series length.}
 
 \item{min.win}{The minimum disturbance length in years (i.e., a moving window) to search for. The default is 9.}
 
@@ -30,14 +30,14 @@ ci_detect(
 
 \item{thresh}{The disturbance detection threshold, corresponding to the number of deviations from the robust mean. The default is 3.29, following Druckenbrod et al. 2013.}
 
-\item{out.span}{Parameter to determine the wiggliness of the loess splines fit to disturbances periods. Higher numbers = less wiggles. Passes to \code{\link[stats]{loess}}. The default is 1.25}
+\item{dist.span}{Parameter to determine the wiggliness of the loess splines fit to disturbances periods. Higher numbers = less wiggles. Passes to \code{\link[stats]{loess}}. The default is 1.25}
 
 \item{max.iter}{The maximum number of iterations to run the disturbance detection and removal processes. The default is 10.}
 }
 \value{
 A 5-element list containing the "disturbance-free" series, the disturbance index,
 a data.frame containing basic data on all the detected disturbances,
-a record of the outlier detection and removal iterations, and the output from the cp_detrend() process.
+a record of the disturbance detection and removal iterations, and the output from the cp_detrend() process.
 }
 \description{
 This function implements an analysis based on the curve intervention detection techniques described by Druckenbrod et al. 2013,
@@ -52,7 +52,7 @@ Following Rydval et al. (2016, 2018), the implementation here uses a version of 
 slightly different coefficients than the Hugershoff curve used by Rydval et al. Namely, the following values are fixed: b = 1, and d = 0.
 The Warren & MacWilliam curve has a 't' coefficient which we use here. These changes improve the robustness of the fits. Fitting is done
 via \code{\link[stats]{nls}}. A major difference for the \code{modendro} implementation of CID is that in the cases where the \code{\link[stats]{nls}} fits fail, a \code{\link[stats]{loess}} spline is fit
-instead. See \code{\link{out_det_rem}} for more details.
+instead. See \code{\link{dist_det_rem}} for more details.
 
 \code{\link{function}}
 }

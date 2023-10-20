@@ -1,19 +1,31 @@
-#' Supporting function for `ci_detect()` - statistical detection and removal of disturbances in tree ring series
+#' Supporting function for \code{\link{ci_detect}} - statistical detection and removal of disturbances in tree ring series
 #'
 #' @description
 #' This function implements the disturbance detection and removal steps for the curve intervention detection techniques described by Druckenbrod et al. 2013,
 #' Rydval et al. 2016, and Rydval et al. 2018. The function works on a collection of transformed ring width series. Iterations
-#' are performed with `ci_detect`.
+#' are performed with \code{\link{ci_detect}}.
 #'
-#' @param rwi A rwl object of detrended standardized series produced by `cp_detrend()`.
+#' @param rwi A rwl object of detrended residual series produced by \code{\link{cp_detrend}}.
 #' @param min.win The minimum disturbance length in years (i.e., a moving window) to search for. The default is 9.
 #' @param max.win The maximum disturbance length in years (i.e., a moving window) to search for. The default is 30.
 #' @param thresh The disturbance detection threshold, corresponding to the number of deviations from the robust mean. The default is 3.29, following Druckenbrod et al. 2013.
-#' @param out.span Parameter to determine the wiggliness of the loess splines fit to outlier periods (when Hugershoff fits fail). Higher numbers = more wiggles. Passes to `stats::loess()`. The default is 1.25.
+#' @param dist.span Parameter to determine the wiggliness of the loess splines fit to disturbance periods (when Hugershoff fits fail). Higher numbers = more wiggles. Passes to \code{\link[stats]{loess}}. The default is 1.25.
 #'
 #' @details
-#' Additional details...
+#' The basic process that `dist_det_rem` performs is to take standardized tree ring series (specifically the output from the Cook & Peters (1997) process, as implemented by \code{\link{cp_detrend}} in \code{\link{ci_detect}}),
+#' fit AR models (using the Burg method) to them and extract the residuals. The AR models are also "backcasted" to estimate residuals for the 1st n years which are NAs (n being equal to the AR order).
+#' Backcasting involves reversing each series then fitting AR models of the same order as the original. Then, we compute moving averages of various window lengths. Disturbances are defined as moving average values that fall outside
+#' the threshold of number of deviations from the robust mean (3.29), computed for each series and each moving average window length. The largest deviation - the largest absolute value of the difference between
+#' the moving average value & the (negative or positive) threshold - for each series is selected first. Thus the largest magnitude disturbance could be a suppression or a release.
+#' This defines the onset year and duration of the disturbance. A modified version of a Hugershoff curve (Warren & MacWilliam 1981) is then fit (via \code{\link[stats]{nls}}) to the disturbance period and beyond (all the way to the end of the series)
+#' transformed, detrended residual series (not the AR residuals), with slightly different coefficients than the Hugershoff curve used by Rydval et al. Namely, the following values are fixed: b = 1, and d = 0. The Warren & MacWilliam curve has a 't' coefficient which we use here.
+#' These modifications allow for more robust fitting (reduced parameters require fewer degrees of freedom). The d term acts like an intercept, and since all series have an overall mean of 0 (they are residuals),
+#' this constraint is reasonable. Setting the b term to 1 allows the beginning y values of the Hugershoff curve to go above or below 0, which helps in minimizing artifacts from poor fit in the early years of a disturbance period.
 #'
+#' While the Hugershoff curve fitting is reasonably robust, \code{\link[stats]{nls}} occasionally fails to converge. In these cases a \code{\link[stats]{loess}} spline is fit to the disturbance period only instead (not the whole remainder of the series as in the Hugershoff).
+#' The wiggliness of these splines can be adjusted using the `dist.span` argument. For both methods, the resulting fitted curve is subtracted from the series. The recent value of the series before the disturbance period - a robust mean of the period before
+#' the disturbance, or, if there is not an adequate period before (at least as long as the disturbance period window), the period after, is added back to the curve-series difference. This is done to avoid large artifacts from the disturbance removal process.
+#' The output series with disturbances removed is now "corrected".
 #'
 #'
 #' @return a 3-element list that contains the corrected RWI, the fitted disturbance curves, and data on disturbance detection iterations
@@ -36,12 +48,12 @@
 #'
 #'
 
-out_det_rem <- function(rwi,
+dist_det_rem <- function(rwi,
                         min.win = 9,
                         max.win = 30,
-                        var.type = "s_bi",
                         thresh = 3.29,
-                        out.span = 1.25,
+                        dist.span = 1.25,
+                        var.type = "s_bi",
                         add.recent.rwi = TRUE
 ) {
 
@@ -393,7 +405,7 @@ out_det_rem <- function(rwi,
       out_period <-
         series_df[y[, "index_pos"]:(y[, "index_pos"] + y$win_len - 1), ]
 
-      # Add a rest of series if there is one
+      # Attach the rest of series if there is one
       if ((max(out_period$year) + 1) < max(series_df$year)) {
         rest_of_years <- (max(out_period$year) + 1) : max(series_df$year)
         rest_of_series <- data.frame(rwi = series_df[series_df$year %in% rest_of_years, "rwi"],
@@ -447,12 +459,12 @@ out_det_rem <- function(rwi,
         silent = TRUE)
 
       if (data.class(hug_fit) %in% "try-error") { # If the Hugershoff fit failed, fit a spline instead.
-        # if this option, we should only plot & subtract the disturbance period itself
+        # if this option, we should only fit & subtract the disturbance period itself
         out_period <- out_period[1:y$win_len,]
         spline_fit <-
           loess(rwi ~ year,
                 data = out_period,
-                span = out.span,
+                span = dist.span,
                 family = "symmetric")
 
         out_period$curve <- spline_fit$fitted
