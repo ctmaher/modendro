@@ -1,12 +1,12 @@
-#' Plot the `ci_detect()` processes & final results
+#' Plot the ci_detect() processes & final results
 #'
 #' @description
-#' Takes the nested output list from `ci_detect()` and makes a list of plots that show the process for each series.
+#' Takes the nested output list from \code{\link{ci_detect}}  and makes a list of plots that show the process for each series.
 #'
-#' @param ci_output A list produced by the `ci_detect()` function
+#' @param ci_output A list produced by the \code{\link{ci_detect}} function
 #'
 #' @details
-#' These plots are designed to illustrate how the `ci_detect()` process works & visualize the final results for each tree ring series.
+#' These plots are designed to illustrate how the \code{\link{ci_detect}} process works & visualize the final results for each tree ring series.
 #' Correspondingly, there are two kinds of plots (if no disturbances were detected, the function returns a message instead of a plot).
 #' The 1st plot type demonstrates the iterative disturbance detection and removal steps. The top
 #' panel of this plot shows the detection step for the current disturbance (iteration number is displayed in the plot title).
@@ -14,7 +14,7 @@
 #' the moving window mean in orange, and the Tukey Biweight Robust Mean and detection thresholds as the horizontal black line and dotted lines, respectively.
 #' The bottom panel shows the disturbance removal steps of curve fitting and subtraction on the detrended & transformed ring width series.
 #' The blue (releases) or red (suppressions) line segment represents the fitted curve. The thin line segment represents the original series the curve was fitted to.
-#' The thicker black line is the resulting "disturbance-free" series after the fitted curve is subtracted. See `?ci_detect()` for more details on the processes.
+#' The thicker black line is the resulting "disturbance-free" series after the fitted curve is subtracted. See \code{\link{ci_detect}} for more details on the processes.
 #' The shared x-axis for both panels marks evenly placed years and the estimated starting year of the disturbance.
 #'
 #' The second plot type shows the entire final "disturbance-free" series as a thick black line, the original series as a thin grey line,
@@ -25,7 +25,7 @@
 #' @return A nested list of output plots illustrating the disturbance detection & removal iterations (1st list element)
 #' for each tree ring series & the final result of the disturbance-free series after all iterations (2nd list element).
 #'
-#' @seealso [ci_detect(), out_det_rem(), cp_detrend(), plot_cp_detrend()]
+#' @seealso \code{\link{ci_detect}}, \code{\link{dist_det_rem}}, \code{\link{cp_detrend}}, \code{\link{plot_cp_detrend}}
 #'
 #' @import ggplot2
 #' @import cowplot

@@ -63,11 +63,15 @@ data("co021")
 ci_detect(co021, max.iter = 5)
 }
 \references{
-Druckenbrod, D. L., N. Pederson, J. Rentch, and E. R. Cook. 2013. A comparison of times series approaches for dendroecological reconstructions of past canopy disturbance events. \emph{Forest Ecology and Management}, \strong{302}, 23–33.
+Druckenbrod, D. L., N. Pederson, J. Rentch, and E. R. Cook. (2013) A comparison of times series approaches for dendroecological reconstructions of past canopy disturbance events.
+\emph{Forest Ecology and Management}, \strong{302}, 23–33.
 
-Rydval, M., D. Druckenbrod, K. J. Anchukaitis, and R. Wilson. 2016. Detection and removal of disturbance trends in tree-ring series for dendroclimatology. \emph{Canadian Journal of Forest Research}, \strong{401}, 387–401.
+Rydval, M., D. Druckenbrod, K. J. Anchukaitis, and R. Wilson. (2016) Detection and removal of disturbance trends in tree-ring series for dendroclimatology.
+\emph{Canadian Journal of Forest Research}, \strong{401}, 387–401.
 
-Rydval, M., D. L. Druckenbrod, M. Svoboda, V. Trotsiuk, P. Janda, M. Mikoláš, V. Čada, R. Bače, M. Teodosiu, and R. Wilson. 2018. Influence of sampling and disturbance history on climatic sensitivity of temperature limited conifers. \emph{The Holocene}, \strong{28}(10), 1574-1587.
+Rydval, M., D. L. Druckenbrod, M. Svoboda, V. Trotsiuk, P. Janda, M. Mikoláš, V. Čada, R. Bače, M. Teodosiu, and R. Wilson. (2018) Influence of sampling and disturbance history on climatic sensitivity of temperature limited conifers.
+\emph{The Holocene}, \strong{28}(10), 1574-1587.
 
-Warren, W. G., and S. L. MacWilliam. 1981. Test of a new method for removing the growth trend from dendrochronological data. \emph{Tree Ring Bulletin}, \strong{41}, 55–66.
+Warren, W. G., and S. L. MacWilliam. 1981. Test of a new method for removing the growth trend from dendrochronological data.
+\emph{Tree Ring Bulletin} \strong{41}, 55–66.
 }

@@ -4,10 +4,10 @@
 #' Compute variance-stabilized & residual detrended ring width indices that minimize the series end effect problems
 #' that can result from using ratios to derive detrended indices.
 #'
-#' @param rwl A rwl object (read in by dplR's `read.rwl()`)
-#' @param detrend.method Character string of the detrending method to use. Passes to `dplR::detrend()`.
-#' @param nyrs Numeric vector, used in dplR's `detrend()` function for the "Spline" and "AgeDepSpline" methods.
-#' @param pos.slope Should positive slopes be allowed in the detrending curves? Generally this should be FALSE (the default), but when used in `ci_detect()` it is TRUE to detect deviations from any long term trend. Passes to `dplR::detrend()`.
+#' @param rwl A rwl object (e.g., read in by \code{\link[dplR]{read.rwl}})
+#' @param detrend.method Character string of the detrending method to use. Passes to \code{\link[dplR]{detrend}}.
+#' @param nyrs Numeric vector, used in dplR's \code{\link[dplR]{detrend}} function for the `"Spline"` and `"AgeDepSpline"` methods.
+#' @param pos.slope Should positive slopes be allowed in the detrending curves? Generally this should be FALSE (the default), but when used in \code{\link{ci_detect}} it is TRUE to detect deviations from any long term trend. Passes to \code{\link[dplR]{detrend}}.
 #'
 #' @details
 #' For decades, the most common method of removing long-term size/age trends from tree ring width series has been to fit a curve
@@ -43,7 +43,7 @@
 #' Cook, E. R., and Peters, K. (1997) Calculating unbiased tree-ring indices for the study of climatic and environmental change.
 #' \emph{The Holocene}, \strong{7}(3), 361-370.
 #'
-#' @seealso [pwr_t_rwl(), find_opt_pwr()]
+#' @seealso \code{\link{pwr_t_rwl}}, \code{\link{find_opt_pwr}}
 #'
 #' @import dplR
 #' @import tidyr
@@ -66,7 +66,7 @@
 #' # Create a new directory for the plots (there could be a lot!)
 #' cp_plot_dir <- paste0(getwd(),"/CP_plots")
 #' dir.create(cp_plot_dir)
-#' # Apply `ggsave()` to each plot:
+#' # Apply ggsave() to each plot:
 #' mapply(FUN = \(x, y) {
 #'         ggsave(filename = paste0(cp_plot_dir, "/", y, ".pdf"),
 #'         plot = x,

@@ -2,7 +2,7 @@
 % Please edit documentation in R/dist_det_rem.R
 \name{dist_det_rem}
 \alias{dist_det_rem}
-\title{Supporting function for \code{\link{ci_detect}} - statistical detection and removal of disturbances in tree ring series}
+\title{Supporting function for ci_detect() - statistical detection and removal of disturbances in tree ring series}
 \usage{
 dist_det_rem(
   rwi,
@@ -50,11 +50,18 @@ the disturbance, or, if there is not an adequate period before (at least as long
 The output series with disturbances removed is now "corrected".
 }
 \references{
-Druckenbrod, D. L., N. Pederson, J. Rentch, and E. R. Cook. 2013. A comparison of times series approaches for dendroecological reconstructions of past canopy disturbance events. Forest Ecology and Management 302:23–33.
+Druckenbrod, D. L., N. Pederson, J. Rentch, and E. R. Cook. (2013) A comparison of times series approaches for dendroecological reconstructions of past canopy disturbance events.
+\emph{Forest Ecology and Management}, \strong{302}, 23–33.
 
-Rydval, M., D. Druckenbrod, K. J. Anchukaitis, and R. Wilson. 2016. Detection and removal of disturbance trends in tree-ring series for dendroclimatology. Canadian Journal of Forest Research 401:387–401.
+Rydval, M., D. Druckenbrod, K. J. Anchukaitis, and R. Wilson. (2016) Detection and removal of disturbance trends in tree-ring series for dendroclimatology.
+\emph{Canadian Journal of Forest Research}, \strong{401}, 387–401.
 
-Rydval, M., D. L. Druckenbrod, M. Svoboda, V. Trotsiuk, P. Janda, M. Mikoláš, V. Čada, R. Bače, M. Teodosiu, and R. Wilson. 2018. Influence of sampling and disturbance history on climatic sensitivity of temperature limited conifers. The Holocene.
+Rydval, M., D. L. Druckenbrod, M. Svoboda, V. Trotsiuk, P. Janda, M. Mikoláš, V. Čada, R. Bače, M. Teodosiu, and R. Wilson. (2018) Influence of sampling and disturbance history on climatic sensitivity of temperature limited conifers.
+\emph{The Holocene}, \strong{28}(10), 1574-1587.
 
-Warren, W. G., and S. L. MacWilliam. 1981. Test of a new method for removing the growth trend from dendrochronological data. Tree Ring Bulletin 41:55–66.
+Cook, E. R., and Peters, K. (1997) Calculating unbiased tree-ring indices for the study of climatic and environmental change.
+\emph{The Holocene}, \strong{7}(3), 361-370.
+
+Warren, W. G., and S. L. MacWilliam. 1981. Test of a new method for removing the growth trend from dendrochronological data.
+\emph{Tree Ring Bulletin} \strong{41}, 55–66.
 }
