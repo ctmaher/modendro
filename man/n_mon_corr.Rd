@@ -22,9 +22,9 @@ n_mon_corr(
 )
 }
 \arguments{
-\item{chrono}{a \code{chron} object (such as that produced by dplR's \code{chron()}). Make sure this has a \code{year} variable.}
+\item{chrono}{a \code{chron} object (such as that produced by dplR's \code{\link[MASS]{chron}}). Make sure this has a \code{year} variable.}
 
-\item{chrono.col}{character vector - the colname of the chronology series (default is "std", which is the defualt produced by dplR's \code{chron()}).}
+\item{chrono.col}{character vector - the colname of the chronology series (default is "std", which is the defualt produced by dplR's \code{\link[MASS]{chron}}).}
 
 \item{clim}{a \code{data.frame} with at least 3 columns: year, month (numeric), and a climate variable.}
 
@@ -45,11 +45,11 @@ Options are "mean" or "sum", e.g., for temperature or precipitation data, respec
 This removes autocorrelation in a time series, leaving only the high-frequency variation. If you are doing this, you should also construct your chronology from AR residuals/prewhitened series. Default is FALSE.}
 
 \item{auto.corr}{logical vector specifying whether there is temporal autocorrelation in either your tree ring chronology or climate time series (there typically is autocorrelation, unless both are "prewhitened").
-If TRUE (the default), & corr.method is "spearman" or "kendall", then the \code{corTESTsrd()} function is used to compute modified significance testing to account for autocorrelation (From Lun et al. 2022).
+If TRUE (the default), & corr.method is "spearman" or "kendall", then the \code{\link[corTESTsrd]{corTESTsrd}}function is used to compute modified significance testing to account for autocorrelation (From Lun et al. 2022).
 Caution! Currently auto.corr = TRUE & corr.method = "Pearson" doesn't make any adjustments. This will be included soon.}
 
 \item{corr.method}{character vector specifying which correlation method to use. Options are \code{c("pearson", "kendall", "spearman")}.
-Passes to \code{cor.test()} or to \code{corTESTsrd()}.}
+Passes to \code{\link[stats]{cor.test}} or to \code{\link[corTESTsrd]{corTESTsrd}}.}
 
 \item{chrono.name}{character vector - the name of your chronology (optional). This is used in the title of your plot.
 If you produce many plots, this helps keep them identifiable.}
@@ -80,7 +80,7 @@ Compared to methods that force rigidly-defined seasons of a fixed length, this a
 
 Fair warning: this is a basic function that will accept any tree ring chronology and climate data in the proper format.
 It is the user's responsibility to make sure that the chronology is properly constructed -
-properly dealing with the "dark arts" of detrending & standardization (see ?detrend.series in the \code{dplR} package) and also accounting for temporal autocorrelation in the data.
+properly dealing with the "dark arts" of detrending & standardization (see \code{\link[dplR]{detrend.series}}) and also accounting for temporal autocorrelation in the data.
 If you don't know what this means or you just took a chronology directly from the ITRDB without knowing how it was made,
 you have some homework to do. There aren't universal answers to these tasks - each dataset is somewhat unique.
 }
@@ -93,11 +93,11 @@ The default correlation test method is Pearson product moment correlation coeffi
 not be appropriate for your analysis.
 
 A note on tree ring analyses based in the Southern hemisphere:
-\code{n_mon_corr()} is designed to work in both the Northern and Southern hemispheres. Hemisphere matters
+\code{\link{n_mon_corr}} is designed to work in both the Northern and Southern hemispheres. Hemisphere matters
 for tree ring growth-climate relationships because tree ring formation in the Southern hemisphere typically
 spans two calendar years (e.g., starting in Nov 2000 and ending in Mar of 2001).
 It was Schulman's (1956) protocol to assign the earlier calendar year to the tree rings in the Southern hemisphere,
-i.e., the calendar year in which growth began. \code{n_mon_corr()} assumes your data follows this standard as well.
+i.e., the calendar year in which growth began. \code{\link{n_mon_corr}} assumes your data follows this standard as well.
 This has implications for how the climate data is aligned with the treering data.
 The current implementation handles this implicitly by assuming that if \code{rel.per.begin} is between 1:6,
 this is a S. hemisphere analysis and the current "growth year" is the same as the calendar year of \code{rel.per.begin}.
@@ -111,7 +111,7 @@ will be defined as months \code{c(10,11,12,1,2,3,4,5,6,7,8,9)} with the calendar
 Interpreting the plots:
 The plots show a 12-month sequence of consecutive months on the x-axis & the correlation coefficient on the y-axis.
 The diamonds indicate the starting month of an n-month aggregate period, small vertical bars the end. Horizontal lines connect
-the start and end months for periods > 1 month. Significant correlations (as determined by \code{cor.test()}) are shown
+the start and end months for periods > 1 month. Significant correlations (as determined by \code{\link[stats]{cor.test}}) are shown
 in black, no significant ones in grey. Plot panel labels (right-hand side of plots) indicate lag years: 0 = current year,
 -1 = previous year, -2 = 2 years back.
 }
