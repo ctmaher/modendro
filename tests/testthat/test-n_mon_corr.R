@@ -9,7 +9,7 @@ test_that("Throws error if not fed a valid clim var name", {
   colnames(clim) <- c("year", "month", "clim.var")
   expect_error(n_mon_corr(chrono = matrix(nrow = 10, ncol = 2), clim = clim,
                           rel.per.begin = 10, hemisphere = "N",
-                          var = "wack-a-doodle"))
+                          clim.var = "wack-a-doodle"))
 })
 ####
 test_that("Throws error if not fed a valid chrono.col name", {
@@ -18,7 +18,7 @@ test_that("Throws error if not fed a valid chrono.col name", {
   chrono <- matrix(nrow = 10, ncol = 2)
   colnames(chrono) <- c("samp.depth", "std")
   expect_error(n_mon_corr(chrono = chrono, clim = clim, rel.per.begin = 10, hemisphere = "N",
-                          var = "clim.var", chrono.col = "wack-a-doodle"))
+                          clim.var = "clim.var", chrono.col = "wack-a-doodle"))
 })
 ####
 test_that("Throws error if not fed a valid aggregation function", {
@@ -34,7 +34,7 @@ test_that("Throws error if not fed a valid correlation method", {
   colnames(chrono) <- c("samp.depth", "std")
   expect_error(n_mon_corr(chrono = chrono, clim = clim,
                           rel.per.begin = 10, hemisphere = "N",
-                          var = "clim.var", chrono.col = "std",
+                          clim.var = "clim.var", chrono.col = "std",
                           corr.method = "catty-wompus"))
 })
 ####
@@ -59,7 +59,48 @@ test_that("Essential function works - and returns a vector", {
   }
   clim <- do.call("rbind", clim.list)
   expect_vector(n_mon_corr(chrono = chrono, clim = clim,
-                           rel.per.begin = 3, hemisphere = "S", var = "clim.var",
+                           rel.per.begin = 3, hemisphere = "S", clim.var = "clim.var",
                            chrono.col = "std", chrono.name = "Synthetic"))
 })
+####
+test_that("The order of months in the input climate data has no effect on the accuracy of the output", {
+  mat.test <- matrix(nrow = 50, ncol = 10)
+  rownames(mat.test) <- 1:50
+  colnames(mat.test) <- 1:10
+  mat.test <- apply(mat.test, MARGIN = 2, FUN = \(x) runif(length(x), 0.1, 2))
+  chrono <- dplR::chron(mat.test)
+  chrono$year <- rownames(chrono) |> as.numeric()
+  # Make some fake climate data
+  mo <- 1:12
+  x <- seq(-4, 4, length.out = 12)
+  gauss.curv <- \(x) {(10/sqrt(2*pi*1.6))*exp(-((x^2)/(2*1.6^2)))}
+  clim.mo <- data.frame(month = mo, clim.var = gauss.curv(x))
 
+  clim.list <- vector("list", length = 12)
+  for (y in seq_along(clim.list)) {
+    clim.y <- data.frame(year = 1:50, month = y)
+    clim.y[,"clim.var"] <- runif(50, min = 0.1, max = 2) + clim.mo[clim.mo$month %in% y, "clim.var"]
+    clim.list[[y]] <- clim.y
+  }
+  clim <- do.call("rbind", clim.list)
+
+  # Let's create a marker in April, such that it is identical to the chronology
+  clim[clim$month %in% "4", "clim.var"] <- chrono$std * 2
+
+  # Reorder random sample of numbers 1-12
+  clim <- clim[sample(nrow(clim), 600, replace = FALSE),]
+  #clim$month <- factor(clim$month, levels = sample(1:12, size = 12, replace = FALSE))
+
+  ggplot(clim[clim$month %in% "4",], aes(year, clim.var)) +
+    geom_line() +
+    facet_wrap(~month)
+
+  ggplot(chrono, aes(year, std)) +
+    geom_line()
+
+  test10 <- n_mon_corr(chrono = chrono, clim = clim, clim.var = "clim.var",
+                       rel.per.begin = 10, hemisphere = "N", chrono.name = "Synthetic",
+                       corr.method = "pearson")
+  cor.res <- test10[["Correlation results"]]
+  expect_true(cor.res$months[cor.res$coef == 1] %in% "4")
+})
