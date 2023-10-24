@@ -2,7 +2,7 @@
 % Please edit documentation in R/n_mon_corr.R
 \name{n_mon_corr}
 \alias{n_mon_corr}
-\title{Flexible monthly aggregate growth-climate correlations for exploratory data analysis}
+\title{Flexible monthly aggregate growth-climate cross correlations for exploratory data analysis}
 \usage{
 n_mon_corr(
   chrono = NULL,

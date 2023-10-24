@@ -1,4 +1,4 @@
-#' Flexible monthly aggregate growth-climate correlations for exploratory data analysis
+#' Flexible monthly aggregate growth-climate cross correlations for exploratory data analysis
 #'
 #' @description
 #' Exploratory data analysis (EDA) function to compute correlations between a tree ring chronology and a monthly climate variable
