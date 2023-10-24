@@ -119,7 +119,8 @@ ci_detect <- function(rwl,
                                  min.win = min.win,
                                  max.win = max.win,
                                  thresh = thresh,
-                                 dist.span = dist.span
+                                 dist.span = dist.span,
+                                 add.recent.rwi = add.recent.rwi
     )
   }
   # Remove the 0 iteration
