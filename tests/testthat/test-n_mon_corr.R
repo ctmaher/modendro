@@ -60,7 +60,7 @@ test_that("Essential function works - and returns a vector", {
   clim <- do.call("rbind", clim.list)
   expect_vector(n_mon_corr(chrono = chrono, clim = clim,
                            rel.per.begin = 3, hemisphere = "S", clim.var = "clim.var",
-                           chrono.col = "std", chrono.name = "Synthetic"))
+                           chrono.col = "std", chrono.name = "Synthetic", silent = TRUE))
 })
 ####
 test_that("The order of months in the input climate data has no effect on the accuracy of the output", {
@@ -84,23 +84,26 @@ test_that("The order of months in the input climate data has no effect on the ac
   }
   clim <- do.call("rbind", clim.list)
 
-  # Let's create a marker in April, such that it is identical to the chronology
-  clim[clim$month %in% "4", "clim.var"] <- chrono$std * 2
+  # Let's create a marker month, such that it is identical to the chronology
+  marker.month <- sample(1:12, 1)
+  clim[clim$month == marker.month, "clim.var"] <- chrono$std * 2
 
   # Reorder random sample of numbers 1-12
   clim <- clim[sample(nrow(clim), 600, replace = FALSE),]
   #clim$month <- factor(clim$month, levels = sample(1:12, size = 12, replace = FALSE))
 
-  ggplot(clim[clim$month %in% "4",], aes(year, clim.var)) +
-    geom_line() +
-    facet_wrap(~month)
-
-  ggplot(chrono, aes(year, std)) +
-    geom_line()
+  # ggplot(clim[clim$month %in% "4",], aes(year, clim.var)) +
+  #   geom_line() +
+  #   facet_wrap(~month)
+  #
+  # ggplot(chrono, aes(year, std)) +
+  #   geom_line()
 
   test10 <- n_mon_corr(chrono = chrono, clim = clim, clim.var = "clim.var",
                        rel.per.begin = 10, hemisphere = "N", chrono.name = "Synthetic",
-                       corr.method = "pearson")
+                       corr.method = "pearson", silent = TRUE)
   cor.res <- test10[["Correlation results"]]
-  expect_true(cor.res$months[cor.res$coef == 1] %in% "4")
+  expect_true(cor.res$months[1] == marker.month)
+  # The top row is the highest correlation (output is sorted),
+  # thus marker month should be the 1st row
 })

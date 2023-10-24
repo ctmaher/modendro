@@ -244,7 +244,7 @@ n_mon_corr <- function(chrono = NULL,
   if (ac.test$order > 0 & auto.corr == FALSE & prewhiten == FALSE) {
     cat("Autocorrelation detected in your chronology, recommend choose auto.corr = TRUE &
         corr.method = c('spearman', 'kendall') to avoid spurious correlation results.
-        You can also construct a chronology of AR residuals (aka prewhitening).")
+        You can also construct a chronology of AR residuals (aka prewhitening).\n")
     # auto.corr <- readline(prompt = "Enter auto.corr (TRUE or FALSE) = ")
     # corr.method <- readline(prompt = "Enter corr.method ('spearman' or 'kendall') = ")
   }
@@ -263,7 +263,7 @@ n_mon_corr <- function(chrono = NULL,
   # Print the relevant climate period
   if (silent == FALSE) {
     cat("You have specified the following months for your relevant climate period in the\n",
-        hemisphere, "hemisphere:", mon.seq)
+        hemisphere, "hemisphere:", mon.seq, "\n")
   }
 
   # The operations below assume that the climate data is arranged by month, then year.
@@ -274,7 +274,7 @@ n_mon_corr <- function(chrono = NULL,
   if (hemisphere %in% "S") {
     if (silent == FALSE) {
       message("\nAssuming Southern hemisphere conventions for linking growth years
-    and climate years (see ?n_mon_corr for details)")
+    and climate years (see ?n_mon_corr for details)\n")
     }
     offset <- rel.per.begin - 1
     clim$growyear <- c(rep(min(clim[,"year"]) - 1, offset), clim[,"year"][1:(length(clim[,"year"]) - offset)])
@@ -282,7 +282,7 @@ n_mon_corr <- function(chrono = NULL,
   } else {
     if (silent == FALSE) {
       message("\nAssuming Northern hemisphere conventions for linking growth years
-    and climate years (see ?n_mon_corr for details)")
+    and climate years (see ?n_mon_corr for details)\n")
     }
     offset <- 12 - rel.per.begin + 1
     clim$growyear <- c(clim[,"year"][(offset + 1):length(clim[,"year"])], rep(max(clim[,"year"]) + 1, offset))
