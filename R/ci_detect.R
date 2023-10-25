@@ -95,14 +95,15 @@ ci_detect <- function(rwl,
               min.win >= 5
   )
 
-
+  # save the original order of the names to realign at each step
+  orig.IDs <- colnames(rwl)
   ## Run cp_detrend to power transform and detrend the rwl
   cp_out <- cp_detrend(rwl, detrend.method = detrend.method, nyrs = nyrs, pos.slope = FALSE)
   # 1st element of cp_out is a rwl-data.frame of the residual transformed and detrended series-
   # take this and turn it into a list, with NAs removed from each series
   # Simplify = FALSE keeps the rownames (which are the years)
   cp_list <- apply(cp_out[[1]], MARGIN = 2, simplify = FALSE, FUN = \(x) na.omit(x))
-
+  cp_list <- cp_list[orig.IDs] # make sure names are ordered
   # Run the dist_det_rem() process
   # The for loop makes sense here - after the 1st iteration (based on the original data),
   # each subsequent iteration uses the values generated in the previous iteration.
@@ -131,8 +132,8 @@ ci_detect <- function(rwl,
 
   retrended <- mapply(FUN = \(x, y) {
     x + na.omit(y)
-  }, x = dist_iter[[length(dist_iter)]][["Corrected RWI"]][colnames(cp_out[["Detrend curves"]])],
-  y = cp_out[["Detrend curves"]])
+  }, x = dist_iter[[length(dist_iter)]][["Corrected RWI"]][orig.IDs],
+  y = cp_out[["Detrend curves"]][,orig.IDs])
 
   # Undo any transformation - this results in a "disturbance-free" series in original units
   untransformed <- mapply(FUN = \(x, y) {
@@ -146,32 +147,31 @@ ci_detect <- function(rwl,
         y
       }
     }
-  }, x = cp_out[["Transformation metadata"]][names(retrended)], # Make sure they share the same order!
-  y = retrended)
+  }, x = cp_out[["Transformation metadata"]][orig.IDs], # Make sure they share the same order!
+  y = retrended[orig.IDs])
 
   # Calculate the disturbance index -
   # this is the difference between the disturbance-free series & the original series
   dis_index <- mapply(FUN = \(x, y) {
     na.omit(x) - y
-  }, x = rwl, y = untransformed, SIMPLIFY = FALSE)
+  }, x = rwl[,orig.IDs], y = untransformed[orig.IDs], SIMPLIFY = FALSE)
 
   # Restore the rwl-data.frame format for the disturbance-free and disturbance index series
   # (with NAs for the years that aren't covered)
   # 1st add a year column to each element of the lists
-  series_names <- names(untransformed)
   untransformed_rwl0 <- mapply(FUN = \(x, y) {
     x <- as.data.frame(x)
     colnames(x) <- y
     x[,"year"] <- rownames(x) |> as.numeric()
     x
-  }, x = untransformed, y = series_names, SIMPLIFY = FALSE)
+  }, x = untransformed[orig.IDs], y = orig.IDs, SIMPLIFY = FALSE)
 
   dis_index_rwl0 <- mapply(FUN = \(x, y) {
     x <- as.data.frame(x)
     colnames(x)[1] <- y
     x[,"year"] <- rownames(x) |> as.numeric()
     x
-  }, x = dis_index, y = series_names, SIMPLIFY = FALSE)
+  }, x = dis_index[orig.IDs], y = orig.IDs, SIMPLIFY = FALSE)
 
   # Can apply merge() iteratively with Reduce():
   untransformed_rwl <- Reduce(f = \(x, y) merge(x, y, by = "year", all = TRUE), untransformed_rwl0)
