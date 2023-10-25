@@ -97,7 +97,7 @@ ci_detect <- function(rwl,
 
 
   ## Run cp_detrend to power transform and detrend the rwl
-  cp_out <- cp_detrend(rwl, detrend.method = detrend.method, nyrs = nyrs, pos.slope = TRUE)
+  cp_out <- cp_detrend(rwl, detrend.method = detrend.method, nyrs = nyrs, pos.slope = FALSE)
   # 1st element of cp_out is a rwl-data.frame of the residual transformed and detrended series-
   # take this and turn it into a list, with NAs removed from each series
   # Simplify = FALSE keeps the rownames (which are the years)
@@ -116,11 +116,11 @@ ci_detect <- function(rwl,
   names(dist_iter) <- 0:max.iter
   for (i in 2:(max.iter+1)) {
     dist_iter[[i]] <- dist_det_rem(dist_iter[[i-1]][[1]],
-                                 min.win = min.win,
-                                 max.win = max.win,
-                                 thresh = thresh,
-                                 dist.span = dist.span,
-                                 add.recent.rwi = add.recent.rwi
+                                   min.win = min.win,
+                                   max.win = max.win,
+                                   thresh = thresh,
+                                   dist.span = dist.span,
+                                   add.recent.rwi = add.recent.rwi
     )
   }
   # Remove the 0 iteration
@@ -130,8 +130,9 @@ ci_detect <- function(rwl,
   # add back the detrend curve (or the mean)
 
   retrended <- mapply(FUN = \(x, y) {
-      x + na.omit(y)
-    }, x = dist_iter[[length(dist_iter)]][["Corrected RWI"]], y = cp_out[["Detrend curves"]])
+    x + na.omit(y)
+  }, x = dist_iter[[length(dist_iter)]][["Corrected RWI"]][colnames(cp_out[["Detrend curves"]])],
+  y = cp_out[["Detrend curves"]])
 
   # Undo any transformation - this results in a "disturbance-free" series in original units
   untransformed <- mapply(FUN = \(x, y) {
@@ -145,7 +146,8 @@ ci_detect <- function(rwl,
         y
       }
     }
-  }, x = cp_out[["Transformation metadata"]], y = retrended)
+  }, x = cp_out[["Transformation metadata"]][names(retrended)], # Make sure they share the same order!
+  y = retrended)
 
   # Calculate the disturbance index -
   # this is the difference between the disturbance-free series & the original series

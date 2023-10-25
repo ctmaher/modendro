@@ -56,12 +56,12 @@
 #'
 
 dist_det_rem <- function(rwi,
-                        min.win = 9,
-                        max.win = 30,
-                        thresh = 3.29,
-                        dist.span = 1.25,
-                        var.type = "s_bi",
-                        add.recent.rwi = TRUE
+                         min.win = 9,
+                         max.win = 30,
+                         thresh = 3.29,
+                         dist.span = 1.25,
+                         var.type = "s_bi",
+                         add.recent.rwi = TRUE
 ) {
 
   ## Error catching
@@ -128,7 +128,7 @@ dist_det_rem <- function(rwi,
     SIMPLIFY = FALSE
   )
 
-  ## Compute moving window averages of various lengths - the length of the window corresponds to outlier length
+  ## Compute moving window averages of various lengths - the length of the window corresponds to disturbance length
   # the min.win sets the smallest possible size, and tradition has it that 20 is the longest period. We can
   # reassess that later - maybe the user can just specify this, within reasonable limits (max = 1/3 of series?).
 
@@ -139,7 +139,7 @@ dist_det_rem <- function(rwi,
     win_lens <- min.win:max.win
     ma_list <- lapply(win_lens, \(w) {
       # Extract the values from the data frame
-      values <- x$value
+      values <- x[,"value"]
 
       # Compute the moving average using rollmean from the zoo package
       ma <- rollmean(values,
@@ -157,7 +157,7 @@ dist_det_rem <- function(rwi,
 
   # The outer level of mov_avgs are each moving window length, with the series inside each of those
 
-  ## Define upper and lower outlier thresholds for each moving window length
+  ## Define upper and lower disturbance thresholds for each moving window length
   # The threshold is by default 3.29 robust scales from the robust mean of each moving average series
   tbrms <- lapply(mov_avgs, FUN = \(x) {
     lapply(x, FUN = \(x) {
@@ -216,29 +216,29 @@ dist_det_rem <- function(rwi,
   )
 
 
-  ## Identify outliers for each series & each moving window size, select the largest among window sizes
-  # Outlier size is defined as the difference between the moving average and the threshold
+  ## Identify disturbances for each series & each moving window size, select the largest among window sizes
+  # disturbance size is defined as the difference between the moving average and the threshold
   # There is potential to bias detection toward the smallest window sizes if I use only the "raw" value of the
-  # moving average outliers. The better metric needs to be relative to the threshold for each particular window size.
+  # moving average disturbances. The better metric needs to be relative to the threshold for each particular window size.
   # So that would be the abs of the difference between ma value & the (lo or hi) threshold.
 
   # 1st step is to determine which ma values are outside of lo.vals & hi.vals, if any, for all ma window sizes
-  # These steps return index values for all outliers
+  # These steps return index values for all disturbances
   pos_out <- mapply(
     FUN = \(x, y) {
       mapply(
         FUN = \(a, b) {
-          # Find the index position of any outliers
+          # Find the index position of any disturbances
           index_pos <- which(a$value > b)
 
-          # Compute how big the outlier is
+          # Compute how big the disturbance is
           dev <- abs(a$value[index_pos] - b)
 
           # Put the results in a data.frame
-          out_df <- data.frame(index_pos = index_pos, dev = dev)
+          dist_df <- data.frame(index_pos = index_pos, dev = dev)
 
-          # return just the largest outlier within each window size
-          out_df[which.max(out_df$dev), ]
+          # return just the largest disturbance within each window size
+          dist_df[which.max(dist_df$dev), ]
 
         },
         a = x,
@@ -255,17 +255,17 @@ dist_det_rem <- function(rwi,
     FUN = \(x, y) {
       mapply(
         FUN = \(a, b) {
-          # Find the index position of any outliers
+          # Find the index position of any disturbances
           index_pos <- which(a$value < b)
 
-          # Compute how big the outlier is
+          # Compute how big the disturbance is
           dev <- abs(a$value[index_pos] - b)
 
           # Put the results in a data.frame
-          out_df <- data.frame(index_pos = index_pos, dev = dev)
+          dist_df <- data.frame(index_pos = index_pos, dev = dev)
 
-          # return just the largest outlier within each window size
-          out_df[which.max(out_df$dev), ]
+          # return just the largest disturbance within each window size
+          dist_df[which.max(dist_df$dev), ]
 
         },
         a = x,
@@ -279,7 +279,7 @@ dist_det_rem <- function(rwi,
   )
 
 
-  # Now find the largest outliers for each series among all window sizes and record the window size and the index value.
+  # Now find the largest disturbances for each series among all window sizes and record the window size and the index value.
   # The index value will correspond to year.
 
   # First the whole list for all window lengths
@@ -287,7 +287,7 @@ dist_det_rem <- function(rwi,
     all_win_df <- do.call("rbind", x)
     all_win_df$win_len <- as.numeric(rownames(all_win_df))
     if (nrow(all_win_df) > 0) {
-      all_win_df$out_dir <- "pos"
+      all_win_df$dist_dir <- "pos"
     }
     all_win_df
   })
@@ -296,12 +296,12 @@ dist_det_rem <- function(rwi,
     all_win_df <- do.call("rbind", x)
     all_win_df$win_len <- as.numeric(rownames(all_win_df))
     if (nrow(all_win_df) > 0) {
-      all_win_df$out_dir <- "neg"
+      all_win_df$dist_dir <- "neg"
     }
     all_win_df
   })
 
-  # Second the max among all window lengths (i.e., just 1 or no outlier for each series)
+  # Second the max among all window lengths (i.e., just 1 or no disturbance for each series)
   max_pos_out <- lapply(max_pos_outs, FUN = \(x) {
     x[which.max(x$dev), ]
   })
@@ -310,12 +310,12 @@ dist_det_rem <- function(rwi,
     x[which.max(x$dev), ]
   })
 
-  # Third find which is the largest of the pos and neg outliers
+  # Third find which is the largest of the pos and neg disturbances
   max_out <- mapply(
     FUN = \(x, y) {
       if (nrow(x) > 0 &
           nrow(y) > 0) {
-        # If there are both pos & neg outliers...
+        # If there are both pos & neg disturbances...
         if (x$dev > y$dev) {
           # Chose largest of the two
           x
@@ -325,14 +325,14 @@ dist_det_rem <- function(rwi,
       } else {
         # if there aren't both
         if (nrow(x) > 0) {
-          # if there is only a pos outlier
+          # if there is only a pos disturbance
           x
         } else {
           if (nrow(y) > 0) {
-            # if there is only a neg outlier
+            # if there is only a neg disturbance
             y
           } else {
-            "No outliers detected"
+            "No disturbances detected"
           }
         }
       }
@@ -342,16 +342,16 @@ dist_det_rem <- function(rwi,
     y = max_neg_out,
     SIMPLIFY = FALSE
   )
-  # max_out contains some basic outlier info - the index of the starting year of the outlier (ie, year),
-  # the dev value of the outlier (magnitude), the window length, and the direction of the outlier.
-  # index_pos & win_len determine the subset over which to fit a curve (out_curves, below).
+  # max_out contains some basic disturbance info - the index of the starting year of the disturbance (ie, year),
+  # the dev value of the disturbance (magnitude), the window length, and the direction of the disturbance.
+  # index_pos & win_len determine the subset over which to fit a curve (dist_curves, below).
   # Can also use win_len to choose the relevant mov_avgs, tbrms, and lo_ & hi_vals out thresholds
   # The AR residual series can be extracted...
 
-  out_mov_avgs <- Map(
+  dist_mov_avgs <- Map(
     f = \(a, b, c, d, e, x) {
       if (is.character(a)) {
-        # For the series with no outliers detected
+        # For the series with no disturbances detected
         a
       } else {
         # create a data.frame that makes plotting easy (using ggplot2)
@@ -392,13 +392,13 @@ dist_det_rem <- function(rwi,
   )
 
 
-  ## Fit curves to the largest outlier from each series (the resid detrended series in cp_list),
-  # subtract the outlier curve, store the records of everything.
-  out_curves <- mapply(FUN = \(x, y) {
+  ## Fit curves to the largest disturbance from each series (the resid detrended series in cp_list),
+  # subtract the disturbance curve, store the records of everything.
+  dist_curves <- mapply(FUN = \(x, y) {
     # The index in max_out corresponds rows/elements in cp_list
-    # Control for the ones with no outliers
+    # Control for the ones with no disturbances
     if (is.character(y)) {
-      out_period <- y
+      dist_period <- y
     } else {
 
       # Make a data.frame from the series
@@ -408,25 +408,25 @@ dist_det_rem <- function(rwi,
         rownames(series_df) |>
         as.numeric()
 
-      # isolate just the outlier period
-      out_period <-
+      # isolate just the disturbance period
+      dist_period <-
         series_df[y[, "index_pos"]:(y[, "index_pos"] + y$win_len - 1), ]
 
       # Attach the rest of series if there is one
-      if ((max(out_period$year) + 1) < max(series_df$year)) {
-        rest_of_years <- (max(out_period$year) + 1) : max(series_df$year)
+      if ((max(dist_period$year) + 1) < max(series_df$year)) {
+        rest_of_years <- (max(dist_period$year) + 1) : max(series_df$year)
         rest_of_series <- data.frame(rwi = series_df[series_df$year %in% rest_of_years, "rwi"],
                                      year = rest_of_years
         )
         # Rbind it
-        out_period <- rbind(out_period, rest_of_series)
+        dist_period <- rbind(dist_period, rest_of_series)
       }
 
       # Record the direction of the disturbance
-      out_period$dir <- y$out_dir
+      dist_period$dir <- y$dist_dir
 
       # Record the actual duration of the disturbance
-      out_period$dur <- y$win_len
+      dist_period$dur <- y$win_len
 
       ## Curve fitting
       # Hugershoff - fits to the detected period and the reminder of the series too
@@ -436,11 +436,11 @@ dist_det_rem <- function(rwi,
       # we set these parameters here.
       hug_form0 <- formula(rwi ~ a * ((x - t)^1) * exp(-c*(x - t)) + 0)
 
-      out_period$x <- 1:(nrow(out_period))
+      dist_period$x <- 1:(nrow(dist_period))
 
       # Set up some start values & constraints for a
-      a_start <- ifelse(y$out_dir %in% "pos", 0.1, -0.1)
-      if (y$out_dir %in% "pos") {
+      a_start <- ifelse(y$dist_dir %in% "pos", 0.1, -0.1)
+      if (y$dist_dir %in% "pos") {
         a_const <- c(0.005, 5)
       } else {
         a_const <- c(-5, -0.005)
@@ -455,7 +455,7 @@ dist_det_rem <- function(rwi,
 
       hug_fit <- try(
         nls(hug_form0,
-            data = out_period,
+            data = dist_period,
             start = list(a = a_start,
                          c = 0.1,
                          t = 1.5),
@@ -467,72 +467,72 @@ dist_det_rem <- function(rwi,
 
       if (data.class(hug_fit) %in% "try-error") { # If the Hugershoff fit failed, fit a spline instead.
         # if this option, we should only fit & subtract the disturbance period itself
-        out_period <- out_period[1:y$win_len,]
+        dist_period <- dist_period[1:y$win_len,]
         spline_fit <-
           loess(rwi ~ year,
-                data = out_period,
+                data = dist_period,
                 span = dist.span,
                 family = "symmetric")
 
-        out_period$curve <- spline_fit$fitted
-        out_period$eq <- "loess spline"
+        dist_period$curve <- spline_fit$fitted
+        dist_period$eq <- "loess spline"
 
       } else {
-        out_period$curve <- predict(hug_fit, newdata = out_period)
+        dist_period$curve <- predict(hug_fit, newdata = dist_period)
         hug_coef <- coef(hug_fit) |> round(4)
         plus_minus <- ifelse(hug_coef[[3]] > 0, "-", "+")
-        out_period$eq <- paste0("y == ", hug_coef[[1]],
-                                " * (x ", plus_minus, " ", abs(hug_coef[[3]]), ")",
-                                " * e^(", -1*hug_coef[[2]],
-                                " * (x ", plus_minus, " ", abs(hug_coef[[3]]), "))")
+        dist_period$eq <- paste0("y == ", hug_coef[[1]],
+                                 " * (x ", plus_minus, " ", abs(hug_coef[[3]]), ")",
+                                 " * e^(", -1*hug_coef[[2]],
+                                 " * (x ", plus_minus, " ", abs(hug_coef[[3]]), "))")
       }
 
-      # "Correct" the rwi values for the outlier period by subtracting the fitted curve (aka, the residuals)
-      # add back the recent value of the series before the outlier period - a robust mean of the period before
+      # "Correct" the rwi values for the disturbance period by subtracting the fitted curve (aka, the residuals)
+      # add back the recent value of the series before the disturbance period - a robust mean of the period before
       # the disturbance, or, if there is not an adequate period before, do the period after.
 
       if (add.recent.rwi == TRUE) {
-        ba_dist <- (min(out_period$year, na.rm = TRUE) - y$win_len):min(out_period$year, na.rm = TRUE)
+        ba_dist <- (min(dist_period$year, na.rm = TRUE) - y$win_len):min(dist_period$year, na.rm = TRUE)
         if (min(ba_dist) < min(series_df$year) | # if there is no before or the before is < than the disturbance
             length(ba_dist[ba_dist %in% series_df$year]) < y$win_len){
           # select the period after
           ba_dist <- (max(ba_dist)+1):(max(ba_dist) + y$win_len)
-          out_period$rwi.cor <- # or just use the raw difference for the mean of 0
-            out_period$rwi - out_period$curve
+          dist_period$rwi.cor <- # or just use the raw difference for the mean of 0
+            dist_period$rwi - dist_period$curve
         } else {# Otherwise, proceed with the before period already determined
           tbrm_recent_rwi <- series_df$rwi[series_df$year %in% ba_dist] |>
             TukeyBiweight()
 
-          out_period$rwi.cor <-
-            (out_period$rwi - out_period$curve) + tbrm_recent_rwi
+          dist_period$rwi.cor <-
+            (dist_period$rwi - dist_period$curve) + tbrm_recent_rwi
         }
       } else {
-        out_period$rwi.cor <-
-          (out_period$rwi - out_period$curve)
+        dist_period$rwi.cor <-
+          (dist_period$rwi - dist_period$curve)
       }
 
     }
     # Return the results
-    out_period
+    dist_period
 
-  }, x = rwi, y = max_out)
+  }, x = rwi, y = max_out, SIMPLIFY = FALSE)
 
 
-  # Now the corrected rwi values can be inserted into the series to remove the outliers
+  # Now the corrected rwi values can be inserted into the series to remove the disturbances
   rwi2 <- mapply(FUN = \(x, y) {
-    # Control for the ones with no outliers
+    # Control for the ones with no disturbances
     if (is.character(y)) {
       x # return the original series
     } else {
-      x[which(names(x) %in% y$year)] <- y$rwi.cor # substitute the corrected section
+      x[which(names(x) %in% y[,"year"])] <- y[,"rwi.cor"] # substitute the corrected section
       x # Return the series
     }
-  }, x = rwi, y = out_curves)
+  }, x = rwi, y = dist_curves, SIMPLIFY = FALSE)
 
 
-  det_rem_out_list <- list(rwi2, out_curves, out_mov_avgs)
-  names(det_rem_out_list) <-
-    c("Corrected RWI", "Outlier curves", "Outlier detection")
-  det_rem_out_list
+  det_rem_dist_list <- list(rwi2, dist_curves, dist_mov_avgs)
+  names(det_rem_dist_list) <-
+    c("Corrected RWI", "Disturbance curves", "Disturbance detection")
+  det_rem_dist_list
 
-} # End of the out_det_rem() function
+} # End of the dist_det_rem() function
