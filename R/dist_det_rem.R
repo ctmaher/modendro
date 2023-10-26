@@ -18,9 +18,9 @@
 #' the threshold of number of deviations from the robust mean (3.29), computed for each series and each moving average window length. The largest deviation - the largest absolute value of the difference between
 #' the moving average value & the (negative or positive) threshold - for each series is selected first. Thus the largest magnitude disturbance could be a suppression or a release.
 #' This defines the onset year and duration of the disturbance. A modified version of a Hugershoff curve (Warren & MacWilliam 1981) is then fit (via \code{\link[stats]{nls}}) to the disturbance period and beyond (all the way to the end of the series)
-#' transformed, detrended residual series (not the AR residuals), with slightly different coefficients than the Hugershoff curve used by Rydval et al. Namely, the following values are fixed: b = 1, and d = 0. The Warren & MacWilliam curve has a 't' coefficient which we use here.
-#' These modifications allow for more robust fitting (reduced parameters require fewer degrees of freedom). The d term acts like an intercept, and since all series have an overall mean of 0 (they are residuals),
-#' this constraint is reasonable. Setting the b term to 1 allows the beginning y values of the Hugershoff curve to go above or below 0, which helps in minimizing artifacts from poor fit in the early years of a disturbance period.
+#' transformed, detrended residual series (not the AR residuals), with slightly different coefficients than the Hugershoff curve used by Rydval et al. Namely, the following values are fixed: \emph{b} = 1, and \emph{d} = 0. The Warren & MacWilliam curve has a \emph{t} coefficient which we use here.
+#' These modifications allow for more robust fitting (reduced parameters require fewer degrees of freedom). The \emph{d} term acts like an intercept, and since all series have an overall mean of 0 (they are residuals),
+#' this constraint is reasonable. Setting the \emph{b} term to 1 allows the beginning y values of the Hugershoff curve to go above or below 0 (more directly determined by \emph{t}), which helps in minimizing artifacts from poor fit in the early years of a disturbance period.
 #'
 #' While the Hugershoff curve fitting is reasonably robust, \code{\link[stats]{nls}} occasionally fails to converge. In these cases a \code{\link[stats]{loess}} spline is fit to the disturbance period only instead (not the whole remainder of the series as in the Hugershoff).
 #' The wiggliness of these splines can be adjusted using the `dist.span` argument. For both methods, the resulting fitted curve is subtracted from the series. The recent value of the series before the disturbance period - a robust mean of the period before
@@ -430,8 +430,8 @@ dist_det_rem <- function(rwi,
 
       ## Curve fitting
       # Hugershoff - fits to the detected period and the reminder of the series too
-      # The formula is modified. z is an added parameter that controls how far above/below the
-      # initial fit can go beyond the asymptote. b = 1, always, to allow z to work. d = 0, always.
+      # The formula is modified. t is an added parameter that controls how far above/below the
+      # initial fit can go beyond the asymptote. b = 1, always, to allow t to work. d = 0, always.
       # d mainly controls the asymptote value. We get a better chance at a successful fit if
       # we set these parameters here.
       hug_form0 <- formula(rwi ~ a * ((x - t)^1) * exp(-c*(x - t)) + 0)
