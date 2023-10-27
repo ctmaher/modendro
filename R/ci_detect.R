@@ -95,6 +95,10 @@ ci_detect <- function(rwl,
               min.win >= 5
   )
 
+  stopifnot("thresh must be > 0" =
+              thresh > 0
+  )
+
   # save the original order of the names to realign at each step
   orig.IDs <- colnames(rwl)
   ## Run cp_detrend to power transform and detrend the rwl
