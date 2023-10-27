@@ -1,4 +1,4 @@
-#' Supporting function for ci_detect() - statistical detection and removal of disturbances in tree ring series
+#' Supporting function for ci_detect - statistical detection and removal of disturbances in tree ring series
 #'
 #' @description
 #' This function implements the disturbance detection and removal steps for the curve intervention detection techniques described by Druckenbrod et al. 2013,
