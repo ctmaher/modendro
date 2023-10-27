@@ -492,25 +492,24 @@ dist_det_rem <- function(rwi,
       # the disturbance, or, if there is not an adequate period before, do the period after.
 
       if (add.recent.rwi == TRUE) {
-        ba_dist <- (min(dist_period$year, na.rm = TRUE) - y$win_len):min(dist_period$year, na.rm = TRUE)
-        if (min(ba_dist) < min(series_df$year) | # if there is no before or the before is < than the disturbance
-            length(ba_dist[ba_dist %in% series_df$year]) < y$win_len){
+        per_len <- ifelse(y$win_len < 15, 15, y$win_len)
+        ba_dist <- ((min(dist_period$year, na.rm = TRUE) - 1) - per_len):(min(dist_period$year, na.rm = TRUE) - 1)
+        if (min(ba_dist) < min(series_df$year) | # if there is no before or
+            length(ba_dist[ba_dist %in% series_df$year]) < per_len){ # the before is < than the disturbance or 15 years
           # select the period after
-          ba_dist <- (max(ba_dist)+1):(max(ba_dist) + y$win_len)
-          dist_period$rwi.cor <- # or just use the raw difference for the mean of 0
-            dist_period$rwi - dist_period$curve
-        } else {# Otherwise, proceed with the before period already determined
-          tbrm_recent_rwi <- series_df$rwi[series_df$year %in% ba_dist] |>
-            TukeyBiweight()
+          ba_dist <- (max(ba_dist)+1):(max(ba_dist) + per_len)
+          #ba_dist <- (max(ba_dist) + 1):(max(ba_dist) + max(series_df$year))
+        } # Otherwise, proceed with the before period already determined
 
-          dist_period$rwi.cor <-
-            (dist_period$rwi - dist_period$curve) + tbrm_recent_rwi
-        }
-      } else {
-        dist_period$rwi.cor <-
-          (dist_period$rwi - dist_period$curve)
+        tbrm_recent_rwi <- series_df$rwi[series_df$year %in% ba_dist] |>
+          TukeyBiweight()
+
+      } else { # just use the raw difference for the mean of 0 if add.recent.rwi is FALSE
+        tbrm_recent_rwi <- 0
       }
 
+      dist_period$rwi.cor <-
+        (dist_period$rwi - dist_period$curve) + tbrm_recent_rwi
     }
     # Return the results
     dist_period
