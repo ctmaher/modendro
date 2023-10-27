@@ -10,12 +10,13 @@
 #' @param max.win The maximum disturbance length in years (i.e., a moving window) to search for. The default is 30.
 #' @param thresh The disturbance detection threshold, corresponding to the number of deviations from the robust mean. The default is 3.29, following Druckenbrod et al. 2013.
 #' @param dist.span Parameter to determine the wiggliness of the loess splines fit to disturbance periods (when Hugershoff fits fail). Higher numbers = more wiggles. Passes to \code{\link[stats]{loess}}. The default is 1.25.
+#' @param add.recent.rwi Logical vector indicating whether to calculate a robust mean of the rwi before or after each detected disturbance and add it to the difference between the disturbance curves and the original disturbance period. See details below.
 #'
 #' @details
 #' The basic process that `dist_det_rem` performs is to take standardized tree ring series (specifically the output from the Cook & Peters (1997) process, as implemented by \code{\link{cp_detrend}} in \code{\link{ci_detect}}),
 #' fit AR models (using the Burg method) to them and extract the residuals. The AR models are also "backcasted" to estimate residuals for the 1st n years which are NAs (n being equal to the AR order).
 #' Backcasting involves reversing each series then fitting AR models of the same order as the original. Then, we compute moving averages of various window lengths. Disturbances are defined as moving average values that fall outside
-#' the threshold of number of deviations from the robust mean (3.29), computed for each series and each moving average window length. The largest deviation - the largest absolute value of the difference between
+#' the threshold of number of deviations from the robust mean (default is 3.29), computed for each series and each moving average window length. The largest deviation - the largest absolute value of the difference between
 #' the moving average value & the (negative or positive) threshold - for each series is selected first. Thus the largest magnitude disturbance could be a suppression or a release.
 #' This defines the onset year and duration of the disturbance. A modified version of a Hugershoff curve (Warren & MacWilliam 1981) is then fit (via \code{\link[stats]{nls}}) to the disturbance period and beyond (all the way to the end of the series)
 #' transformed, detrended residual series (not the AR residuals), with slightly different coefficients than the Hugershoff curve used by Rydval et al. Namely, the following values are fixed: \emph{b} = 1, and \emph{d} = 0. The Warren & MacWilliam curve has a \emph{t} coefficient which we use here.
@@ -23,9 +24,13 @@
 #' this constraint is reasonable. Setting the \emph{b} term to 1 allows the beginning y values of the Hugershoff curve to go above or below 0 (more directly determined by \emph{t}), which helps in minimizing artifacts from poor fit in the early years of a disturbance period.
 #'
 #' While the Hugershoff curve fitting is reasonably robust, \code{\link[stats]{nls}} occasionally fails to converge. In these cases a \code{\link[stats]{loess}} spline is fit to the disturbance period only instead (not the whole remainder of the series as in the Hugershoff).
-#' The wiggliness of these splines can be adjusted using the `dist.span` argument. For both methods, the resulting fitted curve is subtracted from the series. The recent value of the series before the disturbance period - a robust mean of the period before
-#' the disturbance, or, if there is not an adequate period before (at least as long as the disturbance period window), the period after, is added back to the curve-series difference. This is done to avoid large artifacts from the disturbance removal process.
-#' The output series with disturbances removed is now "corrected".
+#' The wiggliness of these splines can be adjusted using the `dist.span` argument. For both methods, the resulting fitted curve is subtracted from the series.
+#'
+#' If `add.recent.rwi` is `TRUE` (the default), then the recent value (the longer of n years in the disturbance window or 15 years) of the series before the disturbance period - a robust mean of the period before
+#' the disturbance, or, if there is not an adequate period before (i.e., < 15 years), the period after, is added back to the curve-series difference. This is done to avoid artifacts from the disturbance removal process when the rwi
+#' values near a disturbance are not near 0 (which is the series mean of transformed detrended residuals). In some cases, this method may produce artifacts instead of preventing them.
+#' Inspect the output plots of \code{\link{ci_detect}} (\code{\link{plot_ci_detect}}) to determine this, specifically the "Disturbance detection & removal plots".
+#'
 #'
 #'
 #' @return a 3-element list that contains the corrected RWI, the fitted disturbance curves, and data on disturbance detection iterations
@@ -60,14 +65,10 @@ dist_det_rem <- function(rwi,
                          max.win = 30,
                          thresh = 3.29,
                          dist.span = 1.25,
-                         var.type = "s_bi",
                          add.recent.rwi = TRUE
 ) {
 
   ## Error catching
-  stopifnot("var.type is not valid. Must be 's_bi' or 'mad'." =
-              var.type %in% "s_bi" |
-              var.type %in% "mad")
 
   stopifnot("Value for thresh is not valid. Must be '>=1'." =
               thresh >= 1)
@@ -167,21 +168,21 @@ dist_det_rem <- function(rwi,
   })
 
   # The robust scale is from Hoaglin et al 1983, p417.
-  if (var.type %in% "s_bi") {
+  #if (var.type %in% "s_bi") {
     var <- lapply(mov_avgs, FUN = \(x) {
       lapply(x, FUN = \(x) {
         s_bi(na.omit(x$value))$s_bi
       })
     })
-  } else {
-    if (var.type %in% "mad") {
-      var <- lapply(mov_avgs, FUN = \(x) {
-        lapply(x, FUN = \(x) {
-          mad(x$value, na.rm = TRUE)
-        })
-      })
-    }
-  }
+  #} else {
+  #   if (var.type %in% "mad") {
+  #     var <- lapply(mov_avgs, FUN = \(x) {
+  #       lapply(x, FUN = \(x) {
+  #         mad(x$value, na.rm = TRUE)
+  #       })
+  #     })
+  #   }
+  # }
 
   lo_vals <- mapply(
     FUN = \(x, y) {

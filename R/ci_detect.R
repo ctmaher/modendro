@@ -17,16 +17,16 @@
 #' @param max.iter The maximum number of iterations to run the disturbance detection and removal processes. The default is 10.
 #'
 #' @details
-#' Intervention detection is a statistical time series approach to identify and remove abrupt changes in radial growth. The "curve" part
+#' Intervention detection is a statistical time series approach to identify and remove abrupt changes in radial growth. Disturbances are detected
+#' using moving averages of autoregressive residuals of transformed detrended ring width series. The "curve" part
 #' of curve intervention detection (CID) describes the type of line fitted to each period that is identified as a disturbance.
-#' Following Rydval et al. (2016, 2018), the implementation here uses a version of the equation presented by Warren & MacWilliam (1981), with
+#' The implementation here uses a version of the equation presented by Warren & MacWilliam (1981), with
 #' slightly different coefficients than the Hugershoff curve used by Rydval et al. Namely, the following values are fixed: b = 1, and d = 0.
 #' The Warren & MacWilliam curve has a 't' coefficient which we use here. These changes improve the robustness of the fits. Fitting is done
 #' via \code{\link[stats]{nls}}. A major difference for the `modendro` implementation of CID is that in the cases where the \code{\link[stats]{nls}} fits fail, a \code{\link[stats]{loess}} spline is fit
 #' instead. See \code{\link{dist_det_rem}} for more details.
 #'
 #'
-#' \code{\link{function}}
 #'
 #' @return A 5-element list containing the "disturbance-free" series, the disturbance index,
 #' a data.frame containing basic data on all the detected disturbances,
