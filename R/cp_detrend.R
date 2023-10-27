@@ -76,6 +76,7 @@
 #'         units = "cm")
 #' }, x = ca533_cp_plots, y = names(ca533_cp_plots))
 
+
 cp_detrend <-
   function(rwl,
            detrend.method = "Mean",
@@ -158,15 +159,15 @@ cp_detrend <-
       )
 
     # Extract the detrending info.
-    detr.info <- detr.result[["model.info"]][, orig.IDs]
+    detr.info <- detr.result[["model.info"]][orig.IDs]
     detr.info <- Map(f = \(d, n) {
       df <- do.call("rbind", d) |> as.data.frame()
       df[, "method"] <- names(d)
       df[, "series"] <- n
       df
     },
-    d = detr.info[, orig.IDs],
-    n = names(detr.info[, orig.IDs]))
+    d = detr.info[orig.IDs],
+    n = names(detr.info[orig.IDs]))
 
 
     curv <- detr.result$curves - 2 # subtract the 2 we added above
