@@ -2,7 +2,7 @@
 % Please edit documentation in R/plot_ci_detect.R
 \name{plot_ci_detect}
 \alias{plot_ci_detect}
-\title{Plot the ci_detect() processes & final results}
+\title{Plot the ci_detect processes & final results}
 \usage{
 plot_ci_detect(ci_output)
 }

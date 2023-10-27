@@ -1,14 +1,18 @@
-#' Plot the `cp_detrend()` process
+#' Plot the cp_detrend process
 #'
 #' @description
-#' Takes the output from `cp_detrend()` and makes a list of plots that show the Cook & Peters (1997) process for each series.
+#' Takes the output from \code{\link{cp_detrend}} and makes a list of plots that show the Cook & Peters (1997) process for each series.
 #'
 #'
-#' @param cp_out A list produced by the `cp_detrend()` function
+#' @param cp_out A list produced by the \code{\link{cp_detrend}} function
 #'
 #' @return A list of output plots showing the power transformation and detrending processes for each series.
 #'
-#' @seealso [cp_detrend(), pwr_t_rwl(), find_opt_pwr()]
+#' @references
+#' Cook, E. R., and Peters, K. (1997) Calculating unbiased tree-ring indices for the study of climatic and environmental change.
+#' \emph{The Holocene}, \strong{7}(3), 361-370.
+#'
+#' @seealso \code{\link{cp_detrend}}, \code{\link{pwr_t_rwl}}, \code{\link{find_opt_pwr}}
 #'
 #' @import ggplot2
 #' @import tidyr
@@ -28,6 +32,7 @@ plot_cp_detrend <- function(cp_out) {
 
     # convert all rwl format data.frames to long format, and then rbind them together.
     rw <- as.data.frame(cp_out[["Raw ring widths"]])
+    orig.IDs <- colnames(rw)
     rw[, "year"] <-
       rownames(cp_out[["Raw ring widths"]]) |> as.numeric()
     long.rw <- tidyr::pivot_longer(rw,
@@ -37,7 +42,9 @@ plot_cp_detrend <- function(cp_out) {
       as.data.frame()
     long.rw$type <- "rw"
 
-    trans <- as.data.frame(cp_out[["Transformed ring widths"]])
+
+
+    trans <- as.data.frame(cp_out[["Transformed ring widths"]][,orig.IDs])
     trans[, "year"] <-
       rownames(cp_out[["Transformed ring widths"]]) |> as.numeric()
     long.trans <- tidyr::pivot_longer(
@@ -48,7 +55,7 @@ plot_cp_detrend <- function(cp_out) {
     )
     long.trans$type <- "pwr.t_cu"
 
-    curv <- as.data.frame(cp_out[["Detrend curves"]])
+    curv <- as.data.frame(cp_out[["Detrend curves"]][,orig.IDs])
     curv[, "year"] <-
       rownames(cp_out[["Detrend curves"]]) |> as.numeric()
     long.curv <- tidyr::pivot_longer(
@@ -60,7 +67,7 @@ plot_cp_detrend <- function(cp_out) {
       as.data.frame()
     long.curv$type <- "pwr.t_cu"
 
-    detr <- as.data.frame(cp_out[["Resid. detrended series"]])
+    detr <- as.data.frame(cp_out[["Resid. detrended series"]][,orig.IDs])
     detr[, "year"] <-
       rownames(cp_out[["Resid. detrended series"]]) |> as.numeric()
     long.detr <- tidyr::pivot_longer(

@@ -7,7 +7,7 @@
 pwr_t_rwl(rwl)
 }
 \arguments{
-\item{rwl}{A rwl object (read in by dplR's \code{read.rwl()}). Essentially a data.frame with columns names as series IDs and years as rownames.}
+\item{rwl}{A rwl object (read in by dplR's \code{\link[dplR]{read.rwl}}). Essentially a data.frame with columns names as series IDs and years as rownames.}
 }
 \value{
 A two-element list, 1 is the transformed series and 2 contains the messages about the transformations
@@ -21,7 +21,7 @@ This function uses the estimated optimal power of transformation and a simple se
 If the estimated power is ≤ 0.1, then log10 transform. If greater than 1, don't transform the series. The set of
 estimated optimal powers that is actually used (applied as: ring width ^ opt pwr) lies between 0.1 < opt pwr ≤ 1.
 
-See ?find_opt_pwr ?cp_detrend and Cook and Peters (1997) for more details.
+See \code{\link{find_opt_pwr}}, \code{\link{cp_detrend}},and Cook and Peters (1997) for more details.
 
 Some cleaning of the rwl data is performed before transformation: because log(0) is undefined,
 0 ring width values are replaced with the minimum value possible given the resolution of the data,
@@ -37,5 +37,5 @@ Cook, E. R., and Peters, K. (1997) Calculating unbiased tree-ring indices for th
 \emph{The Holocene}, \strong{7}(3), 361-370.
 }
 \seealso{
-\code{\link[=find_opt_pwr(), cp_detrend]{find_opt_pwr(), cp_detrend()}}
+\code{\link{find_opt_pwr}}, \code{\link{cp_detrend}}
 }

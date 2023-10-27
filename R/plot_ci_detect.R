@@ -1,4 +1,4 @@
-#' Plot the ci_detect() processes & final results
+#' Plot the ci_detect processes & final results
 #'
 #' @description
 #' Takes the nested output list from \code{\link{ci_detect}}  and makes a list of plots that show the process for each series.
@@ -90,6 +90,8 @@ plot_ci_detect <- function(ci_output) {
           },
           simplify = FALSE)
 
+  orig.IDs <- names(or_series) # capture the original names in their original order
+
   ci_series <-
     apply(ci_output[["Disturbance-free series"]],
           MARGIN = 2,
@@ -99,6 +101,8 @@ plot_ci_detect <- function(ci_output) {
                        type = "Disturb.-free") |> na.omit()
           },
           simplify = FALSE)
+
+  ci_series <- ci_series[orig.IDs] # make sure the order matches
 
 
   # Map() applies the rbind action across the 2 lists. It is a wrapper for mapply().
@@ -112,18 +116,19 @@ plot_ci_detect <- function(ci_output) {
 
   whole_series <-
     lapply(ci_output[["Disturbance removal iterations"]], FUN = \(x) {
-      x[[1]]
+      x[[1]][orig.IDs] # make sure the order matches
     })
+
 
   # This pulls out just the disturbance removal iterations with the specific disturbance metadata
   dist_curves_only <-
     lapply(ci_output[["Disturbance removal iterations"]], FUN = \(x) {
-      x[[2]]
+      x[[2]][orig.IDs] # make sure the order matches
     })
 
   dist_detection_only <-
     lapply(ci_output[["Disturbance removal iterations"]], FUN = \(x) {
-      x[[3]]
+      x[[3]][orig.IDs] # make sure the order matches
     })
   # The outermost layer of these lists represents the iterations. Within each of those inner lists,
   # there are data.frames or a character vector for each of the series.
@@ -223,9 +228,9 @@ plot_ci_detect <- function(ci_output) {
   dist_curves_df$year <- dist_curves_df$year |> as.numeric()
 
   # Now split the dfs into lists by series.
-  dist_curves_split <- split(dist_curves_df, dist_curves_df$series)
-  dist_detection_split <-
-    split(dist_detection_df, dist_detection_df$series)
+  dist_curves_split <- split(dist_curves_df, dist_curves_df$series)[orig.IDs] # make sure the order matches
+  dist_detection_split <- split(dist_detection_df, dist_detection_df$series)[orig.IDs] # make sure the order matches
+
 
   ## The disturbance detection & removal iteration plots
   dist_det_rem_plots <- Map(f = \(det, rem) {
@@ -519,7 +524,7 @@ plot_ci_detect <- function(ci_output) {
     dist = dist_start_dir
   )
 
-  plot_list <- list(dist_det_rem_plots, final_plots)
+  plot_list <- list(dist_det_rem_plots[orig.IDs], final_plots[orig.IDs])
   names(plot_list) <-
     c("Disturbance detection & removal plots",
       "Final disturbance-free series plots")

@@ -7,7 +7,7 @@
 p2yrsL(rwl, limit = 2.6)
 }
 \arguments{
-\item{rwl}{A rwl object (read in by dplR's \code{read.rwl()}). Essentially a data.frame with columns names as series IDs and years as rownames.}
+\item{rwl}{A rwl object (read in by dplR's \code{\link[dplR]{read.rwl}}). Essentially a data.frame with columns names as series IDs and years as rownames.}
 
 \item{limit}{A numeric vector specifying the number of standard deviations beyond the mean to limit (cut off) the resulting series. Default is 2.6, the same value used in CDendro and CooRecorder.}
 }

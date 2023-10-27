@@ -7,7 +7,7 @@
 find_opt_pwr(rwl)
 }
 \arguments{
-\item{rwl}{A rwl object (read in by dplR's \code{read.rwl()}). Essentially a data.frame with columns names as series IDs and years as rownames.}
+\item{rwl}{A rwl object (read in by dplR's  \code{\link[dplR]{read.rwl}}). Essentially a data.frame with columns names as series IDs and years as rownames.}
 }
 \value{
 A named numeric vector with the series IDs (colnames) and the estimated optimal power of transformation
@@ -25,7 +25,7 @@ See ?cp_detrend and Cook and Peters (1997) for more details.
 
 Note that this is a very simple function that only implements the spread vs. level estimation
 of an optimal power for making a tree ring series ± homoscedastic. This function does not select which of these estimated
-powers to use, that is performed in the \code{pwr_t_rwl()} function. See ?pwr_t_rwl for more details.
+powers to use, that is performed in the  \code{\link{pwr_t_rwl}} function.
 }
 \examples{
 library(dplR)
@@ -37,5 +37,5 @@ Cook, E. R., and Peters, K. (1997) Calculating unbiased tree-ring indices for th
 \emph{The Holocene}, \strong{7}(3), 361-370.
 }
 \seealso{
-\code{\link[=pwr_t_rwl(), cp_detrend]{pwr_t_rwl(), cp_detrend()}}
+\code{\link{pwr_t_rwl}}, \code{\link{cp_detrend}}
 }

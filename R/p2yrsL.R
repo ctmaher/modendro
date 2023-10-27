@@ -10,7 +10,7 @@
 #' The essential element of both approaches is that we remove the mid- to low-frequency variation
 #' and highlight the high-frequency for cross-dating purposes only. The high-frequency variation facilitates checking both statistical (correlations) and visual (comparing the squiggly line plots of two series) correspondence of two series.
 #'
-#' @param rwl A rwl object (read in by dplR's `read.rwl()`). Essentially a data.frame with columns names as series IDs and years as rownames.
+#' @param rwl A rwl object (read in by dplR's \code{\link[dplR]{read.rwl}}). Essentially a data.frame with columns names as series IDs and years as rownames.
 #' @param limit A numeric vector specifying the number of standard deviations beyond the mean to limit (cut off) the resulting series. Default is 2.6, the same value used in CDendro and CooRecorder.
 #'
 #' @details

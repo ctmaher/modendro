@@ -14,9 +14,9 @@
 #'
 #' Note that this is a very simple function that only implements the spread vs. level estimation
 #' of an optimal power for making a tree ring series ± homoscedastic. This function does not select which of these estimated
-#' powers to use, that is performed in the `pwr_t_rwl()` function. See ?pwr_t_rwl for more details.
+#' powers to use, that is performed in the  \code{\link{pwr_t_rwl}} function.
 #'
-#' @param rwl A rwl object (read in by dplR's `read.rwl()`). Essentially a data.frame with columns names as series IDs and years as rownames.
+#' @param rwl A rwl object (read in by dplR's  \code{\link[dplR]{read.rwl}}). Essentially a data.frame with columns names as series IDs and years as rownames.
 #'
 #' @return A named numeric vector with the series IDs (colnames) and the estimated optimal power of transformation
 #'
@@ -24,7 +24,7 @@
 #' Cook, E. R., and Peters, K. (1997) Calculating unbiased tree-ring indices for the study of climatic and environmental change.
 #' \emph{The Holocene}, \strong{7}(3), 361-370.
 #'
-#' @seealso [pwr_t_rwl(), cp_detrend()]
+#' @seealso \code{\link{pwr_t_rwl}}, \code{\link{cp_detrend}}
 #'
 #' @export
 #'
@@ -56,15 +56,22 @@ find_opt_pwr <- function(rwl) {
          paste(these_are_NA, collapse = ", "))
   }
 
+  orig.IDs <- colnames(rwl) # original series names in original order
+
   # absolute value of 1st differences.
   # set up lagged vector for 1st differences
   rwl.lag <-
     rbind(rep(NA, ncol(rwl)), rwl[1:(nrow(rwl) - 1), , drop = FALSE])
 
+  rwl.lag <- rwl.lag[, orig.IDs]
+
   # absolute value of 1st differences
   # Cook & Peters equate this as the standard deviation (it is not the same, but 1st differences is what they use).
   diffs <- abs(rwl - rwl.lag)
   lmean <- (rwl + rwl.lag) / 2
+
+  diffs <- diffs[, orig.IDs]
+  lmean <- lmean[, orig.IDs]
 
   # Any zero values in diffs or means should be avoided
   diffs.ind <- which(diffs < 0.001, arr.ind = TRUE)
@@ -76,7 +83,6 @@ find_opt_pwr <- function(rwl) {
   lmean[lmean.ind] <- NA
 
   # Make the dfs into lists - use apply(MARGIN = 2, simplify = F) & an identity function
-  # split() wasn't working well because the colnames are not really a factor in "wide" format.
   diffs <- apply(diffs,
                  MARGIN = 2,
                  FUN = \(x) x,
@@ -89,10 +95,10 @@ find_opt_pwr <- function(rwl) {
   # Get the slopes
   slopes <- mapply(FUN = \(x, y) {
     lm(log10(y) ~ log10(x), na.action = "na.exclude")$coef[2][[1]]
-  }, x = lmean, y = diffs)
+  }, x = lmean[orig.IDs], y = diffs[orig.IDs])
 
   # Make sure the order matches the original rwl
-  slopes <- slopes[colnames(rwl)]
+  slopes <- slopes[orig.IDs]
 
   # Determine optimal power of transformation by subtracting slope from 1
   abs(1 - slopes)

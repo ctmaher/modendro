@@ -136,10 +136,14 @@ cp_detrend <-
       )
     }
 
+    orig.IDs <- names(rwl) # capture the original names in their original order
+
     # Find the optimal power of transformation and transform the series
     trans.list <- pwr_t_rwl(rwl) # Returns a list
-    trans <- trans.list[["Transformed ring widths"]] # The transformed series
+    trans <- trans.list[["Transformed ring widths"]][,orig.IDs] # The transformed series
     mess.df <- trans.list[["Transformation metadata"]] # Info about transformations
+
+
 
     # detrend the transformed series
     detr.result <-
@@ -154,15 +158,15 @@ cp_detrend <-
       )
 
     # Extract the detrending info.
-    detr.info <- detr.result[["model.info"]]
+    detr.info <- detr.result[["model.info"]][, orig.IDs]
     detr.info <- Map(f = \(d, n) {
       df <- do.call("rbind", d) |> as.data.frame()
       df[, "method"] <- names(d)
       df[, "series"] <- n
       df
     },
-    d = detr.info,
-    n = names(detr.info))
+    d = detr.info[, orig.IDs],
+    n = names(detr.info[, orig.IDs]))
 
 
     curv <- detr.result$curves - 2 # subtract the 2 we added above
