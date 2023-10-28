@@ -10,7 +10,6 @@ ci_detect(
   nyrs = NULL,
   min.win = 9,
   max.win = 30,
-  var.type = "s_bi",
   thresh = 3.29,
   dist.span = 1.25,
   max.iter = 10,
@@ -37,7 +36,7 @@ ci_detect(
 \value{
 A named list with the following elements:
 \enumerate{
-\item "Disturbance-free series" - an rwl-data.frame of the final 'disturbance-free' series in original units (ring width; typically mm). Transformation and detrending are reversed to .
+\item "Disturbance-free series" - an rwl-data.frame of the final 'disturbance-free' series in original units (ring width; typically mm).
 \item "Disturbance index" - an rwl-data.frame of the differences (in original units) between the original ring widths and the 'disturbance-free' series.
 \item "Detected disturbances" - a list of data.frames containing the AR residuals, a moving average series, series robust means, and detection thresholds for the max disturbance detected. Mostly for plotting disturbance iterations in \code{\link{plot_ci_detect}}.
 \item "Disturbance removal iterations" - a list of lists containing the details on each disturbance detected and removed for each iteration and each series.
