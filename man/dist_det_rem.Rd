@@ -27,7 +27,12 @@ dist_det_rem(
 \item{add.recent.rwi}{Logical vector indicating whether to calculate a robust mean of the rwi before or after each detected disturbance and add it to the difference between the disturbance curves and the original disturbance period. See details below.}
 }
 \value{
-a 3-element list that contains the corrected RWI, the fitted disturbance curves, and data on disturbance detection iterations
+A named list with the following elements:
+\enumerate{
+\item "Corrected RWI" - a list of the final 'disturbance-free' series after all iterations are done.
+\item "Disturbance curves" - a list of the curves fitted to each disturbance detected within each series.
+\item "Disturbance detection" - a list of data.frames containing the AR residuals, a moving average series, series robust means, and detection thresholds for the max disturbance detected. Mostly for plotting disturbance iterations in \code{\link{plot_ci_detect}}.
+}
 }
 \description{
 This function implements the disturbance detection and removal steps for the curve intervention detection techniques described by Druckenbrod et al. 2013,
@@ -68,4 +73,7 @@ Cook, E. R., and Peters, K. (1997) Calculating unbiased tree-ring indices for th
 
 Warren, W. G., and S. L. MacWilliam. 1981. Test of a new method for removing the growth trend from dendrochronological data.
 \emph{Tree Ring Bulletin} \strong{41}, 55–66.
+}
+\seealso{
+\code{\link{ci_detect}}, \code{\link{plot_ci_detect}}
 }

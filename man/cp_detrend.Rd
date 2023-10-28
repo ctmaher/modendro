@@ -16,13 +16,14 @@ cp_detrend(rwl, detrend.method = "Mean", nyrs = NULL, pos.slope = FALSE)
 \item{pos.slope}{Should positive slopes be allowed in the detrending curves? Generally this should be FALSE (the default), but when used in \code{\link{ci_detect}} it is TRUE to detect deviations from any long term trend. Passes to \code{\link[dplR]{detrend}}.}
 }
 \value{
-A list with the following elements:
+A named list with the following elements:
 \enumerate{
-\item the residual detrended power transformed series.
-\item the curves fitted to the transformed series.
-\item the power transformed series (before detrending).
-\item a data.frame containing each series about the type of transformation applied.
-If no detrending is performed, then only elements 3-5 are in the output list.
+\item "Resid. detrended series" - the residual detrended power transformed series.
+\item "Detrend curves" - the curves fitted to the transformed series.
+\item "Transformed ring widths" - the power transformed series (before detrending).
+\item "Transformation metadata" - a list of data.frames for each series about the type of transformation applied.
+\item "Detrending metadata" - a list of data.frames for each series about the detrending applied (from \code{\link[dplR]{detrend}}).
+\item "Raw ring widths" - the original rwl-data.frame
 }
 }
 \description{

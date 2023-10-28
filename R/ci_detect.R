@@ -5,16 +5,18 @@
 #' Rydval et al. 2016, and Rydval et al. 2018. The modendro implementation differs from the version described by these authors. See Details for more information.
 #' The basic motivations for performing this analysis are to identify, quantify, & remove abrupt changes in radial growth. You might use
 #' this information to help make inferences about forest stand dynamics, insect outbreaks, or isolate a stronger climate signal, depending on your dendroecological or dendroclimatological tendencies.
+#' The main output are "disturbance-free" series that are in the original ring width units (e.g., mm).
 #'
 #'
-#' @param rwl A rwl object (read in by \code{\link[dplR]{read.rwl}}). Essentially a data.frame with columns names as series IDs and years as rownames.
-#' @param detrend.method A character vector specifying the detrending method to use. Passes to \code{\link[dplR]{detrend}}. Default is "Mean".
+#' @param rwl A rwl object (e.g., read in by \code{\link[dplR]{read.rwl}}). Essentially a data.frame with columns names as series IDs and years as rownames.
+#' @param detrend.method A character vector specifying the detrending method to use. Passes to \code{\link[dplR]{detrend}} via \code{\link{cp_detrend}}. Default is "Mean".
 #' @param nyrs A numeric vector that determines the flexibility of the `"AgeDepSpline"` or the `"Spline"` detrending methods. Passes to \code{\link[dplR]{detrend}}. The default is 50 years or 1/3 the series length.
 #' @param min.win The minimum disturbance length in years (i.e., a moving window) to search for. The default is 9.
 #' @param max.win The maximum disturbance length in years (i.e., a moving window) to search for. The default is the smallest of 30 years or 1/3 of the series length.
 #' @param thresh The disturbance detection threshold, corresponding to the number of deviations from the robust mean. The default is 3.29, following Druckenbrod et al. 2013.
 #' @param dist.span Parameter to determine the wiggliness of the loess splines fit to disturbances periods. Higher numbers = less wiggles. Passes to \code{\link[stats]{loess}}. The default is 1.25
 #' @param max.iter The maximum number of iterations to run the disturbance detection and removal processes. The default is 10.
+#'
 #'
 #' @details
 #' Intervention detection is a statistical time series approach to identify and remove abrupt changes in radial growth. Disturbances are detected
@@ -26,11 +28,20 @@
 #' via \code{\link[stats]{nls}}. A major difference for the `modendro` implementation of CID is that in the cases where the \code{\link[stats]{nls}} fits fail, a \code{\link[stats]{loess}} spline is fit
 #' instead. See \code{\link{dist_det_rem}} for more details.
 #'
+#' The choice of initial detrending can have an effect on the subsequent disturbance detection and removal, so choose wisely. All detrending is done with
+#' inside the function with \code{\link{cp_detrend}} so that the resulting series are transformed to homogenize variance and are residuals with a mean of 0.
 #'
+#' The final steps of the process involve adding back the initial detrending curves and reversing the transformations so that the resulting "disturbance-free" series are in
+#' the original ring width units (typically mm). These series can then be treated as any other ring width series, with the type of detrending/standardization depending on
+#' the research goals.
 #'
-#' @return A 5-element list containing the "disturbance-free" series, the disturbance index,
-#' a data.frame containing basic data on all the detected disturbances,
-#' a record of the disturbance detection and removal iterations, and the output from the cp_detrend() process.
+#' @return A named list with the following elements:
+#' 1) "Disturbance-free series" - an rwl-data.frame of the final 'disturbance-free' series in original units (ring width; typically mm). Transformation and detrending are reversed to .
+#' 2) "Disturbance index" - an rwl-data.frame of the differences (in original units) between the original ring widths and the 'disturbance-free' series.
+#' 3) "Detected disturbances" - a list of data.frames containing the AR residuals, a moving average series, series robust means, and detection thresholds for the max disturbance detected. Mostly for plotting disturbance iterations in \code{\link{plot_ci_detect}}.
+#' 4) "Disturbance removal iterations" - a list of lists containing the details on each disturbance detected and removed for each iteration and each series.
+#' 5) "Cook & Peters detrend" - the output from the \code{\link{cp_detrend}} function.
+#'
 #'
 #' @references
 #' Druckenbrod, D. L., N. Pederson, J. Rentch, and E. R. Cook. (2013) A comparison of times series approaches for dendroecological reconstructions of past canopy disturbance events.
@@ -55,7 +66,7 @@
 #' library(dplR)
 #' data("co021")
 #' # before
-#' ci_detect(co021, max.iter = 5)
+#' ci_detect(co021, max.iter = 5) # shorten iterations for the example
 
 
 ci_detect <- function(rwl,

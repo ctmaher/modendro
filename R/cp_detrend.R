@@ -32,12 +32,13 @@
 #' If you have many 0 ring width values in your data, make sure to take a look at the output plots (you should do this anyway) to
 #' check for any weirdness.
 #'
-#' @return A list with the following elements:
-#' 1) the residual detrended power transformed series.
-#' 2) the curves fitted to the transformed series.
-#' 3) the power transformed series (before detrending).
-#' 4) a data.frame containing each series about the type of transformation applied.
-#' If no detrending is performed, then only elements 3-5 are in the output list.
+#' @return A named list with the following elements:
+#' 1) "Resid. detrended series" - the residual detrended power transformed series.
+#' 2) "Detrend curves" - the curves fitted to the transformed series.
+#' 3) "Transformed ring widths" - the power transformed series (before detrending).
+#' 4) "Transformation metadata" - a list of data.frames for each series about the type of transformation applied.
+#' 5) "Detrending metadata" - a list of data.frames for each series about the detrending applied (from \code{\link[dplR]{detrend}}).
+#' 6) "Raw ring widths" - the original rwl-data.frame
 #'
 #' @references
 #' Cook, E. R., and Peters, K. (1997) Calculating unbiased tree-ring indices for the study of climatic and environmental change.

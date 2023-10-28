@@ -31,9 +31,10 @@
 #' values near a disturbance are not near 0 (which is the series mean of transformed detrended residuals). In some cases, this method may produce artifacts instead of preventing them.
 #' Inspect the output plots of \code{\link{ci_detect}} (\code{\link{plot_ci_detect}}) to determine this, specifically the "Disturbance detection & removal plots".
 #'
-#'
-#'
-#' @return a 3-element list that contains the corrected RWI, the fitted disturbance curves, and data on disturbance detection iterations
+#' @return A named list with the following elements:
+#' 1) "Corrected RWI" - a list of the final 'disturbance-free' series after all iterations are done.
+#' 2) "Disturbance curves" - a list of the curves fitted to each disturbance detected within each series.
+#' 3) "Disturbance detection" - a list of data.frames containing the AR residuals, a moving average series, series robust means, and detection thresholds for the max disturbance detected. Mostly for plotting disturbance iterations in \code{\link{plot_ci_detect}}.
 #'
 #' @references
 #' Druckenbrod, D. L., N. Pederson, J. Rentch, and E. R. Cook. (2013) A comparison of times series approaches for dendroecological reconstructions of past canopy disturbance events.
@@ -50,6 +51,8 @@
 #'
 #' Warren, W. G., and S. L. MacWilliam. 1981. Test of a new method for removing the growth trend from dendrochronological data.
 #' \emph{Tree Ring Bulletin} \strong{41}, 55–66.
+#'
+#' @seealso \code{\link{ci_detect}}, \code{\link{plot_ci_detect}}
 #'
 #' @import dplR
 #' @importFrom zoo rollmean
