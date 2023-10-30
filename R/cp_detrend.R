@@ -7,7 +7,9 @@
 #' @param rwl A rwl object (e.g., read in by \code{\link[dplR]{read.rwl}})
 #' @param detrend.method Character string of the detrending method to use. Passes to \code{\link[dplR]{detrend}}.
 #' @param nyrs Numeric vector, used in dplR's \code{\link[dplR]{detrend}} function for the `"Spline"` and `"AgeDepSpline"` methods.
-#' @param pos.slope Should positive slopes be allowed in the detrending curves? Generally this should be FALSE (the default), but when used in \code{\link{ci_detect}} it is TRUE to detect deviations from any long term trend. Passes to \code{\link[dplR]{detrend}}.
+#' @param pos.slope Should positive slopes be allowed in the detrending curves? Generally this should be FALSE (the default),
+#' but when used in \code{\link{ci_detect}} it is TRUE to detect deviations from any long term trend. Passes to \code{\link[dplR]{detrend}}.
+#' @param standardize Logical vector indicating whether to standardize the output detrended & transformed residuals (default is TRUE). See details for more information.
 #'
 #' @details
 #' For decades, the most common method of removing long-term size/age trends from tree ring width series has been to fit a curve
@@ -31,6 +33,12 @@
 #' with the minimum value possible given the resolution of the data, which for tree ring data is typically 0.01 or 0.001 mm.
 #' If you have many 0 ring width values in your data, make sure to take a look at the output plots (you should do this anyway) to
 #' check for any weirdness.
+#'
+#' The `standardize` argument indicates whether a standardization of the residual detrended series should be performed. This is
+#' an important consideration because of the variable transformations applied here can result in series with dramatically different
+#' variances - which will influence the any tree means or chronologies generated from these data. The standardization method we apply here is the same type found in
+#' the `dplR` function \code{\link[dplR]{detrend}} with the `method = "Ar"` option. This is done by adding the means of the original ring width series
+#' to the residual detrended series, then dividing the resulting series by their means. The results are series with a mean of 1 and similar variance.
 #'
 #' @return A named list with the following elements:
 #' 1) "Resid. detrended series" - the residual detrended power transformed series.
@@ -82,7 +90,8 @@ cp_detrend <-
   function(rwl,
            detrend.method = "Mean",
            nyrs = NULL,
-           pos.slope = FALSE) {
+           pos.slope = FALSE,
+           standardize = TRUE) {
     # Power transform series prior to detrending using methods of Cook and Peters (1997)
 
     # Error catching
@@ -174,6 +183,11 @@ cp_detrend <-
     curv <- detr.result$curves - 2 # subtract the 2 we added above
     detr <- detr.result$series
 
+    if (standardize == TRUE) {
+      orig.means <- colMeans(rwl, na.rm = TRUE)
+      resid.plus.orig <- sweep(detr, 2, orig.means, "+")
+      detr <- sweep(resid.plus.orig, 2, colMeans(resid.plus.orig, na.rm = TRUE), "/")
+    }
 
     out.list <- list(detr,
                      curv,

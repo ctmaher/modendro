@@ -4,7 +4,13 @@
 \alias{cp_detrend}
 \title{Detrend raw ring widths using Cook & Peters' (1997) method.}
 \usage{
-cp_detrend(rwl, detrend.method = "Mean", nyrs = NULL, pos.slope = FALSE)
+cp_detrend(
+  rwl,
+  detrend.method = "Mean",
+  nyrs = NULL,
+  pos.slope = FALSE,
+  standardize = TRUE
+)
 }
 \arguments{
 \item{rwl}{A rwl object (e.g., read in by \code{\link[dplR]{read.rwl}})}
@@ -13,7 +19,10 @@ cp_detrend(rwl, detrend.method = "Mean", nyrs = NULL, pos.slope = FALSE)
 
 \item{nyrs}{Numeric vector, used in dplR's \code{\link[dplR]{detrend}} function for the \code{"Spline"} and \code{"AgeDepSpline"} methods.}
 
-\item{pos.slope}{Should positive slopes be allowed in the detrending curves? Generally this should be FALSE (the default), but when used in \code{\link{ci_detect}} it is TRUE to detect deviations from any long term trend. Passes to \code{\link[dplR]{detrend}}.}
+\item{pos.slope}{Should positive slopes be allowed in the detrending curves? Generally this should be FALSE (the default),
+but when used in \code{\link{ci_detect}} it is TRUE to detect deviations from any long term trend. Passes to \code{\link[dplR]{detrend}}.}
+
+\item{standardize}{Logical vector indicating whether to standardize the output detrended & transformed residuals (default is TRUE). See details for more information.}
 }
 \value{
 A named list with the following elements:
@@ -52,6 +61,12 @@ Log transformation will obviously fail in these circumstances. To reduce these p
 with the minimum value possible given the resolution of the data, which for tree ring data is typically 0.01 or 0.001 mm.
 If you have many 0 ring width values in your data, make sure to take a look at the output plots (you should do this anyway) to
 check for any weirdness.
+
+The \code{standardize} argument indicates whether a standardization of the residual detrended series should be performed. This is
+an important consideration because of the variable transformations applied here can result in series with dramatically different
+variances - which will influence the any tree means or chronologies generated from these data. The standardization method we apply here is the same type found in
+the \code{dplR} function \code{\link[dplR]{detrend}} with the \code{method = "Ar"} option. This is done by adding the means of the original ring width series
+to the residual detrended series, then dividing the resulting series by their means. The results are series with a mean of 1 and similar variance.
 }
 \examples{
 library(dplR)
