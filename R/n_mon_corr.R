@@ -214,9 +214,9 @@ n_mon_corr <- function(chrono = NULL,
   #             all(mon.count$month == 12)
   # )
   if (all(mon.count$month != 12)) {
-
-    stop(paste("Year", mon.count$year[mon.count$month < 12],
-                   "does not have all 12 months represented."))
+    paste("Year", mon.count$year[mon.count$month < 12],
+          "does not have all 12 months represented")
+    stop("Not all years in climate data have all 12 months represented")
   }
 
   # n_mon_corr also assumes absolute regularity (this is true for some of the correlation tests too) in both chrono & clim
