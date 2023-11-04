@@ -41,12 +41,12 @@ Options are "mean" or "sum", e.g., for temperature or precipitation data, respec
 
 \item{max.lag}{numeric vector specifying how many years of lag to calculate calculations for. Default is 1 year.}
 
-\item{prewhiten}{logical vector specifying whether or not to convert climate time series to AR residuals (aka "prewhitening").
-This removes autocorrelation in a time series, leaving only the high-frequency variation. If you are doing this, you should also construct your chronology from AR residuals/prewhitened series. Default is FALSE.}
+\item{prewhiten}{logical vector specifying whether or not to convert chronology & climate time series to standardized AR residuals (aka "prewhitening").
+This removes autocorrelation in a time series, leaving only the high-frequency variation. This is common practice before using standard methods for cross-correlations. Default is FALSE.}
 
 \item{auto.corr}{logical vector specifying whether there is temporal autocorrelation in either your tree ring chronology or climate time series (there typically is autocorrelation, unless both are "prewhitened").
 If TRUE (the default), & corr.method is "spearman" or "kendall", then the \code{\link[corTESTsrd]{corTESTsrd}}function is used to compute modified significance testing to account for autocorrelation (From Lun et al. 2022).
-Caution! Currently auto.corr = TRUE & corr.method = "Pearson" doesn't make any adjustments. This will be included soon.}
+Caution! Currently auto.corr = TRUE & corr.method = "Pearson" doesn't make any adjustments. This may be included in the future.}
 
 \item{corr.method}{character vector specifying which correlation method to use. Options are \code{c("pearson", "kendall", "spearman")}.
 Passes to \code{\link[stats]{cor.test}} or to \code{\link[corTESTsrd]{corTESTsrd}}.}

@@ -186,7 +186,10 @@ cp_detrend <-
     if (standardize == TRUE) {
       orig.means <- colMeans(rwl, na.rm = TRUE)
       resid.plus.orig <- sweep(detr, 2, orig.means, "+")
-      detr <- sweep(resid.plus.orig, 2, colMeans(resid.plus.orig, na.rm = TRUE), "/")
+      resid.plus.orig.means <- colMeans(resid.plus.orig, na.rm = TRUE)
+      # Control for the potential for negative series means. Probably impossible with tree ring data.
+      resid.plus.orig.means[resid.plus.orig.means < 0] <- ((resid.plus.orig.means[resid.plus.orig.means < 0]) * -1)
+      detr <- sweep(resid.plus.orig, 2, resid.plus.orig.means, "/")
     }
 
     out.list <- list(detr,
