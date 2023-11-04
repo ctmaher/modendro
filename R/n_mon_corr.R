@@ -34,11 +34,11 @@
 #' @param agg.fun character vector specifying the function to use for aggregating monthly climate combinations.
 #' Options are "mean" or "sum", e.g., for temperature or precipitation data, respectively. Default is "mean".
 #' @param max.lag numeric vector specifying how many years of lag to calculate calculations for. Default is 1 year.
-#' @param prewhiten logical vector specifying whether or not to convert climate time series to AR residuals (aka "prewhitening").
-#' This removes autocorrelation in a time series, leaving only the high-frequency variation. If you are doing this, you should also construct your chronology from AR residuals/prewhitened series. Default is FALSE.
+#' @param prewhiten logical vector specifying whether or not to convert chronology & climate time series to standardized AR residuals (aka "prewhitening").
+#' This removes autocorrelation in a time series, leaving only the high-frequency variation. This is common practice before using standard methods for cross-correlations. Default is FALSE.
 #' @param auto.corr logical vector specifying whether there is temporal autocorrelation in either your tree ring chronology or climate time series (there typically is autocorrelation, unless both are "prewhitened").
 #' If TRUE (the default), & corr.method is "spearman" or "kendall", then the \code{\link[corTESTsrd]{corTESTsrd}}function is used to compute modified significance testing to account for autocorrelation (From Lun et al. 2022).
-#' Caution! Currently auto.corr = TRUE & corr.method = "Pearson" doesn't make any adjustments. This will be included soon.
+#' Caution! Currently auto.corr = TRUE & corr.method = "Pearson" doesn't make any adjustments. This may be included in the future.
 #' @param corr.method character vector specifying which correlation method to use. Options are `c("pearson", "kendall", "spearman")`.
 #'  Passes to \code{\link[stats]{cor.test}} or to \code{\link[corTESTsrd]{corTESTsrd}}.
 #' @param chrono.name character vector - the name of your chronology (optional). This is used in the title of your plot.
@@ -217,7 +217,7 @@ n_mon_corr <- function(chrono = NULL,
     paste("Year", mon.count$year[mon.count$month < 12],
           "does not have all 12 months represented")
     stop("Not all years in climate data have all 12 months represented")
-  }
+  } # This doesn't do what I want it too
 
   # n_mon_corr also assumes absolute regularity (this is true for some of the correlation tests too) in both chrono & clim
   chron.year.seq <- chrono[,"year"]
@@ -356,14 +356,13 @@ n_mon_corr <- function(chrono = NULL,
                            FUN = \(z){ifelse(agg.fun %in% "mean", mean(z), sum(z))})
 
       # If we want to convert climate & chrono to AR residuals (aka, "prewhitening"), do it here
-      # This follows what dplR's detrend.series(method = "Ar) does for tree ring series
       if (prewhiten == TRUE) {
-        ar.mod <- ar(clim.mo[!is.na(clim.mo[,clim.var]),clim.var])
-        ar.mean.resid <- ar.mod$resid + ar.mod$x.mean
-        clim.mo[!is.na(clim.mo[,clim.var]),clim.var] <- ar.mean.resid/mean(ar.mean.resid, na.rm = TRUE)
-        ar.mod2 <- ar(chrono[!is.na(chrono[,chrono.col]),chrono.col])
-        ar.mean2.resid <- ar.mod2$resid + ar.mod2$x.mean
-        chrono[!is.na(chrono[,chrono.col]),chrono.col] <- ar.mean2.resid/mean(ar.mean2.resid, na.rm = TRUE)
+        # 1st the climate
+        ar.mod <- ar(clim.mo[!is.na(clim.mo[, clim.var]), clim.var])
+        clim.mo[!is.na(clim.mo[, clim.var]), clim.var] <- ar.mod$resid
+        # Now the tree rings
+        ar.mod2 <- ar(chrono[!is.na(chrono[, chrono.col]), chrono.col])
+        chrono[!is.na(chrono[, chrono.col]), chrono.col] <- ar.mod2$resid
       }
 
       # The months vector in the desired order.
