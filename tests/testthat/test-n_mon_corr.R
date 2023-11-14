@@ -1,13 +1,13 @@
 ####
 test_that("Throws error if not fed a chrono, data.frame, or matrix", {
-  expect_error(n_mon_corr(chrono = c(1:10), clim = c(1:10), rel.per.begin = 10, hemisphere = "N"))
-  expect_error(n_mon_corr(chrono = 1, clim = 1, rel.per.begin = 10, hemisphere = "N"))
+  expect_error(n_mon_corr(rw = c(1:10), clim = c(1:10), rel.per.begin = 10, hemisphere = "N"))
+  expect_error(n_mon_corr(rw = 1, clim = 1, rel.per.begin = 10, hemisphere = "N"))
 })
 ####
 test_that("Throws error if not fed a valid clim var name", {
   clim <- matrix(nrow = 10, ncol = 3)
   colnames(clim) <- c("year", "month", "clim.var")
-  expect_error(n_mon_corr(chrono = matrix(nrow = 10, ncol = 2), clim = clim,
+  expect_error(n_mon_corr(rw = matrix(nrow = 10, ncol = 2), clim = clim,
                           rel.per.begin = 10, hemisphere = "N",
                           clim.var = "wack-a-doodle"))
 })
@@ -17,12 +17,12 @@ test_that("Throws error if not fed a valid chrono.col name", {
   colnames(clim) <- c("year", "month", "clim.var")
   chrono <- matrix(nrow = 10, ncol = 2)
   colnames(chrono) <- c("samp.depth", "std")
-  expect_error(n_mon_corr(chrono = chrono, clim = clim, rel.per.begin = 10, hemisphere = "N",
-                          clim.var = "clim.var", chrono.col = "wack-a-doodle"))
+  expect_error(n_mon_corr(rw = chrono, clim = clim, rel.per.begin = 10, hemisphere = "N",
+                          clim.var = "clim.var", rw.col = "wack-a-doodle"))
 })
 ####
 test_that("Throws error if not fed a valid aggregation function", {
-  expect_error(n_mon_corr(chrono = matrix(nrow = 10, ncol = 2), clim = matrix(nrow = 10, ncol = 3),
+  expect_error(n_mon_corr(rw = matrix(nrow = 10, ncol = 2), clim = matrix(nrow = 10, ncol = 3),
                           rel.per.begin = 10, hemisphere = "N",
                           agg.fun = "wack-a-doodle"))
 })
@@ -32,9 +32,9 @@ test_that("Throws error if not fed a valid correlation method", {
   colnames(clim) <- c("year", "month", "clim.var")
   chrono <- matrix(nrow = 10, ncol = 2)
   colnames(chrono) <- c("samp.depth", "std")
-  expect_error(n_mon_corr(chrono = chrono, clim = clim,
+  expect_error(n_mon_corr(rw = chrono, clim = clim,
                           rel.per.begin = 10, hemisphere = "N",
-                          clim.var = "clim.var", chrono.col = "std",
+                          clim.var = "clim.var", rw.col = "std",
                           corr.method = "catty-wompus"))
 })
 ####
@@ -58,9 +58,9 @@ test_that("Essential function works - and returns a vector", {
     clim.list[[y]] <- clim.y
   }
   clim <- do.call("rbind", clim.list)
-  expect_vector(n_mon_corr(chrono = chrono, clim = clim,
+  expect_vector(n_mon_corr(rw = chrono, clim = clim,
                            rel.per.begin = 3, hemisphere = "S", clim.var = "clim.var",
-                           chrono.col = "std", chrono.name = "Synthetic", silent = TRUE))
+                           rw.col = "std", rw.name = "Synthetic", silent = TRUE))
 })
 ####
 test_that("The order of months in the input climate data has no effect on the accuracy of the output", {
@@ -99,8 +99,8 @@ test_that("The order of months in the input climate data has no effect on the ac
   # ggplot(chrono, aes(year, std)) +
   #   geom_line()
 
-  test10 <- n_mon_corr(chrono = chrono, clim = clim, clim.var = "clim.var",
-                       rel.per.begin = 10, hemisphere = "N", chrono.name = "Synthetic",
+  test10 <- n_mon_corr(rw = chrono, clim = clim, clim.var = "clim.var",
+                       rel.per.begin = 10, hemisphere = "N", rw.name = "Synthetic",
                        corr.method = "pearson", silent = TRUE)
   cor.res <- test10[["Correlation results"]]
   expect_true(cor.res$months[1] == marker.month)
