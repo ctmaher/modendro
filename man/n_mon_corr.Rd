@@ -5,8 +5,8 @@
 \title{Flexible monthly aggregate growth-climate cross correlations for exploratory data analysis}
 \usage{
 n_mon_corr(
-  chrono = NULL,
-  chrono.col = "std",
+  rw = NULL,
+  rw.col = "std",
   clim = NULL,
   clim.var = NULL,
   rel.per.begin = NULL,
@@ -15,16 +15,16 @@ n_mon_corr(
   max.lag = 1,
   prewhiten = FALSE,
   auto.corr = FALSE,
-  corr.method = "pearson",
-  chrono.name = NULL,
+  corr.method = "spearman",
+  rw.name = NULL,
   plots = TRUE,
   silent = FALSE
 )
 }
 \arguments{
-\item{chrono}{a \code{chron} object (such as that produced by dplR's \code{\link[MASS]{chron}}). Make sure this has a \code{year} variable.}
+\item{rw}{a tree ring series in "long format" with at least two columns representing the year and the tree ring data. Could be individual tree series or a chronology. Not restricted to ring widths.}
 
-\item{chrono.col}{character vector - the colname of the chronology series (default is "std", which is the defualt produced by dplR's \code{\link[MASS]{chron}}).}
+\item{rw.col}{character vector - the colname of the tree ring data series.}
 
 \item{clim}{a \code{data.frame} with at least 3 columns: year, month (numeric), and a climate variable.}
 
@@ -33,7 +33,7 @@ n_mon_corr(
 \item{rel.per.begin}{an integer month representing the beginning of the climatically relevant period to the growth year (always a 12 month period).
 This will include the "water year" of the calendar year before growth. E.g., 10 for N hemisphere, 4 for S hemisphere. See details below for more info.}
 
-\item{hemisphere}{a character vector specifying which hemisphere your chronology - & climate data - comes from ("N" or "S").
+\item{hemisphere}{a character vector specifying which hemisphere your tree ring data - & climate data - comes from ("N" or "S").
 Conventions for assigning growth years - and thus aligning tree ring and climate data - are different for N and S hemisphere.}
 
 \item{agg.fun}{character vector specifying the function to use for aggregating monthly climate combinations.
@@ -41,17 +41,17 @@ Options are "mean" or "sum", e.g., for temperature or precipitation data, respec
 
 \item{max.lag}{numeric vector specifying how many years of lag to calculate calculations for. Default is 1 year.}
 
-\item{prewhiten}{logical vector specifying whether or not to convert chronology & climate time series to standardized AR residuals (aka "prewhitening").
+\item{prewhiten}{logical vector specifying whether or not to convert tree ring & climate time series to standardized AR residuals (aka "prewhitening").
 This removes autocorrelation in a time series, leaving only the high-frequency variation. This is common practice before using standard methods for cross-correlations. Default is FALSE.}
 
-\item{auto.corr}{logical vector specifying whether there is temporal autocorrelation in either your tree ring chronology or climate time series (there typically is autocorrelation, unless both are "prewhitened").
+\item{auto.corr}{logical vector specifying whether there is temporal autocorrelation in either your tree ring or climate time series (there typically is autocorrelation, unless both are "prewhitened").
 If TRUE (the default), & corr.method is "spearman" or "kendall", then the \code{\link[corTESTsrd]{corTESTsrd}}function is used to compute modified significance testing to account for autocorrelation (From Lun et al. 2022).
 Caution! Currently auto.corr = TRUE & corr.method = "Pearson" doesn't make any adjustments. This may be included in the future.}
 
 \item{corr.method}{character vector specifying which correlation method to use. Options are \code{c("pearson", "kendall", "spearman")}.
 Passes to \code{\link[stats]{cor.test}} or to \code{\link[corTESTsrd]{corTESTsrd}}.}
 
-\item{chrono.name}{character vector - the name of your chronology (optional). This is used in the title of your plot.
+\item{rw.name}{character vector - the name of your tree ring series (optional). This is used in the title of your plot.
 If you produce many plots, this helps keep them identifiable.}
 
 \item{plots}{logical vector indicating whether or not to produce plots. Default is TRUE.}
@@ -62,7 +62,7 @@ If you produce many plots, this helps keep them identifiable.}
 A 2-3 element list containing data.frames of the correlation results, the data used in the correlations, and the default plots of the same data.
 }
 \description{
-Exploratory data analysis (EDA) function to compute correlations between a tree ring chronology and a monthly climate variable
+Exploratory data analysis (EDA) function to compute correlations between tree ring data and a monthly climate variable
 aggregated for every combination (lengths 1:12) of consecutive months inside of a 12-month long "relevant climate period" that could conceivably be relevant
 to growth in any given year.
 
@@ -78,11 +78,8 @@ radial growth stops - doing so may result in spurious correlations.
 
 Compared to methods that force rigidly-defined seasons of a fixed length, this approach should allow greater discovery of meaningful growth-climate relationships.
 
-Fair warning: this is a basic function that will accept any tree ring chronology and climate data in the proper format.
-It is the user's responsibility to make sure that the chronology is properly constructed -
-properly dealing with the "dark arts" of detrending & standardization (see \code{\link[dplR]{detrend.series}}) and also accounting for temporal autocorrelation in the data.
-If you don't know what this means or you just took a chronology directly from the ITRDB without knowing how it was made,
-you have some homework to do. There aren't universal answers to these tasks - each dataset is somewhat unique.
+Fair warning: this is a basic function that will accept any tree ring data and climate data in the proper format.
+It is the user's responsibility to make sure that your data is appropriate to the analyses.
 }
 \details{
 Exploring a wide range of plausible growth-climate relationships can be a useful first step once you have
@@ -116,8 +113,92 @@ in black, no significant ones in grey. Plot panel labels (right-hand side of plo
 -1 = previous year, -2 = 2 years back.
 }
 \examples{
-Will add some later
+# Make some synthetic stand-in tree ring data
+rw.ex <- data.frame(year = 1:50, rw.mm = runif(50, 0.1, 2))
 
+
+# Make some synthetic stand-in climate data
+mo <- 1:12
+x <- seq(-4, 4, length.out = 12)
+gauss.curv <- \(x) {(10/sqrt(2*pi*1.6))*exp(-((x^2)/(2*1.6^2)))}
+clim.mo <- data.frame(month = mo, clim.var = gauss.curv(x))
+clim.list <- vector("list", length = 50)
+for (y in seq_along(clim.list)) {
+  clim.y <- clim.mo
+  clim.y[,"clim.var"] <- clim.y[,"clim.var"] + runif(1, min = 0, max = 4)
+  clim.y$year <- y
+  clim.list[[y]] <- clim.y
+}
+clim <- do.call("rbind", clim.list)
+n_mon_corr.out <- n_mon_corr(rw = rw.ex,
+rw.col = "rw.mm",
+clim = clim,
+clim.var = "clim.var",
+rel.per.begin = 3,
+hemisphere = "S",
+rw.name = "Synthetic RW")
+
+# Take a look at the output data frames
+head(n_mon_corr.out[["Correlation results"]])
+head(n_mon_corr.out[["Correlation data"]])
+
+## Method for applying n_mon_corr to each series (or tree) in a rwl file,
+# consistent with tree-level analyses.
+
+# Make some synthetic stand-in tree ring data (in rwl-type format)
+rwl.ex <- matrix(nrow = 50, ncol = 10)
+rownames(rwl.ex) <- 1:50
+colnames(rwl.ex) <- 1:10
+rwl.ex <- apply(rwl.ex, MARGIN = 2, FUN = \(x) runif(length(x), 0.1, 2))
+
+# Convert rwl to long format
+rwl.ex.long <- rwl_longer(rwl.ex,
+dat.name = "rw.mm",
+omit.NAs = TRUE)
+
+# split the data.frame into a list based on ID
+rwl.ex.long.list <- split(rwl.ex.long, f = rwl.ex.long$series)
+
+# Use mapply to run n_mon_corr for each series.
+# Note that the clim data is the same for each.
+# Also note that plots = FALSE and silent = TRUE so that these don't clog the console and plotting window.
+n_mon_corr.out.list <- mapply(FUN = \(x, y) {
+n_mon_corr(rw = x,
+rw.col = "rw.mm",
+clim = clim,
+clim.var = "clim.var",
+rel.per.begin = 3,
+hemisphere = "S",
+plots = FALSE,
+silent = TRUE)
+}, x = rwl.ex.long.list, y = names(rwl.ex.long.list),
+SIMPLIFY = FALSE)
+
+# Outputs are the same as above, but nested in one more list dimension
+head(n_mon_corr.out.list[[1]][[[["Correlation results"]]]])
+
+# It might be helpful to rbind the individual series outputs into data.frames
+
+data.df <- lapply(n_mon_corr.out.list, FUN = \(x, y) {
+x[["Correlation data"]]
+}) |>
+ do.call(what = "rbind")
+
+head(data.df)
+
+results.df <- mapply(FUN = \(x, y) {
+ x[["Correlation results"]]$series <- y
+ x[["Correlation results"]]
+}, x = n_mon_corr.out.list, y = names(n_mon_corr.out.list), SIMPLIFY = FALSE) |>
+ do.call(what = "rbind")
+
+head(results.df)
+
+# Now it is possible to do things like find out how many series have significant correlations
+# for each month combination:
+results.df$sig <- ifelse(results.df$p < 0.05, "Sig.","Not sig.")
+results.agg <- aggregate(series ~ months, data = results.df[results.df$sig \%in\% "Sig.",], length)
+results.agg[order(results.agg$series, decreasing = TRUE),] |> head()
 }
 \references{
 Schulman, E. (1956) \emph{Dendroclimatic changes in semiarid America}, University of Arizona Press.

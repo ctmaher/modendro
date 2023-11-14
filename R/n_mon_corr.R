@@ -1,7 +1,7 @@
 #' Flexible monthly aggregate growth-climate cross correlations for exploratory data analysis
 #'
 #' @description
-#' Exploratory data analysis (EDA) function to compute correlations between a tree ring chronology and a monthly climate variable
+#' Exploratory data analysis (EDA) function to compute correlations between tree ring data and a monthly climate variable
 #' aggregated for every combination (lengths 1:12) of consecutive months inside of a 12-month long "relevant climate period" that could conceivably be relevant
 #' to growth in any given year.
 #'
@@ -17,31 +17,28 @@
 #'
 #' Compared to methods that force rigidly-defined seasons of a fixed length, this approach should allow greater discovery of meaningful growth-climate relationships.
 #'
-#' Fair warning: this is a basic function that will accept any tree ring chronology and climate data in the proper format.
-#' It is the user's responsibility to make sure that the chronology is properly constructed -
-#' properly dealing with the "dark arts" of detrending & standardization (see \code{\link[dplR]{detrend.series}}) and also accounting for temporal autocorrelation in the data.
-#' If you don't know what this means or you just took a chronology directly from the ITRDB without knowing how it was made,
-#'  you have some homework to do. There aren't universal answers to these tasks - each dataset is somewhat unique.
+#' Fair warning: this is a basic function that will accept any tree ring data and climate data in the proper format.
+#' It is the user's responsibility to make sure that your data is appropriate to the analyses.
 #'
-#' @param chrono a `chron` object (such as that produced by dplR's \code{\link[MASS]{chron}}). Make sure this has a `year` variable.
-#' @param chrono.col character vector - the colname of the chronology series (default is "std", which is the defualt produced by dplR's \code{\link[MASS]{chron}}).
+#' @param rw a tree ring series in "long format" with at least two columns representing the year and the tree ring data. Could be individual tree series or a chronology. Not restricted to ring widths.
+#' @param rw.col character vector - the colname of the tree ring data series.
 #' @param clim a `data.frame` with at least 3 columns: year, month (numeric), and a climate variable.
 #' @param clim.var character vector - the colname of the climate variable of interest in the `clim` data.frame.
 #' @param rel.per.begin an integer month representing the beginning of the climatically relevant period to the growth year (always a 12 month period).
 #' This will include the "water year" of the calendar year before growth. E.g., 10 for N hemisphere, 4 for S hemisphere. See details below for more info.
-#' @param hemisphere a character vector specifying which hemisphere your chronology - & climate data - comes from ("N" or "S").
+#' @param hemisphere a character vector specifying which hemisphere your tree ring data - & climate data - comes from ("N" or "S").
 #' Conventions for assigning growth years - and thus aligning tree ring and climate data - are different for N and S hemisphere.
 #' @param agg.fun character vector specifying the function to use for aggregating monthly climate combinations.
 #' Options are "mean" or "sum", e.g., for temperature or precipitation data, respectively. Default is "mean".
 #' @param max.lag numeric vector specifying how many years of lag to calculate calculations for. Default is 1 year.
-#' @param prewhiten logical vector specifying whether or not to convert chronology & climate time series to standardized AR residuals (aka "prewhitening").
+#' @param prewhiten logical vector specifying whether or not to convert tree ring & climate time series to standardized AR residuals (aka "prewhitening").
 #' This removes autocorrelation in a time series, leaving only the high-frequency variation. This is common practice before using standard methods for cross-correlations. Default is FALSE.
-#' @param auto.corr logical vector specifying whether there is temporal autocorrelation in either your tree ring chronology or climate time series (there typically is autocorrelation, unless both are "prewhitened").
+#' @param auto.corr logical vector specifying whether there is temporal autocorrelation in either your tree ring or climate time series (there typically is autocorrelation, unless both are "prewhitened").
 #' If TRUE (the default), & corr.method is "spearman" or "kendall", then the \code{\link[corTESTsrd]{corTESTsrd}}function is used to compute modified significance testing to account for autocorrelation (From Lun et al. 2022).
 #' Caution! Currently auto.corr = TRUE & corr.method = "Pearson" doesn't make any adjustments. This may be included in the future.
 #' @param corr.method character vector specifying which correlation method to use. Options are `c("pearson", "kendall", "spearman")`.
 #'  Passes to \code{\link[stats]{cor.test}} or to \code{\link[corTESTsrd]{corTESTsrd}}.
-#' @param chrono.name character vector - the name of your chronology (optional). This is used in the title of your plot.
+#' @param rw.name character vector - the name of your tree ring series (optional). This is used in the title of your plot.
 #' If you produce many plots, this helps keep them identifiable.
 #' @param plots logical vector indicating whether or not to produce plots. Default is TRUE.
 #' @param silent logical vector indicating whether messages about relevant period and hemisphere conventions will be printed. Default is FALSE.
@@ -90,12 +87,96 @@
 #' @export
 #'
 #' @examples
-#' Will add some later
+#' # Make some synthetic stand-in tree ring data
+#' rw.ex <- data.frame(year = 1:50, rw.mm = runif(50, 0.1, 2))
 #'
+#'
+#' # Make some synthetic stand-in climate data
+#' mo <- 1:12
+#' x <- seq(-4, 4, length.out = 12)
+#' gauss.curv <- \(x) {(10/sqrt(2*pi*1.6))*exp(-((x^2)/(2*1.6^2)))}
+#' clim.mo <- data.frame(month = mo, clim.var = gauss.curv(x))
+#' clim.list <- vector("list", length = 50)
+#' for (y in seq_along(clim.list)) {
+#'   clim.y <- clim.mo
+#'   clim.y[,"clim.var"] <- clim.y[,"clim.var"] + runif(1, min = 0, max = 4)
+#'   clim.y$year <- y
+#'   clim.list[[y]] <- clim.y
+#' }
+#' clim <- do.call("rbind", clim.list)
+#' n_mon_corr.out <- n_mon_corr(rw = rw.ex,
+#' rw.col = "rw.mm",
+#' clim = clim,
+#' clim.var = "clim.var",
+#' rel.per.begin = 3,
+#' hemisphere = "S",
+#' rw.name = "Synthetic RW")
+#'
+#' # Take a look at the output data frames
+#' head(n_mon_corr.out[["Correlation results"]])
+#' head(n_mon_corr.out[["Correlation data"]])
+#'
+#' ## Method for applying n_mon_corr to each series (or tree) in a rwl file,
+#' # consistent with tree-level analyses.
+#'
+#' # Make some synthetic stand-in tree ring data (in rwl-type format)
+#' rwl.ex <- matrix(nrow = 50, ncol = 10)
+#' rownames(rwl.ex) <- 1:50
+#' colnames(rwl.ex) <- 1:10
+#' rwl.ex <- apply(rwl.ex, MARGIN = 2, FUN = \(x) runif(length(x), 0.1, 2))
+#'
+#' # Convert rwl to long format
+#' rwl.ex.long <- rwl_longer(rwl.ex,
+#' dat.name = "rw.mm",
+#' omit.NAs = TRUE)
+#'
+#' # split the data.frame into a list based on ID
+#' rwl.ex.long.list <- split(rwl.ex.long, f = rwl.ex.long$series)
+#'
+#' # Use mapply to run n_mon_corr for each series.
+#' # Note that the clim data is the same for each.
+#' # Also note that plots = FALSE and silent = TRUE so that these don't clog the console and plotting window.
+#' n_mon_corr.out.list <- mapply(FUN = \(x, y) {
+#' n_mon_corr(rw = x,
+#' rw.col = "rw.mm",
+#' clim = clim,
+#' clim.var = "clim.var",
+#' rel.per.begin = 3,
+#' hemisphere = "S",
+#' plots = FALSE,
+#' silent = TRUE)
+#' }, x = rwl.ex.long.list, y = names(rwl.ex.long.list),
+#' SIMPLIFY = FALSE)
+#'
+#' # Outputs are the same as above, but nested in one more list dimension
+#' head(n_mon_corr.out.list[[1]][[[["Correlation results"]]]])
+#'
+#' # It might be helpful to rbind the individual series outputs into data.frames
+#'
+#' data.df <- lapply(n_mon_corr.out.list, FUN = \(x, y) {
+#' x[["Correlation data"]]
+#' }) |>
+#'  do.call(what = "rbind")
+#'
+#' head(data.df)
+#'
+#' results.df <- mapply(FUN = \(x, y) {
+#'  x[["Correlation results"]]$series <- y
+#'  x[["Correlation results"]]
+#' }, x = n_mon_corr.out.list, y = names(n_mon_corr.out.list), SIMPLIFY = FALSE) |>
+#'  do.call(what = "rbind")
+#'
+#' head(results.df)
+#'
+#' # Now it is possible to do things like find out how many series have significant correlations
+#' # for each month combination:
+#' results.df$sig <- ifelse(results.df$p < 0.05, "Sig.","Not sig.")
+#' results.agg <- aggregate(series ~ months, data = results.df[results.df$sig %in% "Sig.",], length)
+#' results.agg[order(results.agg$series, decreasing = TRUE),] |> head()
 
 
-n_mon_corr <- function(chrono = NULL,
-                       chrono.col = "std",
+n_mon_corr <- function(rw = NULL,
+                       rw.col = "std",
                        clim = NULL,
                        clim.var = NULL,
                        rel.per.begin = NULL,
@@ -104,34 +185,32 @@ n_mon_corr <- function(chrono = NULL,
                        max.lag = 1,
                        prewhiten = FALSE,
                        auto.corr = FALSE,
-                       corr.method = "pearson",
-                       chrono.name = NULL,
+                       corr.method = "spearman",
+                       rw.name = NULL,
                        plots = TRUE,
                        silent = FALSE){
 
 
   ## Initial error catching and interactive prompts
 
-  stopifnot("Arg chrono or clim are not an object of class 'chron', 'data.frame', or 'matrix'" =
-              data.class(chrono) %in% "chron" |
-              data.class(chrono) %in% "data.frame" |
-              data.class(chrono) %in% "matrix" |
+  stopifnot("Arg rw or clim are not an object of class 'chron', 'data.frame', or 'matrix'" =
+              data.class(rw) %in% "chron" |
+              data.class(rw) %in% "data.frame" |
+              data.class(rw) %in% "matrix" |
               data.class(clim) %in% "data.frame" |
               data.class(clim) %in% "matrix"
   )
 
-  # stopifnot("No year column in chronology dataframe, please add one (year may be contained in rownames)" =
-  #             substr(colnames(chrono), 1, 1) %in% c("Y","y")
-  #           )
+
 
   match.test <- clim.var %in% colnames(clim)
   stopifnot("Arg clim.var must match one unique column name in clim" =
               length(match.test[match.test == TRUE]) == 1
   )
 
-  match.test <- colnames(chrono) %in% chrono.col
-  stopifnot("Arg chrono.col must match the name
-         of the growth variable in the chrono data.frame" =
+  match.test <- colnames(rw) %in% rw.col
+  stopifnot("Arg rw.col must match the name
+         of the growth variable in the rw data.frame" =
               length(match.test[match.test == TRUE]) == 1
   )
 
@@ -197,12 +276,12 @@ n_mon_corr <- function(chrono = NULL,
   clim[,"month"] <- as.integer(clim[,"month"])
 
   # Get the year from row names
-  if (any(substr(colnames(chrono), 1, 1) %in% c("Y","y")) == FALSE) {
-    chrono[,"year"] <- rownames(chrono) |> as.numeric()
+  if (any(substr(colnames(rw), 1, 1) %in% c("Y","y")) == FALSE) {
+    rw[,"year"] <- rownames(rw) |> as.numeric()
   } else {
-    colnames(chrono)[which((substr(colnames(chrono), start = 1, stop = 1)
+    colnames(rw)[which((substr(colnames(rw), start = 1, stop = 1)
                             %in% c("Y","y")) == T)] <- "year"
-    chrono[,"year"] <- as.numeric(chrono[,"year"])
+    rw[,"year"] <- as.numeric(rw[,"year"])
   }
 
   # n_mon_corr assumes that all years have all 12 months! If even one month is missing somewhere, this will
@@ -219,16 +298,16 @@ n_mon_corr <- function(chrono = NULL,
     stop("Not all years in climate data have all 12 months represented")
   } # This doesn't do what I want it too
 
-  # n_mon_corr also assumes absolute regularity (this is true for some of the correlation tests too) in both chrono & clim
-  chron.year.seq <- chrono[,"year"]
-  chron.year.seq.diff <- chron.year.seq[order(chron.year.seq)] |> diff()
+  # n_mon_corr also assumes absolute regularity (this is true for some of the correlation tests too) in both rw & clim
+  rw.year.seq <- rw[,"year"]
+  rw.year.seq.diff <- rw.year.seq[order(rw.year.seq)] |> diff()
   clim.year.seq <- unique(clim[,"year"])
   clim.year.seq.diff <- clim.year.seq[order(clim.year.seq)] |> diff()
-  if (any(chron.year.seq.diff != 1)) {
-    paste("Year", chron.year.seq[which(chron.year.seq.diff > 1)], "is missing from chronology.")
+  if (any(rw.year.seq.diff != 1)) {
+    paste("Year", rw.year.seq[which(rw.year.seq.diff > 1)], "is missing from ring width data.")
   }
-  stopifnot("Chronology does not have complete continuous years." =
-              all(chron.year.seq.diff == 1)
+  stopifnot("Ring width data does not have complete continuous years." =
+              all(rw.year.seq.diff == 1)
   )
 
   if (any(clim.year.seq.diff != 1)) {
@@ -241,11 +320,11 @@ n_mon_corr <- function(chrono = NULL,
 
   # Give a warning & maybe stop the function if there is autocorrelation in the tree ring series
   # There should be a prompt (verbal or otherwise)
-  ac.test <- ar(x = na.omit(chrono[order(chrono[,"year"]), chrono.col]))
+  ac.test <- ar(x = na.omit(rw[order(rw[,"year"]), rw.col]))
   if (ac.test$order > 0 & auto.corr == FALSE & prewhiten == FALSE) {
-    cat("Autocorrelation detected in your chronology, recommend choose auto.corr = TRUE &
+    cat("Autocorrelation detected in rw, recommend choose auto.corr = TRUE &
         corr.method = c('spearman', 'kendall') to avoid spurious correlation results.
-        You can also construct a chronology of AR residuals (aka prewhitening).\n")
+        You can also select prewhiten = TRUE to produce AR residuals of both rw and clim data.\n")
     # auto.corr <- readline(prompt = "Enter auto.corr (TRUE or FALSE) = ")
     # corr.method <- readline(prompt = "Enter corr.method ('spearman' or 'kendall') = ")
   }
@@ -301,8 +380,8 @@ n_mon_corr <- function(chrono = NULL,
   clim <- clim[clim[,"growyear"] %in% clim.complete[,"growyear"],]
 
   # Find min and max complete years for the correlations, i.e., the complete overlap
-  min.y <- max(min(chrono[,"year"]), min(clim[,"growyear"]))
-  max.y <- min(max(chrono[,"year"]), max(clim[,"growyear"]))
+  min.y <- max(min(rw[,"year"]), min(clim[,"growyear"]))
+  max.y <- min(max(rw[,"year"]), max(clim[,"growyear"]))
 
   # Create a vector of all possible combinations of months
   # Regular calendar year first
@@ -355,14 +434,14 @@ n_mon_corr <- function(chrono = NULL,
                            data = clim[clim$month %in% x, ],
                            FUN = \(z){ifelse(agg.fun %in% "mean", mean(z), sum(z))})
 
-      # If we want to convert climate & chrono to AR residuals (aka, "prewhitening"), do it here
+      # If we want to convert climate & rw to AR residuals (aka, "prewhitening"), do it here
       if (prewhiten == TRUE) {
         # 1st the climate
         ar.mod <- ar(clim.mo[!is.na(clim.mo[, clim.var]), clim.var])
         clim.mo[!is.na(clim.mo[, clim.var]), clim.var] <- ar.mod$resid
         # Now the tree rings
-        ar.mod2 <- ar(chrono[!is.na(chrono[, chrono.col]), chrono.col])
-        chrono[!is.na(chrono[, chrono.col]), chrono.col] <- ar.mod2$resid
+        ar.mod2 <- ar(rw[!is.na(rw[, rw.col]), rw.col])
+        rw[!is.na(rw[, rw.col]), rw.col] <- ar.mod2$resid
       }
 
       # The months vector in the desired order.
@@ -370,21 +449,21 @@ n_mon_corr <- function(chrono = NULL,
                           paste(x[1], x[length(x)], sep = ":"),
                           paste(x))
 
-      # attach the chronology to the climate data
+      # attach rw to the climate data
       clim.mo.new <- clim.mo
       clim.mo.new$growyear <- clim.mo.new$growyear + l
-      clim.mo.new <- merge(clim.mo.new, chrono, by.x = "growyear", by.y = "year")
+      clim.mo.new <- merge(clim.mo.new, rw, by.x = "growyear", by.y = "year")
       clim.mo.new$lag <- ifelse(l == 0, paste(l), paste0("-", l))
       clim.mo.new$months <- month.vec
 
       # Remove any ties from the data
       clim.mo.new <- clim.mo.new[which(!duplicated(clim.mo.new[,clim.var])),]
-      clim.mo.new <- clim.mo.new[which(!duplicated(clim.mo.new[,chrono.col])),]
+      clim.mo.new <- clim.mo.new[which(!duplicated(clim.mo.new[,rw.col])),]
 
-      # Run the correlation test between climate and the chronology
+      # Run the correlation test between climate and rw
       if (auto.corr == TRUE) {
         if (corr.method %in% "pearson") {
-          ct <- cor.test(clim.mo.new[, clim.var], clim.mo.new[, chrono.col],
+          ct <- cor.test(clim.mo.new[, clim.var], clim.mo.new[, rw.col],
                          method = corr.method, alternative = "two.sided")
           # put the results together in a data.frame
           result <- data.frame(months = month.vec,
@@ -393,7 +472,7 @@ n_mon_corr <- function(chrono = NULL,
                                ci.lo = ct$conf.int[1],
                                ci.hi = ct$conf.int[2])
         } else { # if spearman or kendall
-          ct <- corTESTsrd(clim.mo.new[,clim.var], clim.mo.new[, chrono.col],
+          ct <- corTESTsrd(clim.mo.new[,clim.var], clim.mo.new[, rw.col],
                            method = corr.method,
                            iid = FALSE, alternative = "two.sided")
           # put the results together in a data.frame
@@ -402,7 +481,7 @@ n_mon_corr <- function(chrono = NULL,
                                p = ct[["pval"]])
         }
       } else {
-        ct <- cor.test(clim.mo.new[,clim.var], clim.mo.new[, chrono.col], method = corr.method)
+        ct <- cor.test(clim.mo.new[,clim.var], clim.mo.new[, rw.col], method = corr.method)
 
         # put the results together in a data.frame
         if (corr.method %in% "pearson") {
@@ -418,7 +497,7 @@ n_mon_corr <- function(chrono = NULL,
                                p = ct$p.value[[1]])
         }
       }
-      # return the correlation results and the data.frame of the merged climate and chronology data
+      # return the correlation results and the data.frame of the merged climate and rw data
       list(result, clim.mo.new)
     })
 
@@ -483,11 +562,11 @@ n_mon_corr <- function(chrono = NULL,
 
     # Build a nice title for the plots
     if (prewhiten == TRUE) {
-      title <- ifelse(is.null(chrono.name), paste0("Chronology correlations with ", clim.var, " (prewhitened)"),
-                      paste0(chrono.name, " chronology correlations with ", clim.var, " (prewhitened)"))
+      title <- ifelse(is.null(rw.name), paste0("Correlations with ", clim.var, " (prewhitened)"),
+                      paste0(rw.name, " correlations with ", clim.var, " (prewhitened)"))
     } else {
-      title <- ifelse(is.null(chrono.name), paste0("Chronology correlations with ", clim.var),
-                      paste0(chrono.name, " chronology correlations with ", clim.var))
+      title <- ifelse(is.null(rw.name), paste0("Correlations with ", clim.var),
+                      paste0(rw.name, " correlations with ", clim.var))
     }
 
     # Make the plot

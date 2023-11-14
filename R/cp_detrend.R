@@ -4,7 +4,7 @@
 #' Compute variance-stabilized & residual detrended ring width indices that minimize the series end effect problems
 #' that can result from using ratios to derive detrended indices.
 #'
-#' @param rwl A rwl object (e.g., read in by \code{\link[dplR]{read.rwl}})
+#' @param rwl A rwl-type data.frame (e.g., read in by \code{\link[dplR]{read.rwl}}). Essentially a data.frame with columns names as series IDs and years as rownames.
 #' @param detrend.method Character string of the detrending method to use. Passes to \code{\link[dplR]{detrend}}.
 #' @param nyrs Numeric vector, used in dplR's \code{\link[dplR]{detrend}} function for the `"Spline"` and `"AgeDepSpline"` methods.
 #' @param pos.slope Should positive slopes be allowed in the detrending curves? Generally this should be FALSE (the default),

@@ -8,7 +8,7 @@
 #' The main output are "disturbance-free" series that are in the original ring width units (e.g., mm).
 #'
 #'
-#' @param rwl A rwl object (e.g., read in by \code{\link[dplR]{read.rwl}}). Essentially a data.frame with columns names as series IDs and years as rownames.
+#' @param rwl A rwl-type data.frame (e.g., read in by \code{\link[dplR]{read.rwl}}). Essentially a data.frame with columns names as series IDs and years as rownames.
 #' @param detrend.method A character vector specifying the detrending method to use. Passes to \code{\link[dplR]{detrend}} via \code{\link{cp_detrend}}. Default is "Mean".
 #' @param nyrs A numeric vector that determines the flexibility of the `"AgeDepSpline"` or the `"Spline"` detrending methods. Passes to \code{\link[dplR]{detrend}}. The default is 50 years or 1/3 the series length.
 #' @param min.win The minimum disturbance length in years (i.e., a moving window) to search for. The default is 9.

@@ -17,7 +17,7 @@ ci_detect(
 )
 }
 \arguments{
-\item{rwl}{A rwl object (e.g., read in by \code{\link[dplR]{read.rwl}}). Essentially a data.frame with columns names as series IDs and years as rownames.}
+\item{rwl}{A rwl-type data.frame (e.g., read in by \code{\link[dplR]{read.rwl}}). Essentially a data.frame with columns names as series IDs and years as rownames.}
 
 \item{detrend.method}{A character vector specifying the detrending method to use. Passes to \code{\link[dplR]{detrend}} via \code{\link{cp_detrend}}. Default is "Mean".}
 
