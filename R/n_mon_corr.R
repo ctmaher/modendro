@@ -36,7 +36,7 @@
 #' @param auto.corr logical vector specifying whether there is temporal autocorrelation in either your tree ring or climate time series (there typically is autocorrelation, unless both are "prewhitened").
 #' If TRUE (the default), & corr.method is "spearman" or "kendall", then the \code{\link[corTESTsrd]{corTESTsrd}}function is used to compute modified significance testing to account for autocorrelation (From Lun et al. 2022).
 #' Caution! Currently auto.corr = TRUE & corr.method = "Pearson" doesn't make any adjustments. This may be included in the future.
-#' @param corr.method character vector specifying which correlation method to use. Options are `c("pearson", "kendall", "spearman")`.
+#' @param corr.method character vector specifying which correlation method to use. Default is `"spearman"`. Options are `c("pearson", "kendall", "spearman")`.
 #'  Passes to \code{\link[stats]{cor.test}} or to \code{\link[corTESTsrd]{corTESTsrd}}.
 #' @param rw.name character vector - the name of your tree ring series (optional). This is used in the title of your plot.
 #' If you produce many plots, this helps keep them identifiable.
@@ -74,7 +74,7 @@
 #' in black, no significant ones in grey. Plot panel labels (right-hand side of plots) indicate lag years: 0 = current year,
 #' -1 = previous year, -2 = 2 years back.
 #'
-#' @return A 2-3 element list containing data.frames of the correlation results, the data used in the correlations, and the default plots of the same data.
+#' @return A 2-4 element list containing data.frames of the correlation results, the data used in the correlations (both prewhitened and raw if prewhiten = TRUE), and the default plots of the same data.
 #'
 #' @references
 #' Schulman, E. (1956) \emph{Dendroclimatic changes in semiarid America}, University of Arizona Press.
@@ -280,7 +280,7 @@ n_mon_corr <- function(rw = NULL,
     rw[,"year"] <- rownames(rw) |> as.numeric()
   } else {
     colnames(rw)[which((substr(colnames(rw), start = 1, stop = 1)
-                            %in% c("Y","y")) == T)] <- "year"
+                        %in% c("Y","y")) == T)] <- "year"
     rw[,"year"] <- as.numeric(rw[,"year"])
   }
 
@@ -428,21 +428,11 @@ n_mon_corr <- function(rw = NULL,
   lag.list <- lapply(lag.seq, FUN = function(l){
 
     # Run through all the month aggregates
-    cor.res.df <- lapply(mos, FUN = \(x){
+    cor.res.dfs <- lapply(mos, FUN = \(x){
       # Aggregate the variable of interest for the given month sequence
       clim.mo <- aggregate(formula(paste(clim.var, "growyear", sep = "~")),
                            data = clim[clim$month %in% x, ],
                            FUN = \(z){ifelse(agg.fun %in% "mean", mean(z), sum(z))})
-
-      # If we want to convert climate & rw to AR residuals (aka, "prewhitening"), do it here
-      if (prewhiten == TRUE) {
-        # 1st the climate
-        ar.mod <- ar(clim.mo[!is.na(clim.mo[, clim.var]), clim.var])
-        clim.mo[!is.na(clim.mo[, clim.var]), clim.var] <- ar.mod$resid
-        # Now the tree rings
-        ar.mod2 <- ar(rw[!is.na(rw[, rw.col]), rw.col])
-        rw[!is.na(rw[, rw.col]), rw.col] <- ar.mod2$resid
-      }
 
       # The months vector in the desired order.
       month.vec <- ifelse(length(x) > 1,
@@ -459,6 +449,19 @@ n_mon_corr <- function(rw = NULL,
       # Remove any ties from the data
       clim.mo.new <- clim.mo.new[which(!duplicated(clim.mo.new[,clim.var])),]
       clim.mo.new <- clim.mo.new[which(!duplicated(clim.mo.new[,rw.col])),]
+
+      # If we want to convert climate & rw to AR residuals (aka, "prewhitening"), do it here
+      if (prewhiten == TRUE) {
+        # Save the raw data before prewhitening
+        clim.mo.orig <- clim.mo.new
+
+        # 1st the climate
+        ar.mod.clim <- ar(clim.mo.new[!is.na(clim.mo.new[, clim.var]), clim.var])
+        clim.mo.new[!is.na(clim.mo.new[, clim.var]), clim.var] <- ar.mod.clim$resid
+        # Now the tree rings
+        ar.mod.rw <- ar(clim.mo.new[!is.na(clim.mo.new[, rw.col]), rw.col])
+        clim.mo.new[!is.na(clim.mo.new[, rw.col]), rw.col] <- ar.mod.rw$resid
+      }
 
       # Run the correlation test between climate and rw
       if (auto.corr == TRUE) {
@@ -498,15 +501,15 @@ n_mon_corr <- function(rw = NULL,
         }
       }
       # return the correlation results and the data.frame of the merged climate and rw data
-      list(result, clim.mo.new)
+      if (prewhiten == TRUE) {
+        list(result, clim.mo.new, clim.mo.orig)
+      } else {
+        list(result, clim.mo.new)
+      }
     })
 
-    cor.results <- lapply(cor.res.df, FUN = \(x) {
+    cor.results <- lapply(cor.res.dfs, FUN = \(x) {
       x[[1]]
-    }) |> do.call(what = "rbind")
-
-    cor.df <- lapply(cor.res.df, FUN = \(x) {
-      x[[2]]
     }) |> do.call(what = "rbind")
 
     cor.results$sig <- ifelse(cor.results$p > 0.05, "",
@@ -514,30 +517,55 @@ n_mon_corr <- function(rw = NULL,
                                      ifelse(cor.results$p <= 0.001, "***", "**")))
 
     cor.results$lag <- ifelse(l == 0, paste(l), paste0("-", l))
+
+    cor.df <- lapply(cor.res.dfs, FUN = \(x) {
+      x[[2]]
+    }) |> do.call(what = "rbind")
+
     cor.df$lag <- ifelse(l == 0, paste(l), paste0("-", l))
 
-    # Return all the results
-    list(cor.results, cor.df)
+    if (prewhiten == TRUE) {
+      cor.raw.df <- lapply(cor.res.dfs, FUN = \(x) {
+        x[[3]]
+      }) |> do.call(what = "rbind")
+
+      cor.raw.df$lag <- ifelse(l == 0, paste(l), paste0("-", l))
+
+      # Return all the results
+      list(cor.results, cor.df, cor.raw.df)
+    } else {
+      # Return all the results
+      list(cor.results, cor.df)
+    }
   })
 
   lag.res <- lapply(lag.list, FUN = \(x) {
-    x[[1]]
+    x[[1]] # 1st list element contains the results
   }) |> do.call(what = "rbind")
-
-  lag.df <- lapply(lag.list, FUN = \(x) {
-    x[[2]]
-  }) |> do.call(what = "rbind")
-
-  # Make the lag a factor in both data.frames
+  # Make the lag a factor
   lag.res$lag <- factor(lag.res$lag, levels = lag.seq*-1)
-  lag.df$lag <- factor(lag.df$lag, levels = lag.seq*-1)
-
   # sort correlation results by correlation coef
   lag.res <- lag.res[order(lag.res$coef, decreasing = T),]
-
-  # order the months as a factor in both data.frames
+  # order the months as a factor
   lag.res$months <- factor(lag.res$months, levels = mos.fac)
+
+  lag.df <- lapply(lag.list, FUN = \(x) {
+    x[[2]] # 2nd list element contains the data used in the correlations
+  }) |> do.call(what = "rbind")
+  # Make the lag a factor
+  lag.df$lag <- factor(lag.df$lag, levels = lag.seq*-1)
+  # order the months as a factor
   lag.df$months <- factor(lag.df$months, levels = mos.fac)
+
+  if (prewhiten == TRUE) {
+    lag.raw.df <- lapply(lag.list, FUN = \(x) {
+      x[[3]] # 2nd list element contains the data used in the correlations
+    }) |> do.call(what = "rbind")
+    # Make the lag a factor
+    lag.raw.df$lag <- factor(lag.raw.df$lag, levels = lag.seq*-1)
+    # order the months as a factor
+    lag.raw.df$months <- factor(lag.raw.df$months, levels = mos.fac)
+  }
 
   # Set up a data.frame for the plots - add some variables that are useful for plotting, but not
   # for the main output.
@@ -592,12 +620,25 @@ n_mon_corr <- function(rw = NULL,
                                 agg.fun, "s with annual lag 0:",
                                 max.lag, " (overlapping years ", min.y, "-", max.y, ")"))
 
-    out.list <- list(lag.res, lag.df, out.plot)
-    names(out.list) <- c("Correlation results", "Correlation data", "Results plots")
+    if (prewhiten == TRUE) {
+      out.list <- list(lag.res, lag.df, lag.raw.df, out.plot)
+      names(out.list) <- c("Correlation results", "Correlation data (prewhitened)",
+                           "Correlation data (raw)", "Results plots")
+    } else {
+      out.list <- list(lag.res, lag.df, out.plot)
+      names(out.list) <- c("Correlation results", "Correlation data", "Results plots")
+    }
+
     return(out.list)
   } else {
-    out.list <- list(lag.res, lag.df)
-    names(out.list) <- c("Correlation results", "Correlation data")
+    if (prewhiten == TRUE) {
+      out.list <- list(lag.res, lag.df, lag.raw.df)
+      names(out.list) <- c("Correlation results", "Correlation data (prewhitened)", "Correlation data (raw)")
+    } else {
+      out.list <- list(lag.res, lag.df)
+      names(out.list) <- c("Correlation results", "Correlation data")
+    }
+
     return(out.list)
   }
 

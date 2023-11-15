@@ -48,7 +48,7 @@ This removes autocorrelation in a time series, leaving only the high-frequency v
 If TRUE (the default), & corr.method is "spearman" or "kendall", then the \code{\link[corTESTsrd]{corTESTsrd}}function is used to compute modified significance testing to account for autocorrelation (From Lun et al. 2022).
 Caution! Currently auto.corr = TRUE & corr.method = "Pearson" doesn't make any adjustments. This may be included in the future.}
 
-\item{corr.method}{character vector specifying which correlation method to use. Options are \code{c("pearson", "kendall", "spearman")}.
+\item{corr.method}{character vector specifying which correlation method to use. Default is \code{"spearman"}. Options are \code{c("pearson", "kendall", "spearman")}.
 Passes to \code{\link[stats]{cor.test}} or to \code{\link[corTESTsrd]{corTESTsrd}}.}
 
 \item{rw.name}{character vector - the name of your tree ring series (optional). This is used in the title of your plot.
@@ -59,7 +59,7 @@ If you produce many plots, this helps keep them identifiable.}
 \item{silent}{logical vector indicating whether messages about relevant period and hemisphere conventions will be printed. Default is FALSE.}
 }
 \value{
-A 2-3 element list containing data.frames of the correlation results, the data used in the correlations, and the default plots of the same data.
+A 2-4 element list containing data.frames of the correlation results, the data used in the correlations (both prewhitened and raw if prewhiten = TRUE), and the default plots of the same data.
 }
 \description{
 Exploratory data analysis (EDA) function to compute correlations between tree ring data and a monthly climate variable
