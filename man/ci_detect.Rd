@@ -6,11 +6,10 @@
 \usage{
 ci_detect(
   rwl,
-  detrend.method = "None",
+  detrend.method = "Mean",
   nyrs = NULL,
   min.win = 9,
   max.win = 30,
-  var.type = "s_bi",
   thresh = 3.29,
   dist.span = 1.25,
   max.iter = 10,
@@ -72,7 +71,27 @@ the research goals.
 library(dplR)
 data("co021")
 
-co021.ci.out <- ci_detect(co021, detrend.method = "ModHugershoff", max.iter = 5) # shorten iterations for the example
+
+co021.ci.out <- ci_detect(co021,
+detrend.method =
+"AgeDepSpline",
+max.iter = 5,
+add.recent.rwi = FALSE) # for long series like these, turning this off works best (see ?dist_det_rem)
+
+names(co021.ci.out)
+
+# dplR::spag.plot() can give you a quick look at some of the key outputs
+spag.plot(co021.ci.out[["Disturbance-free series"]])
+spag.plot(co021.ci.out[["Disturbance index"]])
+
+# You can get more detailed plots from plot_ci_detect
+co021.ci.out.plots <- plot_ci_detect(co021.ci.out)
+co021.ci.out.plots[["Disturbance detection & removal plots"]][["641121"]] # outputs 5 plots (more if max.iter is increased)
+co021.ci.out.plots[["Final disturbance-free series plots"]][["641121"]]
+
+# The power transformation and detrending steps can also be retrieved using plot_cp_detrend:
+co021.detrend.plots <- plot_cp_detrend(co021.ci.out[["Cook & Peters detrend"]])
+co021.detrend.plots[["641121"]]
 
 }
 \references{
@@ -87,4 +106,7 @@ Rydval, M., D. L. Druckenbrod, M. Svoboda, V. Trotsiuk, P. Janda, M. Mikoláš, 
 
 Warren, W. G., and S. L. MacWilliam. 1981. Test of a new method for removing the growth trend from dendrochronological data.
 \emph{Tree Ring Bulletin} \strong{41}, 55–66.
+}
+\seealso{
+\code{\link{dist_det_rem}}, \code{\link{plot_ci_detect}}, \code{\link{cp_detrend}}, \code{\link{plot_cp_detrend}}
 }
