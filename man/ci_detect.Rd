@@ -10,6 +10,7 @@ ci_detect(
   nyrs = NULL,
   min.win = 9,
   max.win = 30,
+  var.type = "s_bi",
   thresh = 3.29,
   dist.span = 1.25,
   max.iter = 10,
@@ -70,8 +71,9 @@ the research goals.
 \examples{
 library(dplR)
 data("co021")
-# before
-ci_detect(co021, max.iter = 5) # shorten iterations for the example
+
+co021.ci.out <- ci_detect(co021, detrend.method = "ModHugershoff", max.iter = 5) # shorten iterations for the example
+
 }
 \references{
 Druckenbrod, D. L., N. Pederson, J. Rentch, and E. R. Cook. (2013) A comparison of times series approaches for dendroecological reconstructions of past canopy disturbance events.

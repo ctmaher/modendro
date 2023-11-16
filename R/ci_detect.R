@@ -65,8 +65,9 @@
 #' @examples
 #' library(dplR)
 #' data("co021")
-#' # before
-#' ci_detect(co021, max.iter = 5) # shorten iterations for the example
+#'
+#' co021.ci.out <- ci_detect(co021, detrend.method = "ModHugershoff", max.iter = 5) # shorten iterations for the example
+#'
 
 
 ci_detect <- function(rwl,
@@ -74,6 +75,7 @@ ci_detect <- function(rwl,
                       nyrs = NULL,
                       min.win = 9,
                       max.win = 30,
+                      var.type = "s_bi",
                       thresh = 3.29,
                       dist.span = 1.25,
                       max.iter = 10,
@@ -112,7 +114,11 @@ ci_detect <- function(rwl,
   # save the original order of the names to realign at each step
   orig.IDs <- colnames(rwl)
   ## Run cp_detrend to power transform and detrend the rwl
-  cp_out <- cp_detrend(rwl, detrend.method = detrend.method, nyrs = nyrs, pos.slope = FALSE)
+  cp_out <- cp_detrend(rwl,
+                       detrend.method = detrend.method,
+                       nyrs = nyrs,
+                       pos.slope = FALSE,
+                       standardize = FALSE)
   # 1st element of cp_out is a rwl-data.frame of the residual transformed and detrended series-
   # take this and turn it into a list, with NAs removed from each series
   # Simplify = FALSE keeps the rownames (which are the years)
@@ -144,10 +150,16 @@ ci_detect <- function(rwl,
   ## Take the last element of dist_iter as the final output series...
   # add back the detrend curve (or the mean)
 
+  # Make the detrend curves a list
+  detrend.curves <- apply(cp_out[["Detrend curves"]][orig.IDs],
+                          MARGIN = 2,
+                          FUN = \(x) {na.omit(x)},
+                          simplify = FALSE)
+
   retrended <- mapply(FUN = \(x, y) {
     x + na.omit(y)
   }, x = dist_iter[[length(dist_iter)]][["Corrected RWI"]][orig.IDs],
-  y = cp_out[["Detrend curves"]][,orig.IDs])
+  y = detrend.curves[orig.IDs])
 
   # Undo any transformation - this results in a "disturbance-free" series in original units
   untransformed <- mapply(FUN = \(x, y) {
@@ -166,9 +178,17 @@ ci_detect <- function(rwl,
 
   # Calculate the disturbance index -
   # this is the difference between the disturbance-free series & the original series
+  # Note that there is an assumption that series from na.omit(x) and y are in the same order of years
+
+  # The original rwl as a list, with no NAs
+  orig.rwl <- apply(rwl,
+                    MARGIN = 2,
+                    FUN = \(x) {na.omit(x)},
+                    simplify = FALSE)
+
   dis_index <- mapply(FUN = \(x, y) {
     na.omit(x) - y
-  }, x = rwl[,orig.IDs], y = untransformed[orig.IDs], SIMPLIFY = FALSE)
+  }, x = orig.rwl[orig.IDs], y = untransformed[orig.IDs], SIMPLIFY = FALSE)
 
   # Restore the rwl-data.frame format for the disturbance-free and disturbance index series
   # (with NAs for the years that aren't covered)
@@ -188,20 +208,20 @@ ci_detect <- function(rwl,
   }, x = dis_index[orig.IDs], y = orig.IDs, SIMPLIFY = FALSE)
 
   # Can apply merge() iteratively with Reduce():
-  untransformed_rwl <- Reduce(f = \(x, y) merge(x, y, by = "year", all = TRUE), untransformed_rwl0)
+  untransformed_rwl <- Reduce(f = \(x, y) merge(x, y, by = "year", all = TRUE), untransformed_rwl0[orig.IDs])
 
-  dis_index_rwl <- Reduce(f = \(x, y) merge(x, y, by = "year", all = TRUE), dis_index_rwl0)
+  dis_index_rwl <- Reduce(f = \(x, y) merge(x, y, by = "year", all = TRUE), dis_index_rwl0[orig.IDs])
 
   # Make years as rownames & then remove the year column
   rownames(untransformed_rwl) <- untransformed_rwl$year
-  untransformed_rwl <- untransformed_rwl[,!c(colnames(untransformed_rwl) %in% "year")]
+  untransformed_rwl <- untransformed_rwl[,orig.IDs]
 
   rownames(dis_index_rwl) <- dis_index_rwl$year
-  dis_index_rwl <- dis_index_rwl[,!c(colnames(dis_index_rwl) %in% "year")]
+  dis_index_rwl <- dis_index_rwl[,orig.IDs]
 
   # Collapse the detection & removal iterations into a data.frame that contains all the detected disturbances
   dist_det <- lapply(dist_iter, FUN = \(x) {
-    x1 <- x[["Disturbance curves"]]
+    x1 <- x[["Disturbance curves"]][orig.IDs]
 
     x2 <- lapply(x1, FUN = \(y) {
       if (!is.character(y)){

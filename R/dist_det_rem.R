@@ -76,6 +76,9 @@ dist_det_rem <- function(rwi,
   stopifnot("Value for thresh is not valid. Must be '>=1'." =
               thresh >= 1)
 
+  # Save the order of series names in the input
+  orig.IDs <- names(rwi)
+
   ## Find the best AR model for each series
   ar_fits <-
     lapply(rwi, FUN = \(x) ar(
@@ -86,10 +89,10 @@ dist_det_rem <- function(rwi,
     ))
 
   # Get the resids
-  ar_resids <- lapply(ar_fits, FUN = \(x) x$resid)
+  ar_resids <- lapply(ar_fits[orig.IDs], FUN = \(x) x$resid)
 
   # Reverse the cp series
-  cp_rev <- lapply(rwi, rev)
+  cp_rev <- lapply(rwi[orig.IDs], rev)
 
   ## "Backcast" the NAs (due to the ar order lag) at the beginning of each series
   # Fit ar models of the same order as those above to the reversed data
@@ -112,8 +115,8 @@ dist_det_rem <- function(rwi,
         x$resid
       }
     },
-    x = ar_fits,
-    y = cp_rev,
+    x = ar_fits[orig.IDs],
+    y = cp_rev[orig.IDs],
     SIMPLIFY = FALSE
   )
 
@@ -127,8 +130,8 @@ dist_det_rem <- function(rwi,
       x[, "value"] <- y
       x
     },
-    x = rwi,
-    y = comp_resids,
+    x = rwi[orig.IDs],
+    y = comp_resids[orig.IDs],
     SIMPLIFY = FALSE
   )
 
@@ -136,7 +139,7 @@ dist_det_rem <- function(rwi,
   # the min.win sets the smallest possible size, and tradition has it that 20 is the longest period. We can
   # reassess that later - maybe the user can just specify this, within reasonable limits (max = 1/3 of series?).
 
-  mov_avgs <- lapply(comp_resids, \(x) {
+  mov_avgs <- lapply(comp_resids[orig.IDs], \(x) {
     # Cap max.win at 1/3 the series length. If not, detection becomes oversensitive for short series
     max.win <- min(max.win, round(nrow(x)/3))
 
@@ -163,7 +166,7 @@ dist_det_rem <- function(rwi,
 
   ## Define upper and lower disturbance thresholds for each moving window length
   # The threshold is by default 3.29 robust scales from the robust mean of each moving average series
-  tbrms <- lapply(mov_avgs, FUN = \(x) {
+  tbrms <- lapply(mov_avgs[orig.IDs], FUN = \(x) {
     lapply(x, FUN = \(x) {
       TukeyBiweight(x$value, const = 9, na.rm = TRUE)
       #tbrm(x$value, C = 9) # The dplR version
@@ -172,11 +175,11 @@ dist_det_rem <- function(rwi,
 
   # The robust scale is from Hoaglin et al 1983, p417.
   #if (var.type %in% "s_bi") {
-    var <- lapply(mov_avgs, FUN = \(x) {
-      lapply(x, FUN = \(x) {
-        s_bi(na.omit(x$value))$s_bi
-      })
+  var <- lapply(mov_avgs[orig.IDs], FUN = \(x) {
+    lapply(x, FUN = \(x) {
+      s_bi(na.omit(x$value))$s_bi
     })
+  })
   #} else {
   #   if (var.type %in% "mad") {
   #     var <- lapply(mov_avgs, FUN = \(x) {
@@ -198,8 +201,8 @@ dist_det_rem <- function(rwi,
         SIMPLIFY = FALSE
       )
     },
-    x = tbrms,
-    y = var,
+    x = tbrms[orig.IDs],
+    y = var[orig.IDs],
     SIMPLIFY = FALSE
   )
 
@@ -214,8 +217,8 @@ dist_det_rem <- function(rwi,
         SIMPLIFY = FALSE
       )
     },
-    x = tbrms,
-    y = var,
+    x = tbrms[orig.IDs],
+    y = var[orig.IDs],
     SIMPLIFY = FALSE
   )
 
@@ -250,8 +253,8 @@ dist_det_rem <- function(rwi,
         SIMPLIFY = FALSE
       )
     },
-    x = mov_avgs,
-    y = hi_vals,
+    x = mov_avgs[orig.IDs],
+    y = hi_vals[orig.IDs],
     SIMPLIFY = FALSE
   )
 
@@ -277,8 +280,8 @@ dist_det_rem <- function(rwi,
         SIMPLIFY = FALSE
       )
     },
-    x = mov_avgs,
-    y = lo_vals,
+    x = mov_avgs[orig.IDs],
+    y = lo_vals[orig.IDs],
     SIMPLIFY = FALSE
   )
 
@@ -287,7 +290,7 @@ dist_det_rem <- function(rwi,
   # The index value will correspond to year.
 
   # First the whole list for all window lengths
-  max_pos_outs <- lapply(pos_out, FUN = \(x) {
+  max_pos_outs <- lapply(pos_out[orig.IDs], FUN = \(x) {
     all_win_df <- do.call("rbind", x)
     all_win_df$win_len <- as.numeric(rownames(all_win_df))
     if (nrow(all_win_df) > 0) {
@@ -296,7 +299,7 @@ dist_det_rem <- function(rwi,
     all_win_df
   })
 
-  max_neg_outs <- lapply(neg_out, FUN = \(x) {
+  max_neg_outs <- lapply(neg_out[orig.IDs], FUN = \(x) {
     all_win_df <- do.call("rbind", x)
     all_win_df$win_len <- as.numeric(rownames(all_win_df))
     if (nrow(all_win_df) > 0) {
@@ -306,11 +309,11 @@ dist_det_rem <- function(rwi,
   })
 
   # Second the max among all window lengths (i.e., just 1 or no disturbance for each series)
-  max_pos_out <- lapply(max_pos_outs, FUN = \(x) {
+  max_pos_out <- lapply(max_pos_outs[orig.IDs], FUN = \(x) {
     x[which.max(x$dev), ]
   })
 
-  max_neg_out <- lapply(max_neg_outs, FUN = \(x) {
+  max_neg_out <- lapply(max_neg_outs[orig.IDs], FUN = \(x) {
     x[which.max(x$dev), ]
   })
 
@@ -342,8 +345,8 @@ dist_det_rem <- function(rwi,
       }
 
     },
-    x = max_pos_out,
-    y = max_neg_out,
+    x = max_pos_out[orig.IDs],
+    y = max_neg_out[orig.IDs],
     SIMPLIFY = FALSE
   )
   # max_out contains some basic disturbance info - the index of the starting year of the disturbance (ie, year),
@@ -387,12 +390,12 @@ dist_det_rem <- function(rwi,
       }
 
     },
-    a = max_out,
-    b = comp_resids,
-    c = mov_avgs,
-    d = tbrms,
-    e = lo_vals,
-    x = hi_vals
+    a = max_out[orig.IDs],
+    b = comp_resids[orig.IDs],
+    c = mov_avgs[orig.IDs],
+    d = tbrms[orig.IDs],
+    e = lo_vals[orig.IDs],
+    x = hi_vals[orig.IDs]
   )
 
 
@@ -518,7 +521,7 @@ dist_det_rem <- function(rwi,
     # Return the results
     dist_period
 
-  }, x = rwi, y = max_out, SIMPLIFY = FALSE)
+  }, x = rwi[orig.IDs], y = max_out[orig.IDs], SIMPLIFY = FALSE)
 
 
   # Now the corrected rwi values can be inserted into the series to remove the disturbances
@@ -530,7 +533,7 @@ dist_det_rem <- function(rwi,
       x[which(names(x) %in% y[,"year"])] <- y[,"rwi.cor"] # substitute the corrected section
       x # Return the series
     }
-  }, x = rwi, y = dist_curves, SIMPLIFY = FALSE)
+  }, x = rwi[orig.IDs], y = dist_curves[orig.IDs], SIMPLIFY = FALSE)
 
 
   det_rem_dist_list <- list(rwi2, dist_curves, dist_mov_avgs)
