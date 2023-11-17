@@ -22,7 +22,8 @@
 #' of the transformed series after the disturbance, or 0 if the disturbance covers the end of the series. The \emph{d} term acts like an intercept. The Warren & MacWilliam curve has a \emph{t} coefficient which we use here.
 #' These modifications allow for more robust fitting (reduced parameters require fewer degrees of freedom). Setting the \emph{b} term to 1 allows the beginning y values of the Hugershoff curve to go above or below 0 (more directly determined by \emph{t}), which helps in minimizing artifacts from poor fit in the early years of a disturbance period.
 #'
-#' While the Hugershoff curve fitting is reasonably robust, \code{\link[stats]{nls}} occasionally fails to converge. In these cases a \code{\link[stats]{loess}} spline is fit to the disturbance period only instead (not the whole remainder of the series as in the Hugershoff).
+#' While the Hugershoff curve fitting is reasonably robust, \code{\link[stats]{nls}} occasionally fails to converge. Additionally, the  In these cases a \code{\link[stats]{loess}} spline
+#' is fit to the disturbance period only instead (not the whole remainder of the series as in the Hugershoff).
 #' The wiggliness of these splines can be adjusted using the `dist.span` argument. For both methods, the resulting fitted curve is subtracted from the series.
 #'
 #' If the arithmetic mean RWI ± 2sd of 15 years or the disturbance window length (whichever is longer) before the disturbance year does not contain 0, then the robust mean of this before period is
@@ -441,9 +442,7 @@ dist_det_rem <- function(rwi,
 
         dist_period$x <- 1:(nrow(dist_period))
 
-        # Set up some start values & constraints for the coefficients
-        # a should be pos or neg based on direction of disturbance
-
+        # Set up some start values & constraints for a
         a_start <- ifelse(y$dist_dir %in% "pos", 0.1, -0.1)
         if (y$dist_dir %in% "pos") {
           a_const <- c(0.005, 5)
@@ -452,10 +451,10 @@ dist_det_rem <- function(rwi,
         }
 
         lower_const <- list(a = a_const[1],
-                            c = -0.1,
+                            c = -5,
                             t = -10)
         upper_const <- list(a = a_const[2],
-                            c = 0.1,
+                            c = 5,
                             t = 10)
 
         hug_fit <- try(nls(
@@ -480,16 +479,15 @@ dist_det_rem <- function(rwi,
           diffs <- (dist_period[1:y$win_len, "rwi"] -
                       predict(hug_fit, newdata = dist_period)[1:y$win_len])
           sse_dist_win <- sum(diffs^2)
-          #sd_diffs <- sd(diffs)
+          sd_diffs <- sd(diffs)
         } else {
           sse_dist_win <- 0
-          #sd_diffs <- 0
         }
         # SSE from 0 for the disturbance window
         sse_dist_win0 <- sum((dist_period[1:y$win_len, "rwi"] - 0)^2)
-        #sd_diffs0 <- sd((dist_period[1:y$win_len, "rwi"] - 0))
+        sd_diffs0 <- sd((dist_period[1:y$win_len, "rwi"] - 0))
 
-        if (data.class(hug_fit) %in% "try-error" | sse_dist_win >= sse_dist_win0) {
+        if (data.class(hug_fit) %in% "try-error" | round(sse_dist_win, 3) >= round(sse_dist_win0, 3)) {
           # If the Hugershoff fit failed or the fit in the detected disturbance window was poor,
           # fit a spline instead.
           # if this option, we should only fit & subtract the disturbance period itself
