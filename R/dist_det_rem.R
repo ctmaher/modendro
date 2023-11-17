@@ -475,15 +475,18 @@ dist_det_rem <- function(rwi,
 
         # SSE of the model fit for disturbance window
         if (!c(data.class(hug_fit) %in% "try-error")) {
-          sse_dist_win <- sum((dist_period[1:y$win_len, "rwi"] -
-                                 predict(hug_fit, newdata = dist_period)[1:y$win_len])^2)
+          diffs <- (dist_period[1:y$win_len, "rwi"] -
+                      predict(hug_fit, newdata = dist_period)[1:y$win_len])
+          sse_dist_win <- sum(diffs^2)
+          sd_diffs <- sd(diffs)
         } else {
           sse_dist_win <- 0
         }
         # SSE from 0 for the disturbance window
         sse_dist_win0 <- sum((dist_period[1:y$win_len, "rwi"] - 0)^2)
+        sd_diffs0 <- sd((dist_period[1:y$win_len, "rwi"] - 0))
 
-        if (data.class(hug_fit) %in% "try-error" | sse_dist_win >= sse_dist_win0) {
+        if (data.class(hug_fit) %in% "try-error" | (sse_dist_win+sd_diffs) >= sse_dist_win0) {
           # If the Hugershoff fit failed or the fit in the detected disturbance window was poor,
           # fit a spline instead.
           # if this option, we should only fit & subtract the disturbance period itself
