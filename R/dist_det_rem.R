@@ -436,17 +436,17 @@ dist_det_rem <- function(rwi,
         # d mainly controls the asymptote value. We get a better chance at a successful fit if
         # we set these parameters here.
 
-        hug_form0 <-
+        hug_form <-
           formula(rwi ~ a * ((x - t) ^ 1) * exp(-c * (x - t)) + d)
 
         dist_period$x <- 1:(nrow(dist_period))
 
         # Set up some start values & constraints for a
-        a_start <- ifelse(y$dist_dir %in% "pos", 0.1,-0.1)
+        a_start <- ifelse(y$dist_dir %in% "pos", 0.1, -0.1)
         if (y$dist_dir %in% "pos") {
           a_const <- c(0.005, 5)
         } else {
-          a_const <- c(-5,-0.005)
+          a_const <- c(-5, -0.005)
         }
 
         lower_const <- list(a = a_const[1],
@@ -457,7 +457,7 @@ dist_det_rem <- function(rwi,
                             t = 10)
 
         hug_fit <- try(nls(
-          hug_form0,
+          hug_form,
           data = dist_period,
           start = list(a = a_start,
                        c = 0.1,
@@ -473,8 +473,19 @@ dist_det_rem <- function(rwi,
         ),
         silent = TRUE)
 
-        if (data.class(hug_fit) %in% "try-error") {
-          # If the Hugershoff fit failed, fit a spline instead.
+        # SSE of the model fit for disturbance window
+        if (!c(data.class(hug_fit) %in% "try-error")) {
+          sse_dist_win <- sum((dist_period[1:y$win_len, "rwi"] -
+                                 predict(hug_fit, newdata = dist_period)[1:y$win_len])^2)
+        } else {
+          sse_dist_win <- 0
+        }
+        # SSE from 0 for the disturbance window
+        sse_dist_win0 <- sum((dist_period[1:y$win_len, "rwi"] - 0)^2)
+
+        if (data.class(hug_fit) %in% "try-error" | sse_dist_win >= sse_dist_win0) {
+          # If the Hugershoff fit failed or the fit in the detected disturbance window was poor,
+          # fit a spline instead.
           # if this option, we should only fit & subtract the disturbance period itself
           dist_period <- dist_period[1:y$win_len, ]
           spline_fit <-
