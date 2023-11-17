@@ -26,7 +26,7 @@
 #' While the Hugershoff curve fitting is reasonably robust, \code{\link[stats]{nls}} occasionally fails to converge. In these cases a \code{\link[stats]{loess}} spline is fit to the disturbance period only instead (not the whole remainder of the series as in the Hugershoff).
 #' The wiggliness of these splines can be adjusted using the `dist.span` argument. For both methods, the resulting fitted curve is subtracted from the series.
 #'
-#' If the arithmetic mean RWI ± 3sd of 15 years or the disturbance window length (whichever is longer) before the disturbance year does not contain 0, then the robust mean of this before period is
+#' If the arithmetic mean RWI ± 2sd of 15 years or the disturbance window length (whichever is longer) before the disturbance year does not contain 0, then the robust mean of this before period is
 #' added back to the curve-series difference. If the interval does contain 0 or the disturbance is very near the start of the series (i.e., < 15 years), no value is added to the difference.
 #' This is done to avoid artifacts from the disturbance removal process when the RWI values near a disturbance are not near 0 (which is the series mean of transformed detrended residuals).
 #' This seems to be a fairly robust method, but be sure to inspect the "Disturbance detection & removal plots" & "Final disturbance-free series plots" of \code{\link{ci_detect}} (\code{\link{plot_ci_detect}}) to be sure.
@@ -536,10 +536,10 @@ dist_det_rem <- function(rwi,
           # Check if the b_dist values are near zero
           rwi.mean <-
             mean(series_df$rwi[series_df$year %in% b_dist])
-          rwi.3sd <-
-            sd(series_df$rwi[series_df$year %in% b_dist]) * 3
-          upper <- rwi.mean + rwi.3sd
-          lower <- rwi.mean - rwi.3sd
+          rwi.2sd <-
+            sd(series_df$rwi[series_df$year %in% b_dist]) * 2
+          upper <- rwi.mean + rwi.2sd
+          lower <- rwi.mean - rwi.2sd
 
           if (lower <= 0 &
               upper >= 0) {
