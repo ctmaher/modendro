@@ -441,7 +441,9 @@ dist_det_rem <- function(rwi,
 
         dist_period$x <- 1:(nrow(dist_period))
 
-        # Set up some start values & constraints for a
+        # Set up some start values & constraints for the coefficients
+        # a should be pos or neg based on direction of disturbance
+
         a_start <- ifelse(y$dist_dir %in% "pos", 0.1, -0.1)
         if (y$dist_dir %in% "pos") {
           a_const <- c(0.005, 5)
@@ -450,10 +452,10 @@ dist_det_rem <- function(rwi,
         }
 
         lower_const <- list(a = a_const[1],
-                            c = -5,
+                            c = -0.1,
                             t = -10)
         upper_const <- list(a = a_const[2],
-                            c = 5,
+                            c = 0.1,
                             t = 10)
 
         hug_fit <- try(nls(
@@ -478,16 +480,16 @@ dist_det_rem <- function(rwi,
           diffs <- (dist_period[1:y$win_len, "rwi"] -
                       predict(hug_fit, newdata = dist_period)[1:y$win_len])
           sse_dist_win <- sum(diffs^2)
-          sd_diffs <- sd(diffs)
+          #sd_diffs <- sd(diffs)
         } else {
           sse_dist_win <- 0
-          sd_diffs <- 0
+          #sd_diffs <- 0
         }
         # SSE from 0 for the disturbance window
         sse_dist_win0 <- sum((dist_period[1:y$win_len, "rwi"] - 0)^2)
-        sd_diffs0 <- sd((dist_period[1:y$win_len, "rwi"] - 0))
+        #sd_diffs0 <- sd((dist_period[1:y$win_len, "rwi"] - 0))
 
-        if (data.class(hug_fit) %in% "try-error" | (sse_dist_win + sd_diffs) >= sse_dist_win0) {
+        if (data.class(hug_fit) %in% "try-error" | sse_dist_win >= sse_dist_win0) {
           # If the Hugershoff fit failed or the fit in the detected disturbance window was poor,
           # fit a spline instead.
           # if this option, we should only fit & subtract the disturbance period itself
