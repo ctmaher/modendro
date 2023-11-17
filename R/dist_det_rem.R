@@ -26,10 +26,10 @@
 #' While the Hugershoff curve fitting is reasonably robust, \code{\link[stats]{nls}} occasionally fails to converge. In these cases a \code{\link[stats]{loess}} spline is fit to the disturbance period only instead (not the whole remainder of the series as in the Hugershoff).
 #' The wiggliness of these splines can be adjusted using the `dist.span` argument. For both methods, the resulting fitted curve is subtracted from the series.
 #'
-#' If `add.recent.rwi` is `TRUE` (the default), then the recent value (the longer of n years in the disturbance window or 15 years) of the series before the disturbance period - a robust mean of the period before
-#' the disturbance, or, if there is not an adequate period before (i.e., < 15 years), the period after, is added back to the curve-series difference. This is done to avoid artifacts from the disturbance removal process when the rwi
-#' values near a disturbance are not near 0 (which is the series mean of transformed detrended residuals). In some cases, this method may produce artifacts instead of preventing them.
-#' Inspect the output plots of \code{\link{ci_detect}} (\code{\link{plot_ci_detect}}) to determine this, specifically the "Disturbance detection & removal plots".
+#' If the arithmetic mean RWI ± 3sd of 15 years or the disturbance window length (whichever is longer) before the disturbance year does not contain 0, then the robust mean of this before period is
+#' added back to the curve-series difference. If the interval does contain 0 or the disturbance is very near the start of the series (i.e., < 15 years), no value is added to the difference.
+#' This is done to avoid artifacts from the disturbance removal process when the RWI values near a disturbance are not near 0 (which is the series mean of transformed detrended residuals).
+#' This seems to be a fairly robust method, but be sure to inspect the "Disturbance detection & removal plots" & "Final disturbance-free series plots" of \code{\link{ci_detect}} (\code{\link{plot_ci_detect}}) to be sure.
 #'
 #' @return A named list with the following elements:
 #' 1) "Corrected RWI" - a list of the final 'disturbance-free' series after all iterations are done.
@@ -67,10 +67,7 @@ dist_det_rem <- function(rwi,
                          min.win = 9,
                          max.win = 30,
                          thresh = 3.29,
-                         dist.span = 1.25,
-                         add.recent.rwi = TRUE
-) {
-
+                         dist.span = 1.25) {
   ## Error catching
 
   stopifnot("Value for thresh is not valid. Must be '>=1'." =
@@ -141,12 +138,12 @@ dist_det_rem <- function(rwi,
 
   mov_avgs <- lapply(comp_resids[orig.IDs], \(x) {
     # Cap max.win at 1/3 the series length. If not, detection becomes oversensitive for short series
-    max.win <- min(max.win, round(nrow(x)/3))
+    max.win <- min(max.win, round(nrow(x) / 3))
 
     win_lens <- min.win:max.win
     ma_list <- lapply(win_lens, \(w) {
       # Extract the values from the data frame
-      values <- x[,"value"]
+      values <- x[, "value"]
 
       # Compute the moving average using rollmean from the zoo package
       ma <- rollmean(values,
@@ -245,7 +242,7 @@ dist_det_rem <- function(rwi,
           dist_df <- data.frame(index_pos = index_pos, dev = dev)
 
           # return just the largest disturbance within each window size
-          dist_df[which.max(dist_df$dev), ]
+          dist_df[which.max(dist_df$dev),]
 
         },
         a = x,
@@ -272,7 +269,7 @@ dist_det_rem <- function(rwi,
           dist_df <- data.frame(index_pos = index_pos, dev = dev)
 
           # return just the largest disturbance within each window size
-          dist_df[which.max(dist_df$dev), ]
+          dist_df[which.max(dist_df$dev),]
 
         },
         a = x,
@@ -310,11 +307,11 @@ dist_det_rem <- function(rwi,
 
   # Second the max among all window lengths (i.e., just 1 or no disturbance for each series)
   max_pos_out <- lapply(max_pos_outs[orig.IDs], FUN = \(x) {
-    x[which.max(x$dev), ]
+    x[which.max(x$dev),]
   })
 
   max_neg_out <- lapply(max_neg_outs[orig.IDs], FUN = \(x) {
-    x[which.max(x$dev), ]
+    x[which.max(x$dev),]
   })
 
   # Third find which is the largest of the pos and neg disturbances
@@ -401,152 +398,197 @@ dist_det_rem <- function(rwi,
 
   ## Fit curves to the largest disturbance from each series (the resid detrended series in cp_list),
   # subtract the disturbance curve, store the records of everything.
-  dist_curves <- mapply(FUN = \(x, y) {
-    # The index in max_out corresponds rows/elements in cp_list
-    # Control for the ones with no disturbances
-    if (is.character(y)) {
-      dist_period <- y
-    } else {
-
-      # Make a data.frame from the series
-      series_df <- as.data.frame(x)
-      colnames(series_df) <- "rwi"
-      series_df$year <-
-        rownames(series_df) |>
-        as.numeric()
-
-      # isolate just the disturbance period
-      dist_period <-
-        series_df[y[, "index_pos"]:(y[, "index_pos"] + y$win_len - 1), ]
-
-      # Value of d in the Hugershoff equation will be 0 (the overall series mean) if the disturbance covers
-      # the end of the series
-      d <- 0
-      # Attach the rest of series if there is one
-      if ((max(dist_period$year) + 1) < max(series_df$year)) {
-        rest_of_years <- (max(dist_period$year) + 1) : max(series_df$year)
-        rest_of_series <- data.frame(rwi = series_df[series_df$year %in% rest_of_years, "rwi"],
-                                     year = rest_of_years
-        )
-        # Rbind it
-        dist_period <- rbind(dist_period, rest_of_series)
-
-        # Use TBRM of rest of series for value of d in the Hugershoff equation below
-        d <- TukeyBiweight(rest_of_series$rwi, na.rm = TRUE)
-      }
-
-      # Record the direction of the disturbance
-      dist_period$dir <- y$dist_dir
-
-      # Record the actual duration of the disturbance
-      dist_period$dur <- y$win_len
-
-      ## Curve fitting
-      # Hugershoff - fits to the detected period and the reminder of the series too
-      # The formula is modified. t is an added parameter that controls how far above/below the
-      # initial fit can go beyond the asymptote. b = 1, always, to allow t to work. d = the mean of the series after
-      # the disturbance period or 0.
-      # d mainly controls the asymptote value. We get a better chance at a successful fit if
-      # we set these parameters here.
-
-      hug_form0 <- formula(rwi ~ a * ((x - t)^1) * exp(-c*(x - t)) + d)
-
-      dist_period$x <- 1:(nrow(dist_period))
-
-      # Set up some start values & constraints for a
-      a_start <- ifelse(y$dist_dir %in% "pos", 0.1, -0.1)
-      if (y$dist_dir %in% "pos") {
-        a_const <- c(0.005, 5)
+  dist_curves <- mapply(
+    FUN = \(x, y) {
+      # The index in max_out corresponds rows/elements in cp_list
+      # Control for the ones with no disturbances
+      if (is.character(y)) {
+        dist_period <- y
       } else {
-        a_const <- c(-5, -0.005)
-      }
+        # Make a data.frame from the series
+        series_df <- as.data.frame(x)
+        colnames(series_df) <- "rwi"
+        series_df$year <-
+          rownames(series_df) |>
+          as.numeric()
 
-      lower_const <- list(a = a_const[1],
-                          c = -5,
-                          t = -10)
-      upper_const <- list(a = a_const[2],
-                          c = 5,
-                          t = 10)
+        # isolate just the disturbance period
+        dist_period <-
+          series_df[y[, "index_pos"]:(y[, "index_pos"] + y$win_len - 1),]
 
-      hug_fit <- try(
-        nls(hug_form0,
-            data = dist_period,
-            start = list(a = a_start,
-                         c = 0.1,
-                         t = 1.5),
-            algorithm = "port",
-            lower = lower_const,
-            upper = upper_const,
-            control = nls.control(maxiter = 100, minFactor = 1/4096, warnOnly = FALSE)),
+        # Value of d in the Hugershoff equation will be 0 (the overall series mean) if the disturbance covers
+        # the end of the series
+        d <- 0
+        # Attach the rest of series if there is one
+        if ((max(dist_period$year) + 1) < max(series_df$year)) {
+          rest_of_years <- (max(dist_period$year) + 1):max(series_df$year)
+          rest_of_series <-
+            data.frame(rwi = series_df[series_df$year %in% rest_of_years, "rwi"],
+                       year = rest_of_years)
+          # Rbind it
+          dist_period <- rbind(dist_period, rest_of_series)
+
+          # Use TBRM of rest of series for value of d in the Hugershoff equation below
+          d <- TukeyBiweight(rest_of_series$rwi, na.rm = TRUE)
+        }
+
+        # Record the direction of the disturbance
+        dist_period$dir <- y$dist_dir
+
+        # Record the actual duration of the disturbance
+        dist_period$dur <- y$win_len
+
+        ## Curve fitting
+        # Hugershoff - fits to the detected period and the reminder of the series too
+        # The formula is modified. t is an added parameter that controls how far above/below the
+        # initial fit can go beyond the asymptote. b = 1, always, to allow t to work. d = the mean of the series after
+        # the disturbance period or 0.
+        # d mainly controls the asymptote value. We get a better chance at a successful fit if
+        # we set these parameters here.
+
+        hug_form0 <-
+          formula(rwi ~ a * ((x - t) ^ 1) * exp(-c * (x - t)) + d)
+
+        dist_period$x <- 1:(nrow(dist_period))
+
+        # Set up some start values & constraints for a
+        a_start <- ifelse(y$dist_dir %in% "pos", 0.1,-0.1)
+        if (y$dist_dir %in% "pos") {
+          a_const <- c(0.005, 5)
+        } else {
+          a_const <- c(-5,-0.005)
+        }
+
+        lower_const <- list(a = a_const[1],
+                            c = -5,
+                            t = -10)
+        upper_const <- list(a = a_const[2],
+                            c = 5,
+                            t = 10)
+
+        hug_fit <- try(nls(
+          hug_form0,
+          data = dist_period,
+          start = list(a = a_start,
+                       c = 0.1,
+                       t = 1.5),
+          algorithm = "port",
+          lower = lower_const,
+          upper = upper_const,
+          control = nls.control(
+            maxiter = 100,
+            minFactor = 1 / 4096,
+            warnOnly = FALSE
+          )
+        ),
         silent = TRUE)
 
-      if (data.class(hug_fit) %in% "try-error") { # If the Hugershoff fit failed, fit a spline instead.
-        # if this option, we should only fit & subtract the disturbance period itself
-        dist_period <- dist_period[1:y$win_len,]
-        spline_fit <-
-          loess(rwi ~ year,
-                data = dist_period,
-                span = dist.span,
-                family = "symmetric")
+        if (data.class(hug_fit) %in% "try-error") {
+          # If the Hugershoff fit failed, fit a spline instead.
+          # if this option, we should only fit & subtract the disturbance period itself
+          dist_period <- dist_period[1:y$win_len, ]
+          spline_fit <-
+            loess(rwi ~ year,
+                  data = dist_period,
+                  span = dist.span,
+                  family = "symmetric")
 
-        dist_period$curve <- spline_fit$fitted
-        dist_period$eq <- "loess spline"
+          dist_period$curve <- spline_fit$fitted
+          dist_period$eq <- "loess spline"
 
-      } else {
-        dist_period$curve <- predict(hug_fit, newdata = dist_period)
-        hug_coef <- coef(hug_fit) |> round(4)
-        plus_minus <- ifelse(hug_coef[[3]] > 0, "-", "+")
-        dist_period$eq <- paste0("y == ", hug_coef[[1]],
-                                 " * (x ", plus_minus, " ", abs(hug_coef[[3]]), ")",
-                                 " * e^(", -1*hug_coef[[2]],
-                                 " * (x ", plus_minus, " ", abs(hug_coef[[3]]), "))")
-      }
+        } else {
+          dist_period$curve <- predict(hug_fit, newdata = dist_period)
+          hug_coef <- coef(hug_fit) |> round(4)
+          plus_minus <- ifelse(hug_coef[[3]] > 0, "-", "+")
+          dist_period$eq <- paste0(
+            "y == ",
+            hug_coef[[1]],
+            " * (x ",
+            plus_minus,
+            " ",
+            abs(hug_coef[[3]]),
+            ")",
+            " * e^(",
+            -1 * hug_coef[[2]],
+            " * (x ",
+            plus_minus,
+            " ",
+            abs(hug_coef[[3]]),
+            "))"
+          )
+        }
 
-      # "Correct" the rwi values for the disturbance period by subtracting the fitted curve (aka, the residuals)
-      # add back the recent value of the series before the disturbance period - a robust mean of the period before
-      # the disturbance, or, if there is not an adequate period before, do the period after.
+        # "Correct" the rwi values for the disturbance period by subtracting the fitted curve (aka, the residuals)
+        # Dynamic add.recent.rwi instead of a global option - use only when the mean ± 3sd of
+        # proximate (before) rwi values does not contain 0. If this interval does contain 0 or the disturbance
+        # is very near the beginning of the series, just use 0.
 
-      if (add.recent.rwi == TRUE) {
         per_len <- ifelse(y$win_len < 15, 15, y$win_len)
-        ba_dist <- ((min(dist_period$year, na.rm = TRUE) - 1) - per_len):(min(dist_period$year, na.rm = TRUE) - 1)
-        if (min(ba_dist) < min(series_df$year) | # if there is no before or
-            length(ba_dist[ba_dist %in% series_df$year]) < per_len){ # the before is < than the disturbance or 15 years
-          # select the period after
-          ba_dist <- (max(ba_dist)+1):(max(ba_dist) + per_len)
-          #ba_dist <- (max(ba_dist) + 1):(max(ba_dist) + max(series_df$year))
-        } # Otherwise, proceed with the before period already determined
+        b_dist <-
+          ((min(dist_period$year, na.rm = TRUE) - 1) - per_len):(min(dist_period$year, na.rm = TRUE) - 1)
+        if (min(b_dist) < min(series_df$year) |
+            # if there is no before or
+            length(b_dist[b_dist %in% series_df$year]) < per_len) {
+          # the before is < the disturbance or 15 years
+          # just use 0 for the value
+          tbrm_recent_rwi <- 0
+        } else {
+          # Check if the b_dist values are near zero
+          rwi.mean <-
+            mean(series_df$rwi[series_df$year %in% b_dist])
+          rwi.3sd <-
+            sd(series_df$rwi[series_df$year %in% b_dist]) * 3
+          upper <- rwi.mean + rwi.3sd
+          lower <- rwi.mean - rwi.3sd
 
-        tbrm_recent_rwi <- series_df$rwi[series_df$year %in% ba_dist] |>
-          TukeyBiweight()
+          if (lower <= 0 &
+              upper >= 0) {
+            # Use 0 if this interval includes 0
+            tbrm_recent_rwi <- 0
+          } else {
+            # Calculate the TBRM for the period
+            tbrm_recent_rwi <-
+              series_df$rwi[series_df$year %in% b_dist] |>
+              TukeyBiweight()
+          }
+        }
 
-      } else { # just use the raw difference for the mean of 0 if add.recent.rwi is FALSE
-        tbrm_recent_rwi <- 0
+        dist_period$rwi.cor <-
+          (dist_period$rwi - dist_period$curve) + tbrm_recent_rwi
       }
+      # Return the results
+      dist_period
 
-      dist_period$rwi.cor <-
-        (dist_period$rwi - dist_period$curve) + tbrm_recent_rwi
-    }
-    # Return the results
-    dist_period
-
-  }, x = rwi[orig.IDs], y = max_out[orig.IDs], SIMPLIFY = FALSE)
+    },
+    x = rwi[orig.IDs],
+    y = max_out[orig.IDs],
+    SIMPLIFY = FALSE
+  )
 
 
   # Now the corrected rwi values can be inserted into the series to remove the disturbances
-  rwi2 <- mapply(FUN = \(x, y) {
-    # Control for the ones with no disturbances
-    if (is.character(y)) {
-      x # return the original series
-    } else {
-      x[which(names(x) %in% y[,"year"])] <- y[,"rwi.cor"] # substitute the corrected section
-      x # Return the series
-    }
-  }, x = rwi[orig.IDs], y = dist_curves[orig.IDs], SIMPLIFY = FALSE)
+  rwi2 <- mapply(
+    FUN = \(x, y) {
+      # Control for the ones with no disturbances
+      if (is.character(y)) {
+        x # return the original series
+      } else {
+        x[which(names(x) %in% y[, "year"])] <-
+          y[, "rwi.cor"] # substitute the corrected section
+        x # Return the series
+      }
+    },
+    x = rwi[orig.IDs],
+    y = dist_curves[orig.IDs],
+    SIMPLIFY = FALSE
+  )
 
 
   det_rem_dist_list <- list(rwi2, dist_curves, dist_mov_avgs)
   names(det_rem_dist_list) <-
-    c("Corrected RWI", "Disturbance curves", "Disturbance detection")
+    c("Corrected RWI",
+      "Disturbance curves",
+      "Disturbance detection")
   det_rem_dist_list
 
 } # End of the dist_det_rem() function

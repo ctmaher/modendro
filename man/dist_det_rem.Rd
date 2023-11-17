@@ -4,14 +4,7 @@
 \alias{dist_det_rem}
 \title{Supporting function for ci_detect - statistical detection and removal of disturbances in tree ring series}
 \usage{
-dist_det_rem(
-  rwi,
-  min.win = 9,
-  max.win = 30,
-  thresh = 3.29,
-  dist.span = 1.25,
-  add.recent.rwi = TRUE
-)
+dist_det_rem(rwi, min.win = 9, max.win = 30, thresh = 3.29, dist.span = 1.25)
 }
 \arguments{
 \item{rwi}{A rwl object of detrended residual series produced by \code{\link{cp_detrend}}.}
@@ -53,10 +46,10 @@ These modifications allow for more robust fitting (reduced parameters require fe
 While the Hugershoff curve fitting is reasonably robust, \code{\link[stats]{nls}} occasionally fails to converge. In these cases a \code{\link[stats]{loess}} spline is fit to the disturbance period only instead (not the whole remainder of the series as in the Hugershoff).
 The wiggliness of these splines can be adjusted using the \code{dist.span} argument. For both methods, the resulting fitted curve is subtracted from the series.
 
-If \code{add.recent.rwi} is \code{TRUE} (the default), then the recent value (the longer of n years in the disturbance window or 15 years) of the series before the disturbance period - a robust mean of the period before
-the disturbance, or, if there is not an adequate period before (i.e., < 15 years), the period after, is added back to the curve-series difference. This is done to avoid artifacts from the disturbance removal process when the rwi
-values near a disturbance are not near 0 (which is the series mean of transformed detrended residuals). In some cases, this method may produce artifacts instead of preventing them.
-Inspect the output plots of \code{\link{ci_detect}} (\code{\link{plot_ci_detect}}) to determine this, specifically the "Disturbance detection & removal plots".
+If the arithmetic mean RWI ± 3sd of 15 years or the disturbance window length (whichever is longer) before the disturbance year does not contain 0, then the robust mean of this before period is
+added back to the curve-series difference. If the interval does contain 0 or the disturbance is very near the start of the series (i.e., < 15 years), no value is added to the difference.
+This is done to avoid artifacts from the disturbance removal process when the RWI values near a disturbance are not near 0 (which is the series mean of transformed detrended residuals).
+This seems to be a fairly robust method, but be sure to inspect the "Disturbance detection & removal plots" & "Final disturbance-free series plots" of \code{\link{ci_detect}} (\code{\link{plot_ci_detect}}) to be sure.
 }
 \references{
 Druckenbrod, D. L., N. Pederson, J. Rentch, and E. R. Cook. (2013) A comparison of times series approaches for dendroecological reconstructions of past canopy disturbance events.
