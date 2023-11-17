@@ -400,6 +400,7 @@ plot_ci_detect <- function(ci_output) {
                              values = c("black", "grey20", curve_col)) +
           scale_linewidth_manual(name = element_blank(), values = c(0.75, 0.25, 0.5)) +
           scale_linetype_manual(name = element_blank(), values = c(1, 1, 1)) +
+          geom_hline(yintercept = 0, linetype = 3) +
           geom_line() +
           ylab("Detrended resids.") +
           scale_x_continuous(breaks = clean_breaks) +
