@@ -489,22 +489,26 @@ dist_det_rem <- function(rwi,
         } else {
           dist_period$curve <- predict(hug_fit, newdata = dist_period)
           hug_coef <- coef(hug_fit) |> round(4)
-          plus_minus <- ifelse(hug_coef[[3]] > 0, "-", "+")
+          plus_minus_t <- ifelse(hug_coef[[3]] > 0, "-", "+")
+          plus_minus_d <- ifelse(d > 0, "-", "+")
           dist_period$eq <- paste0(
             "y == ",
             hug_coef[[1]],
             " * (x ",
-            plus_minus,
+            plus_minus_t,
             " ",
             abs(hug_coef[[3]]),
             ")",
             " * e^(",
             -1 * hug_coef[[2]],
             " * (x ",
-            plus_minus,
+            plus_minus_t,
             " ",
             abs(hug_coef[[3]]),
-            "))"
+            "))",
+            plus_minus_d,
+            " ",
+            d
           )
         }
 
