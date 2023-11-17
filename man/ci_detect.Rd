@@ -12,8 +12,7 @@ ci_detect(
   max.win = 30,
   thresh = 3.29,
   dist.span = 1.25,
-  max.iter = 10,
-  add.recent.rwi = TRUE
+  max.iter = 10
 )
 }
 \arguments{

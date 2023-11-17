@@ -16,8 +16,6 @@ dist_det_rem(rwi, min.win = 9, max.win = 30, thresh = 3.29, dist.span = 1.25)
 \item{thresh}{The disturbance detection threshold, corresponding to the number of deviations from the robust mean. The default is 3.29, following Druckenbrod et al. 2013.}
 
 \item{dist.span}{Parameter to determine the wiggliness of the loess splines fit to disturbance periods (when Hugershoff fits fail). Higher numbers = more wiggles. Passes to \code{\link[stats]{loess}}. The default is 1.25.}
-
-\item{add.recent.rwi}{Logical vector indicating whether to calculate a robust mean of the rwi before or after each detected disturbance and add it to the difference between the disturbance curves and the original disturbance period. See details below.}
 }
 \value{
 A named list with the following elements:

@@ -99,8 +99,7 @@ ci_detect <- function(rwl,
                       max.win = 30,
                       thresh = 3.29,
                       dist.span = 1.25,
-                      max.iter = 10,
-                      add.recent.rwi = TRUE
+                      max.iter = 10
 ) {
 
   ## Error catching & warnings
@@ -161,8 +160,7 @@ ci_detect <- function(rwl,
                                    min.win = min.win,
                                    max.win = max.win,
                                    thresh = thresh,
-                                   dist.span = dist.span,
-                                   add.recent.rwi = add.recent.rwi
+                                   dist.span = dist.span
     )
   }
   # Remove the 0 iteration

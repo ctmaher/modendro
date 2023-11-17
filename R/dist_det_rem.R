@@ -10,7 +10,6 @@
 #' @param max.win The maximum disturbance length in years (i.e., a moving window) to search for. The default is 30.
 #' @param thresh The disturbance detection threshold, corresponding to the number of deviations from the robust mean. The default is 3.29, following Druckenbrod et al. 2013.
 #' @param dist.span Parameter to determine the wiggliness of the loess splines fit to disturbance periods (when Hugershoff fits fail). Higher numbers = more wiggles. Passes to \code{\link[stats]{loess}}. The default is 1.25.
-#' @param add.recent.rwi Logical vector indicating whether to calculate a robust mean of the rwi before or after each detected disturbance and add it to the difference between the disturbance curves and the original disturbance period. See details below.
 #'
 #' @details
 #' The basic process that `dist_det_rem` performs is to take standardized tree ring series (specifically the output from the Cook & Peters (1997) process, as implemented by \code{\link{cp_detrend}} in \code{\link{ci_detect}}),
@@ -177,15 +176,6 @@ dist_det_rem <- function(rwi,
       s_bi(na.omit(x$value))$s_bi
     })
   })
-  #} else {
-  #   if (var.type %in% "mad") {
-  #     var <- lapply(mov_avgs, FUN = \(x) {
-  #       lapply(x, FUN = \(x) {
-  #         mad(x$value, na.rm = TRUE)
-  #       })
-  #     })
-  #   }
-  # }
 
   lo_vals <- mapply(
     FUN = \(x, y) {
