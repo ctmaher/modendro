@@ -81,7 +81,7 @@ yrs_to_pith <- function(rwl = NULL,
   z <- z[order(z$year),] # Make sure the order is correct
   mean(z[1:n.rings, "rw"], na.rm = TRUE)
   }) |> do.call(what = "rbind") |> as.data.frame()
-  colnames(n.rings.agg) <- "mean.rw"
+  colnames(n.rings.agg) <- paste("mean.rw", n.rings, sep = ".")
   n.rings.agg$series <- rownames(n.rings.agg)
 
   # merge the attributes and the mean.rw by series
