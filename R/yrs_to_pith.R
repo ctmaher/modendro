@@ -80,7 +80,7 @@ yrs_to_pith <- function(rwl = NULL,
   n.rings.agg <- lapply(xdf.list, FUN = \(y) {
   y <- y[order(y$year),] # Make sure the order is correct
   mean(y[1:n.rings, "rw"], na.rm = TRUE)
-  })
+  }) |> do.call(what = "rbind") |> as.data.frame()
   colnames(n.rings.agg) <- "mean.rw"
   n.rings.agg$series <- rownames(n.rings.agg)
 
