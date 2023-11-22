@@ -14,7 +14,7 @@ rwl_longer(rwl = NULL, dat.name = "rw", omit.NAs = TRUE)
 \item{omit.NAs}{Logical vector indicating whether to keep NAs in the output or not. Default is TRUE. This can cause issues if missing rings are represented with NA.}
 }
 \value{
-A data.frame with 3 columns
+A data.frame with 3 columns: 1) "year", 2) "series", 3) dat.name ("rw", "rw.mm", "bai.mm" or whatever you name this)
 }
 \description{
 Simple function to convert rwl-format data (columns are series, rows are yeqrs) to long format

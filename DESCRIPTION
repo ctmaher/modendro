@@ -18,6 +18,7 @@ Imports:
     stats,
     zoo,
     DescTools,
-    corTESTsrd
+    corTESTsrd,
+    mgcv
 URL: https://github.com/ctmaher/modendro
 BugReports: https://github.com/ctmaher/modendro/issues

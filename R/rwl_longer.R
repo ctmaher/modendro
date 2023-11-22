@@ -9,7 +9,8 @@
 #' @param dat.name Character vector of length 1 representing the column name you want for the the tree ring data. Default is "rw".
 #' @param omit.NAs Logical vector indicating whether to keep NAs in the output or not. Default is TRUE. This can cause issues if missing rings are represented with NA.
 #'
-#' @return A data.frame with 3 columns
+#' @return A data.frame with 3 columns: 1) "year", 2) "series", 3) dat.name ("rw", "rw.mm", "bai.mm" or whatever you name this)
+#'
 #' @import stats
 #' @import dplR
 #' @export

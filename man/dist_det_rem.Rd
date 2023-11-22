@@ -41,7 +41,8 @@ transformed, detrended residual series (not the AR residuals), with slightly dif
 of the transformed series after the disturbance, or 0 if the disturbance covers the end of the series. The \emph{d} term acts like an intercept. The Warren & MacWilliam curve has a \emph{t} coefficient which we use here.
 These modifications allow for more robust fitting (reduced parameters require fewer degrees of freedom). Setting the \emph{b} term to 1 allows the beginning y values of the Hugershoff curve to go above or below 0 (more directly determined by \emph{t}), which helps in minimizing artifacts from poor fit in the early years of a disturbance period.
 
-While the Hugershoff curve fitting is reasonably robust, \code{\link[stats]{nls}} occasionally fails to converge. In these cases a \code{\link[stats]{loess}} spline is fit to the disturbance period only instead (not the whole remainder of the series as in the Hugershoff).
+While the Hugershoff curve fitting is reasonably robust, \code{\link[stats]{nls}} occasionally fails to converge. Additionally, the  In these cases a \code{\link[stats]{loess}} spline
+is fit to the disturbance period only instead (not the whole remainder of the series as in the Hugershoff).
 The wiggliness of these splines can be adjusted using the \code{dist.span} argument. For both methods, the resulting fitted curve is subtracted from the series.
 
 If the arithmetic mean RWI ± 2sd of 15 years or the disturbance window length (whichever is longer) before the disturbance year does not contain 0, then the robust mean of this before period is
