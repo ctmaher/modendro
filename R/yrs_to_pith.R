@@ -77,15 +77,15 @@ yrs_to_pith <- function(rwl = NULL,
 
   if (method %in% "simple") {
   # Get aggregates of n.rings for each series
-  n.rings.agg <- lapply(xdf.list, FUN = \(y) {
-  y <- y[order(y$year),] # Make sure the order is correct
-  mean(y[1:n.rings, "rw"], na.rm = TRUE)
+  n.rings.agg <- lapply(xdf.list, FUN = \(z) {
+  z <- z[order(z$year),] # Make sure the order is correct
+  mean(z[1:n.rings, "rw"], na.rm = TRUE)
   }) |> do.call(what = "rbind") |> as.data.frame()
   colnames(n.rings.agg) <- "mean.rw"
   n.rings.agg$series <- rownames(n.rings.agg)
 
   # merge the attributes and the mean.rw by series
-  merged.att <- merge(y, n.rings.agg, by = "series")
+  merged.att <- merge(d2pith, n.rings.agg, by = "series")
   merged.att$y2pith <- (merged.att$d2pith / merged.att$mean.rw) |> round(digits = 0)
 
   merged.att
