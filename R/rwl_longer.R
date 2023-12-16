@@ -58,7 +58,7 @@ rwl_longer <- function(rwl = NULL,
   series.cols <- colnames(rwl)
 
   # Make a year column based on the rownames
-  rwl$year <- rownames(rwl) |> as.numeric()
+  rwl[, "year"] <- rownames(rwl) |> as.numeric()
 
 
   long.rwl <- stats::reshape(

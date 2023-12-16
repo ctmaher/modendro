@@ -20,7 +20,7 @@
 #' distance to pith estimates are essentially seamless with ring measurements. Estimating years to pith in CooRecorder, however, is somewhat cumbersome.
 #' This function is designed to save time by doing the calculations necessary for each series all at once.
 #'
-#' The "modeled" method is a somewhat experimental method that uses a generalized additive model (GAM) and a number of
+#' Not implemented yet: The "modeled" method is an experimental idea that uses a generalized additive model (GAM) and a number of
 #' series from your site that have pith.offset = 1 (i.e., from cores that contained pith). More is better, and hopefully
 #' coverage of the diameter range is adequate to predict for the series that don't contain pith.
 #'
@@ -48,6 +48,7 @@ yrs_to_pith <- function(rwl = NULL,
                         n.rings = 5,
                         diam.df = NULL) {
   ## Error catching & warnings
+
   #
   stopifnot(
     "rwl is not an object of class 'rwl', 'data.frame', or 'matrix'" =
@@ -58,15 +59,33 @@ yrs_to_pith <- function(rwl = NULL,
 
   #
   stopifnot(
+    "d2pith is not an object of class 'data.frame', or 'matrix'" =
+      data.class(d2pith) %in% "data.frame" |
+      data.class(d2pith) %in% "matrix"
+  )
+
+  #
+  stopifnot(
     "rwl has no rownames (must be years only) or no colnames (must be series IDs only)" =
       !is.null(rownames(rwl)) |
       !is.null(colnames(rwl))
   )
 
+
+  #
   stopifnot(
     "rwl and d2pith series names do not completely match" =
       all((colnames(rwl) %in% d2pith$series) == TRUE)
   )
+
+  #
+  stopifnot(
+    "n.rings must be a numeric vector of length 1" =
+      data.class(n.rings) == "numeric" |
+      data.class(n.rings) == "double" &
+      length(n.rings) == 1
+  )
+
 
 
 

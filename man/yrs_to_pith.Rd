@@ -40,7 +40,7 @@ has it's own intuitive method that is like a flexible version of the transparenc
 distance to pith estimates are essentially seamless with ring measurements. Estimating years to pith in CooRecorder, however, is somewhat cumbersome.
 This function is designed to save time by doing the calculations necessary for each series all at once.
 
-The "modeled" method is a somewhat experimental method that uses a generalized additive model (GAM) and a number of
+Not implemented yet: The "modeled" method is an experimental idea that uses a generalized additive model (GAM) and a number of
 series from your site that have pith.offset = 1 (i.e., from cores that contained pith). More is better, and hopefully
 coverage of the diameter range is adequate to predict for the series that don't contain pith.
 }
