@@ -31,7 +31,7 @@
 #' @param agg.fun character vector specifying the function to use for aggregating monthly climate combinations.
 #' Options are "mean" or "sum", e.g., for temperature or precipitation data, respectively. Default is "mean".
 #' @param max.lag numeric vector specifying how many years of lag to calculate calculations for. Default is 1 year.
-#' @param prewhiten logical vector specifying whether or not to convert tree ring & climate time series to standardized AR residuals (aka "prewhitening").
+#' @param prewhiten logical vector specifying whether or not to convert tree ring & climate time series to ARIMA residuals (aka "prewhitening"). A "best fit" ARIMA model is automatically selected using \code{\link[forecast]{auto.arima}}.
 #' This removes autocorrelation in a time series, leaving only the high-frequency variation. This is common practice before using standard methods for cross-correlations. Default is FALSE.
 #' @param auto.corr logical vector specifying whether there is temporal autocorrelation in either your tree ring or climate time series (there typically is autocorrelation, unless both are "prewhitened").
 #' If TRUE (the default), & corr.method is "spearman" or "kendall", then the \code{\link[corTESTsrd]{corTESTsrd}}function is used to compute modified significance testing to account for autocorrelation (From Lun et al. 2022).
@@ -83,6 +83,7 @@
 #'
 #' @import ggplot2
 #' @import corTESTsrd
+#' @import forecast
 #'
 #' @export
 #'
@@ -324,7 +325,7 @@ n_mon_corr <- function(rw = NULL,
   if (ac.test$order > 0 & auto.corr == FALSE & prewhiten == FALSE) {
     cat("Autocorrelation detected in rw, recommend choose auto.corr = TRUE &
         corr.method = c('spearman', 'kendall') to avoid spurious correlation results.
-        You can also select prewhiten = TRUE to produce AR residuals of both rw and clim data.\n")
+        You can also select prewhiten = TRUE to produce ARIMA residuals of both rw and clim data.\n")
     # auto.corr <- readline(prompt = "Enter auto.corr (TRUE or FALSE) = ")
     # corr.method <- readline(prompt = "Enter corr.method ('spearman' or 'kendall') = ")
   }
@@ -450,17 +451,17 @@ n_mon_corr <- function(rw = NULL,
       clim.mo.new <- clim.mo.new[which(!duplicated(clim.mo.new[,clim.var])),]
       clim.mo.new <- clim.mo.new[which(!duplicated(clim.mo.new[,rw.col])),]
 
-      # If we want to convert climate & rw to AR residuals (aka, "prewhitening"), do it here
+      # If we want to convert climate & rw to ARIMA residuals (aka, "prewhitening"), do it here
       if (prewhiten == TRUE) {
         # Save the raw data before prewhitening
         clim.mo.orig <- clim.mo.new
 
         # 1st the climate
-        ar.mod.clim <- ar(clim.mo.new[!is.na(clim.mo.new[, clim.var]), clim.var])
-        clim.mo.new[!is.na(clim.mo.new[, clim.var]), clim.var] <- ar.mod.clim$resid
+        arima.mod.clim <- auto.arima(clim.mo.new[!is.na(clim.mo.new[, clim.var]), clim.var])
+        clim.mo.new[!is.na(clim.mo.new[, clim.var]), clim.var] <- residuals(arima.mod.clim) |> as.numeric()
         # Now the tree rings
-        ar.mod.rw <- ar(clim.mo.new[!is.na(clim.mo.new[, rw.col]), rw.col])
-        clim.mo.new[!is.na(clim.mo.new[, rw.col]), rw.col] <- ar.mod.rw$resid
+        arima.mod.rw <- auto.arima(clim.mo.new[!is.na(clim.mo.new[, rw.col]), rw.col])
+        clim.mo.new[!is.na(clim.mo.new[, rw.col]), rw.col] <- residuals(arima.mod.rw) |> as.numeric()
       }
 
       # Run the correlation test between climate and rw

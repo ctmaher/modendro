@@ -41,7 +41,7 @@ Options are "mean" or "sum", e.g., for temperature or precipitation data, respec
 
 \item{max.lag}{numeric vector specifying how many years of lag to calculate calculations for. Default is 1 year.}
 
-\item{prewhiten}{logical vector specifying whether or not to convert tree ring & climate time series to standardized AR residuals (aka "prewhitening").
+\item{prewhiten}{logical vector specifying whether or not to convert tree ring & climate time series to ARIMA residuals (aka "prewhitening"). A "best fit" ARIMA model is automatically selected using \code{\link[forecast]{auto.arima}}.
 This removes autocorrelation in a time series, leaving only the high-frequency variation. This is common practice before using standard methods for cross-correlations. Default is FALSE.}
 
 \item{auto.corr}{logical vector specifying whether there is temporal autocorrelation in either your tree ring or climate time series (there typically is autocorrelation, unless both are "prewhitened").
