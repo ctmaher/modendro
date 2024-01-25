@@ -4,10 +4,14 @@
 \alias{pwr_t_rwl}
 \title{Find optimal power and apply Cook & Peters (1997) transformation on tree ring series}
 \usage{
-pwr_t_rwl(rwl)
+pwr_t_rwl(rwl, universal = FALSE, ID.group.substr = NULL)
 }
 \arguments{
 \item{rwl}{A rwl object (read in by dplR's \code{\link[dplR]{read.rwl}}). Essentially a data.frame with columns names as series IDs and years as rownames.}
+
+\item{universal}{A logical vector indicating whether to compute a single "universal" optimal power for all series within a group (if \code{TRUE} and arg \code{ID.group.substr} is unspecified, will assume all series in the rwl). If \code{FALSE}, the function estimates a separate optimal power for each individual series.}
+
+\item{ID.group.substr}{A numeric vector of length 2 that determines a sub grouping for calculating "universal" optimal power. Ulitmately passes to \code{\link[base]{substr}} as the start (1st number) and stop (2nd number) args to split the series IDs in your rwl into groups (performed in \code{\link{find_opt_pwr}}).}
 }
 \value{
 A two-element list, 1 is the transformed series and 2 contains the messages about the transformations

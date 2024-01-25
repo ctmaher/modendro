@@ -5,6 +5,8 @@
 #' that can result from using ratios to derive detrended indices.
 #'
 #' @param rwl A rwl-type data.frame (e.g., read in by \code{\link[dplR]{read.rwl}}). Essentially a data.frame with columns names as series IDs and years as rownames.
+#' @param universal.pwr.t A logical vector indicating whether to compute a single "universal" optimal power of transformation for all series within a group (if `TRUE` and arg `ID.group.substr` is unspecified, will assume all series in the rwl). If `FALSE`, the function estimates a separate optimal power for each individual series (the default).
+#' @param pwr.t.ID.group.substr A numeric vector of length 2 that determines a sub grouping for calculating "universal" optimal power of transformation. Ulitmately passes to \code{\link[base]{substr}} as the start (1st number) and stop (2nd number) args to split the series IDs in your rwl into groups (performed in \code{\link{find_opt_pwr}}).
 #' @param detrend.method Character string of the detrending method to use. Passes to \code{\link[dplR]{detrend}}.
 #' @param nyrs Numeric vector, used in dplR's \code{\link[dplR]{detrend}} function for the `"Spline"` and `"AgeDepSpline"` methods.
 #' @param pos.slope Should positive slopes be allowed in the detrending curves? Generally this should be FALSE (the default),
@@ -88,6 +90,8 @@
 
 cp_detrend <-
   function(rwl,
+           universal.pwr.t = FALSE,
+           pwr.t.ID.group.substr = NULL,
            detrend.method = "Mean",
            nyrs = NULL,
            pos.slope = FALSE,
