@@ -458,10 +458,11 @@ n_mon_corr <- function(rw = NULL,
 
         # 1st the climate
         arima.mod.clim <- auto.arima(clim.mo.new[!is.na(clim.mo.new[, clim.var]), clim.var],
-                                     seasonal = FALSE, ic = "bic")
+                                     seasonal = FALSE)
         clim.mo.new[!is.na(clim.mo.new[, clim.var]), clim.var] <- residuals(arima.mod.clim) |> as.numeric()
         # Now the tree rings
-        arima.mod.rw <- auto.arima(clim.mo.new[!is.na(clim.mo.new[, rw.col]), rw.col])
+        arima.mod.rw <- auto.arima(clim.mo.new[!is.na(clim.mo.new[, rw.col]), rw.col],
+                                   seasonal = FALSE)
         clim.mo.new[!is.na(clim.mo.new[, rw.col]), rw.col] <- residuals(arima.mod.rw) |> as.numeric()
       }
 
