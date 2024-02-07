@@ -149,10 +149,10 @@ head(n_mon_corr.out[["Correlation data"]])
 rwl.ex <- matrix(nrow = 50, ncol = 10)
 rownames(rwl.ex) <- 1:50
 colnames(rwl.ex) <- 1:10
-rwl.ex <- apply(rwl.ex, MARGIN = 2, FUN = \(x) runif(length(x), 0.1, 2))
+rwl.ex <- apply(rwl.ex, MARGIN = 2, FUN = \(x) runif(length(x), 0.1, 2)) |> as.data.frame()
 
-# Convert rwl to long format
-rwl.ex.long <- rwl_longer(rwl.ex,
+# Convert rwl to long format using modendro's rwl_longer() function
+rwl.ex.long <- modendro::rwl_longer(rwl.ex,
 dat.name = "rw.mm",
 omit.NAs = TRUE)
 
@@ -161,7 +161,7 @@ rwl.ex.long.list <- split(rwl.ex.long, f = rwl.ex.long$series)
 
 # Use mapply to run n_mon_corr for each series.
 # Note that the clim data is the same for each.
-# Also note that plots = FALSE and silent = TRUE so that these don't clog the console and plotting window.
+# Also note that plots = FALSE and silent = TRUE so that these don't clog the plotting window and console.
 n_mon_corr.out.list <- mapply(FUN = \(x, y) {
 n_mon_corr(rw = x,
 rw.col = "rw.mm",
@@ -175,7 +175,7 @@ silent = TRUE)
 SIMPLIFY = FALSE)
 
 # Outputs are the same as above, but nested in one more list dimension
-head(n_mon_corr.out.list[[1]][[[["Correlation results"]]]])
+head(n_mon_corr.out.list[[1]][["Correlation results"]])
 
 # It might be helpful to rbind the individual series outputs into data.frames
 
@@ -190,14 +190,14 @@ results.df <- mapply(FUN = \(x, y) {
  x[["Correlation results"]]$series <- y
  x[["Correlation results"]]
 }, x = n_mon_corr.out.list, y = names(n_mon_corr.out.list), SIMPLIFY = FALSE) |>
- do.call(what = "rbind")
+ do.call(what = "rbind") |> as.data.frame()
 
 head(results.df)
 
 # Now it is possible to do things like find out how many series have significant correlations
-# for each month combination:
+# for each month combination (these are random series so results are not meaningful):
 results.df$sig <- ifelse(results.df$p < 0.05, "Sig.","Not sig.")
-results.agg <- aggregate(series ~ months, data = results.df[results.df$sig \%in\% "Sig.",], length)
+results.agg <- aggregate(series ~ months + sig, data = results.df, length)
 results.agg[order(results.agg$series, decreasing = TRUE),] |> head()
 }
 \references{

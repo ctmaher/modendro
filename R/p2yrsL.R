@@ -30,9 +30,9 @@
 #' library(dplR)
 #' data(ca533)
 #' # before
-#' ca533[1000:1358,] |> spag.plot()
+#' ca533 |> spag.plot()
 #' # after
-#' ca533[1000:1358,] |> p2yrsL() |> spag.plot()
+#' ca533 |> p2yrsL() |> spag.plot()
 #'
 
 p2yrsL <- function(rwl, limit = 2.6) {

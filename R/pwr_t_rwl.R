@@ -108,7 +108,7 @@ pwr_t_rwl <- function(rwl, universal = FALSE, ID.group.substr = NULL) {
                                    "Power transformed"))
 
   # split back into a list
-  pwr.t.list <- split(pwr.t.df, f = pwr.t.df$series)
+  pwr.t.list <- split(pwr.t.df, f = pwr.t.df$series)[orig.IDs]
 
   out.list <- list(as.data.frame(rwl0), pwr.t.list, rwl)
   names(out.list) <- c("Transformed ring widths", "Transformation metadata", "Raw ring widths")

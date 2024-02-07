@@ -186,11 +186,8 @@ find_opt_pwr <- function(rwl, universal = FALSE, ID.group.substr = NULL) {
       slopes.num <- diff.lmean.slope[diff.lmean.slope$series %in% orig.IDs, "slope"]
       names(slopes.num) <- diff.lmean.slope[diff.lmean.slope$series %in% orig.IDs, "series"]
 
-      # Make double sure the order matches the original rwl
-      slopes.num <- slopes.num[orig.IDs]
-
       # Determine optimal power of transformation for each series by subtracting slope from 1
-      abs(1 - slopes.num)
+      abs(1 - slopes.num)[orig.IDs]# Make double sure the order matches the original rwl
     }
   }
 } # End of function

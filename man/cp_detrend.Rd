@@ -76,6 +76,7 @@ to the residual detrended series, then dividing the resulting series by their me
 }
 \examples{
 library(dplR)
+library(ggplot2)
 # Bristlecone pine tree ring collection from Campito mountain, White Mountains, CA
 # Many 0 value rings in this collection
 data("ca533")

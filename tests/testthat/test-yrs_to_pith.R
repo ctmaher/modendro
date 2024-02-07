@@ -42,7 +42,7 @@ test_that("Throws error if any rwl series are all NAs", {
 ####
 test_that("Names are equal in the rwl and messages outputs", {
   mat.test <- matrix(nrow = 50, ncol = 10)
-  mat.test <- apply(mat.test, MARGIN = 2, FUN = \(x) runif(length(x), 0.1, 2)) |> as.data
+  mat.test <- apply(mat.test, MARGIN = 2, FUN = \(x) runif(length(x), 0.1, 2)) |> as.data.frame()
   rownames(mat.test) <- 1:50
   colnames(mat.test) <- paste0("series", 1:10)
 

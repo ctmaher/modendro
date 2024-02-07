@@ -124,10 +124,10 @@
 #' rwl.ex <- matrix(nrow = 50, ncol = 10)
 #' rownames(rwl.ex) <- 1:50
 #' colnames(rwl.ex) <- 1:10
-#' rwl.ex <- apply(rwl.ex, MARGIN = 2, FUN = \(x) runif(length(x), 0.1, 2))
+#' rwl.ex <- apply(rwl.ex, MARGIN = 2, FUN = \(x) runif(length(x), 0.1, 2)) |> as.data.frame()
 #'
-#' # Convert rwl to long format
-#' rwl.ex.long <- rwl_longer(rwl.ex,
+#' # Convert rwl to long format using modendro's rwl_longer() function
+#' rwl.ex.long <- modendro::rwl_longer(rwl.ex,
 #' dat.name = "rw.mm",
 #' omit.NAs = TRUE)
 #'
@@ -136,7 +136,7 @@
 #'
 #' # Use mapply to run n_mon_corr for each series.
 #' # Note that the clim data is the same for each.
-#' # Also note that plots = FALSE and silent = TRUE so that these don't clog the console and plotting window.
+#' # Also note that plots = FALSE and silent = TRUE so that these don't clog the plotting window and console.
 #' n_mon_corr.out.list <- mapply(FUN = \(x, y) {
 #' n_mon_corr(rw = x,
 #' rw.col = "rw.mm",
@@ -150,7 +150,7 @@
 #' SIMPLIFY = FALSE)
 #'
 #' # Outputs are the same as above, but nested in one more list dimension
-#' head(n_mon_corr.out.list[[1]][[[["Correlation results"]]]])
+#' head(n_mon_corr.out.list[[1]][["Correlation results"]])
 #'
 #' # It might be helpful to rbind the individual series outputs into data.frames
 #'
@@ -165,14 +165,14 @@
 #'  x[["Correlation results"]]$series <- y
 #'  x[["Correlation results"]]
 #' }, x = n_mon_corr.out.list, y = names(n_mon_corr.out.list), SIMPLIFY = FALSE) |>
-#'  do.call(what = "rbind")
+#'  do.call(what = "rbind") |> as.data.frame()
 #'
 #' head(results.df)
 #'
 #' # Now it is possible to do things like find out how many series have significant correlations
-#' # for each month combination:
+#' # for each month combination (these are random series so results are not meaningful):
 #' results.df$sig <- ifelse(results.df$p < 0.05, "Sig.","Not sig.")
-#' results.agg <- aggregate(series ~ months, data = results.df[results.df$sig %in% "Sig.",], length)
+#' results.agg <- aggregate(series ~ months + sig, data = results.df, length)
 #' results.agg[order(results.agg$series, decreasing = TRUE),] |> head()
 
 
@@ -515,9 +515,7 @@ n_mon_corr <- function(rw = NULL,
       x[[1]]
     }) |> do.call(what = "rbind")
 
-    cor.results$sig <- ifelse(cor.results$p > 0.05, "",
-                              ifelse(cor.results$p <= 0.05 & cor.results$p >= 0.01, "*",
-                                     ifelse(cor.results$p <= 0.001, "***", "**")))
+    cor.results$sig <- ifelse(cor.results$p >= 0.05, "Not sig.", "Sig.")
 
     cor.results$lag <- ifelse(l == 0, paste(l), paste0("-", l))
 
@@ -588,8 +586,6 @@ n_mon_corr <- function(rw = NULL,
     plot.df$start.mo <- unlist(plot.df$start.mo) |> as.numeric()
     plot.df$end.mo <- unlist(plot.df$end.mo) |> as.numeric()
 
-    # Simplified version of significance
-    plot.df$simp.sig <- ifelse(plot.df$sig %in% c("*","**","***"), "Sig.","Not sig.")
 
     # Build a nice title for the plots
     if (prewhiten == TRUE) {

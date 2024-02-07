@@ -70,10 +70,8 @@
 #'
 #'
 #' co021.ci.out <- ci_detect(co021,
-#' detrend.method =
-#' "AgeDepSpline",
-#' max.iter = 5,
-#' add.recent.rwi = FALSE) # for long series like these, turning this off works best (see ?dist_det_rem)
+#' detrend.method = "AgeDepSpline",
+#' max.iter = 5)
 #'
 #' names(co021.ci.out)
 #'

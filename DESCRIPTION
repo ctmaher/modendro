@@ -12,7 +12,6 @@ RoxygenNote: 7.3.1
 Imports: 
     dplR,
     ggplot2,
-    plyr,
     tidyr,
     cowplot,
     stats,

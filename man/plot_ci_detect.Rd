@@ -61,14 +61,14 @@ filename = paste0("ca533_ci_iter_plots/", n, "_ci_iter_plots.pdf"),
 plot = marrangeGrob(p, nrow = length(p), ncol = 1),
 width = 10, height = length(p)*4 # choose wise values here to make sure your plots aren't squished
 )
-}, p = ci_plots[[1]][sapply(ci_plots[[1]], FUN = \(x) !is.character(x))],
-n = names(ci_plots[[1]][sapply(ci_plots[[1]], FUN = \(x) !is.character(x))])
+}, p = ca533_ci_plots[[1]][sapply(ca533_ci_plots[[1]], FUN = \(x) !is.character(x))],
+n = names(ca533_ci_plots[[1]][sapply(ca533_ci_plots[[1]], FUN = \(x) !is.character(x))])
 )
 
 # For the final plots:
 ggsave(
 filename = "ca533_final_ci_plots.pdf",
-plot = marrangeGrob(ci_plots[[2]][sapply(ci_plots[[2]], FUN = \(x) !is.character(x))], nrow=1, ncol=1),
+plot = marrangeGrob(ca533_ci_plots[[2]][sapply(ca533_ci_plots[[2]], FUN = \(x) !is.character(x))], nrow=1, ncol=1),
 width = 10, height = 4 # choose wise values here to make sure your plots aren't squished
 )
 

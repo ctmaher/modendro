@@ -50,27 +50,28 @@
 #' # If you wanted to write these plots to pdf to browse them more freely,
 #' # you could do the following steps (will write to your working directory):
 #'
+#' library(ggplot2)
 #' library(gridExtra)
 #'
 #' # For the iteration plots:
 #' dir.create("ca533_ci_iter_plots") # create a folder first
 #' # Then make plot sheets for each series
-#' mapply(FUN = \(p, n) {
-#' ggsave(
-#' filename = paste0("ca533_ci_iter_plots/", n, "_ci_iter_plots.pdf"),
-#' plot = marrangeGrob(p, nrow = length(p), ncol = 1),
-#' width = 10, height = length(p)*4 # choose wise values here to make sure your plots aren't squished
-#' )
-#' }, p = ci_plots[[1]][sapply(ci_plots[[1]], FUN = \(x) !is.character(x))],
-#' n = names(ci_plots[[1]][sapply(ci_plots[[1]], FUN = \(x) !is.character(x))])
-#' )
+#' # mapply(FUN = \(p, n) {
+#' # ggsave(
+#' # filename = paste0("ca533_ci_iter_plots/", n, "_ci_iter_plots.pdf"),
+#' # plot = marrangeGrob(p, nrow = length(p), ncol = 1),
+#' # width = 10, height = length(p)*4 # choose wise values here to make sure your plots aren't squished
+#' # )
+#' # }, p = ca533_ci_plots[[1]][sapply(ca533_ci_plots[[1]], FUN = \(x) !is.character(x))],
+#' # n = names(ca533_ci_plots[[1]][sapply(ca533_ci_plots[[1]], FUN = \(x) !is.character(x))])
+#' # )
 #'
-#' # For the final plots:
-#' ggsave(
-#' filename = "ca533_final_ci_plots.pdf",
-#' plot = marrangeGrob(ci_plots[[2]][sapply(ci_plots[[2]], FUN = \(x) !is.character(x))], nrow=1, ncol=1),
-#' width = 10, height = 4 # choose wise values here to make sure your plots aren't squished
-#' )
+#' # For the final plots (not run):
+#' # ggsave(
+#' # filename = "ca533_final_ci_plots.pdf",
+#' # plot = marrangeGrob(ca533_ci_plots[[2]][sapply(ca533_ci_plots[[2]], FUN = \(x) !is.character(x))], nrow=1, ncol=1),
+#' # width = 10, height = 4 # choose wise values here to make sure your plots aren't squished
+#' # )
 #'
 #' # You can also use the `modendro` function `plot_cp_detrend()` to make plots of just intial detrending & transformaton steps.
 #' # The required input is the 4th element in the `ci_detect()` output.
