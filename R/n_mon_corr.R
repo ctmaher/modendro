@@ -599,14 +599,14 @@ n_mon_corr <- function(rw = NULL,
     # Make the plot
     out.plot <- ggplot(plot.df) +
       geom_point(aes(factor(start.mo, levels = mon.seq), # start points
-                     coef, color = simp.sig),
+                     coef, color = sig),
                  shape = 18, size = 2) +
       geom_point(aes(factor(end.mo, levels = mon.seq), # end points
-                     coef, color = simp.sig),
+                     coef, color = sig),
                  shape = 124, size = 2) +
       geom_segment(aes(x = factor(start.mo, levels = mon.seq), # lines connecting
                        xend = factor(end.mo, levels = mon.seq),
-                       y = coef, yend = coef, color = simp.sig)) +
+                       y = coef, yend = coef, color = sig)) +
       scale_x_discrete(breaks = mon.seq, labels = mon.seq) +
       scale_y_continuous(breaks = seq(-1,1, by = 0.1)) +
       xlab("Month") +
