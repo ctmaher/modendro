@@ -15,7 +15,7 @@
 #' up to the growing period and only extends through the months when growth occurs. It is nonsensical to include months after
 #' radial growth stops - doing so may result in spurious correlations.
 #'
-#' Compared to methods that force rigidly-defined seasons of a fixed length, this approach should allow greater discovery of meaningful growth-climate relationships.
+#' Compared to methods that force rigidly-defined seasons of a fixed length, this approach should facilitate discovery of potentially more meaningful growth-climate relationships.
 #'
 #' Fair warning: this is a basic function that will accept any tree ring data and climate data in the proper format.
 #' It is the user's responsibility to make sure that your data is appropriate to the analyses.
@@ -189,100 +189,115 @@ n_mon_corr <- function(rw = NULL,
                        corr.method = "spearman",
                        rw.name = NULL,
                        plots = TRUE,
-                       silent = FALSE){
-
-
+                       silent = FALSE) {
   ## Initial error catching and interactive prompts
 
-  stopifnot("Arg rw or clim are not an object of class 'chron', 'data.frame', or 'matrix'" =
-              data.class(rw) %in% "chron" |
-              data.class(rw) %in% "data.frame" |
-              data.class(rw) %in% "matrix" |
-              data.class(clim) %in% "data.frame" |
-              data.class(clim) %in% "matrix"
+  stopifnot(
+    "Arg rw or clim are not an object of class 'chron', 'data.frame', or 'matrix'" =
+      data.class(rw) %in% "chron" |
+      data.class(rw) %in% "data.frame" |
+      data.class(rw) %in% "matrix" |
+      data.class(clim) %in% "data.frame" |
+      data.class(clim) %in% "matrix"
   )
 
 
 
   match.test <- clim.var %in% colnames(clim)
   stopifnot("Arg clim.var must match one unique column name in clim" =
-              length(match.test[match.test == TRUE]) == 1
-  )
+              length(match.test[match.test == TRUE]) == 1)
 
   match.test <- colnames(rw) %in% rw.col
-  stopifnot("Arg rw.col must match the name
+  stopifnot(
+    "Arg rw.col must match the name
          of the growth variable in the rw data.frame" =
-              length(match.test[match.test == TRUE]) == 1
+      length(match.test[match.test == TRUE]) == 1
   )
 
   if (is.null(rel.per.begin)) {
-    cat("You haven't specified the beginning month of the relevant climate period -\n",
-        "this is the 1st month after radial growth typically stops in a year\n",
-        "(i.e., the 1st month of the fall season at your site).\n",
-        "This is approximate, but you should have a reasonable idea of what month this is for your study system.\n")
-    rel.per.begin <- readline(prompt = "First month of relevant climate period = ") |> as.integer()
+    cat(
+      "You haven't specified the beginning month of the relevant climate period -\n",
+      "this is the 1st month after radial growth typically stops in a year\n",
+      "(i.e., the 1st month of the fall season at your site).\n",
+      "This is approximate, but you should have a reasonable idea of what month this is for your study system.\n"
+    )
+    rel.per.begin <-
+      readline(prompt = "First month of relevant climate period = ") |> as.integer()
   }
 
   if (is.null(hemisphere)) {
-    cat("You haven't specified the hemisphere from which your tree ring series comes from.\n",
-        "This is important because there are different conventions for linking growth years\n",
-        "to climate years for N vs. S hemispheres")
-    hemisphere <- readline(prompt = "Enter hemisphere ('N' or 'S') = ")
+    cat(
+      "You haven't specified the hemisphere from which your tree ring series comes from.\n",
+      "This is important because there are different conventions for linking growth years\n",
+      "to climate years for N vs. S hemispheres"
+    )
+    hemisphere <-
+      readline(prompt = "Enter hemisphere ('N' or 'S') = ")
   }
 
-  stopifnot("Invalid climatically relevant period begin month provided (must be a single integer month)" =
-              is.numeric(rel.per.begin) &
-              length(rel.per.begin) == 1)
+  stopifnot(
+    "Invalid climatically relevant period begin month provided (must be a single integer month)" =
+      is.numeric(rel.per.begin) &
+      length(rel.per.begin) == 1
+  )
 
-  stopifnot("Invalid hemisphere argument provided (must be a character vector & either 'S' or 'N')" =
-              is.character(hemisphere) &
-              substr(hemisphere, 1, 1) %in% c("s","S","N","n")) # actually more permissive than the error message suggests
+  stopifnot(
+    "Invalid hemisphere argument provided (must be a character vector & either 'S' or 'N')" =
+      is.character(hemisphere) &
+      substr(hemisphere, 1, 1) %in% c("s", "S", "N", "n")
+  ) # actually more permissive than the error message suggests
 
   stopifnot("Arg agg.fun must be either 'mean' or 'sum'" =
               agg.fun %in% "mean" |
-              agg.fun %in% "sum"
-  )
+              agg.fun %in% "sum")
 
   stopifnot("Arg max.lag must be a numeric vector of length = 1" =
               length(max.lag) == 1 |
-              is.numeric(max.lag)
-  )
+              is.numeric(max.lag))
 
   # accept max.lag inputs that have a negative in front
   if (max.lag < 0) {
     max.lag <- as.numeric(max.lag) |> abs()
   }
 
-  stopifnot("Arg corr.method must be an exact match of one of these: c('pearson','kendall','spearman')" =
-              corr.method %in% c("pearson", "kendall", "spearman")
+  stopifnot(
+    "Arg corr.method must be an exact match of one of these: c('pearson','kendall','spearman')" =
+      corr.method %in% c("pearson", "kendall", "spearman")
   )
 
 
   # make sure that "year" columns are labelled as such
-  colnames(clim)[which((substr(colnames(clim), start = 1, stop = 1)
-                        %in% c("Y","y")) == T)] <- "year"
+  colnames(clim)[which((substr(
+    colnames(clim), start = 1, stop = 1
+  )
+  %in% c("Y", "y")) == T)] <- "year"
 
   # same for month
-  colnames(clim)[which((substr(colnames(clim), start = 1, stop = 1)
-                        %in% c("M","m")) == T)] <- "month"
+  colnames(clim)[which((substr(
+    colnames(clim), start = 1, stop = 1
+  )
+  %in% c("M", "m")) == T)] <- "month"
 
-  stopifnot("Month variable in climate data not numeric or integer" =
-              is.numeric(clim[,"month"]) |
-              is.integer(clim[,"month"]) |
-              is.double(clim[,"month"])
+  stopifnot(
+    "Month variable in climate data not numeric or integer" =
+      is.numeric(clim[, "month"]) |
+      is.integer(clim[, "month"]) |
+      is.double(clim[, "month"])
   )
 
   # make sure year and month are integers from here on out
-  clim[,"year"] <- as.integer(clim[,"year"])
-  clim[,"month"] <- as.integer(clim[,"month"])
+  clim[, "year"] <- as.integer(clim[, "year"])
+  clim[, "month"] <- as.integer(clim[, "month"])
 
   # Get the year from row names
-  if (any(substr(colnames(rw), 1, 1) %in% c("Y","y")) == FALSE) {
-    rw[,"year"] <- rownames(rw) |> as.numeric()
+  if (any(substr(colnames(rw), 1, 1) %in% c("Y", "y")) == FALSE) {
+    rw[, "year"] <- rownames(rw) |> as.numeric()
   } else {
-    colnames(rw)[which((substr(colnames(rw), start = 1, stop = 1)
-                        %in% c("Y","y")) == T)] <- "year"
-    rw[,"year"] <- as.numeric(rw[,"year"])
+    colnames(rw)[which((substr(
+      colnames(rw), start = 1, stop = 1
+    )
+    %in% c("Y", "y")) == T)] <- "year"
+    rw[, "year"] <- as.numeric(rw[, "year"])
   }
 
   # n_mon_corr assumes that all years have all 12 months! If even one month is missing somewhere, this will
@@ -294,79 +309,95 @@ n_mon_corr <- function(rw = NULL,
   #             all(mon.count$month == 12)
   # )
   if (all(mon.count$month != 12)) {
-    paste("Year", mon.count$year[mon.count$month < 12],
+    paste("Year",
+          mon.count$year[mon.count$month < 12],
           "does not have all 12 months represented")
     stop("Not all years in climate data have all 12 months represented")
   } # This doesn't do what I want it too
 
   # n_mon_corr also assumes absolute regularity (this is true for some of the correlation tests too) in both rw & clim
-  rw.year.seq <- rw[,"year"]
+  rw.year.seq <- rw[, "year"]
   rw.year.seq.diff <- rw.year.seq[order(rw.year.seq)] |> diff()
-  clim.year.seq <- unique(clim[,"year"])
-  clim.year.seq.diff <- clim.year.seq[order(clim.year.seq)] |> diff()
+  clim.year.seq <- unique(clim[, "year"])
+  clim.year.seq.diff <-
+    clim.year.seq[order(clim.year.seq)] |> diff()
   if (any(rw.year.seq.diff != 1)) {
     paste("Year", rw.year.seq[which(rw.year.seq.diff > 1)], "is missing from ring width data.")
   }
   stopifnot("Ring width data does not have complete continuous years." =
-              all(rw.year.seq.diff == 1)
-  )
+              all(rw.year.seq.diff == 1))
 
   if (any(clim.year.seq.diff != 1)) {
     paste("Year", clim.year.seq[which(clim.year.seq.diff > 1)], "is missing from climate data.")
   }
   stopifnot("Climate data does not have complete continuous years." =
-              all(clim.year.seq.diff == 1)
-  )
+              all(clim.year.seq.diff == 1))
 
 
   # Give a warning & maybe stop the function if there is autocorrelation in the tree ring series
   # There should be a prompt (verbal or otherwise)
-  ac.test <- ar(x = na.omit(rw[order(rw[,"year"]), rw.col]))
+  ac.test <- ar(x = na.omit(rw[order(rw[, "year"]), rw.col]))
   if (ac.test$order > 0 & auto.corr == FALSE & prewhiten == FALSE) {
-    cat("Autocorrelation detected in rw, recommend choose auto.corr = TRUE &
+    cat(
+      "Autocorrelation detected in rw, recommend choose auto.corr = TRUE &
         corr.method = c('spearman', 'kendall') to avoid spurious correlation results.
-        You can also select prewhiten = TRUE to produce ARIMA residuals of both rw and clim data.\n")
+        You can also select prewhiten = TRUE to produce ARIMA residuals of both rw and clim data.\n"
+    )
     # auto.corr <- readline(prompt = "Enter auto.corr (TRUE or FALSE) = ")
     # corr.method <- readline(prompt = "Enter corr.method ('spearman' or 'kendall') = ")
   }
 
   # Clean up the hemisphere argument if needed
-  hemisphere <- ifelse(substr(hemisphere, 1, 1) %in% c("n","N") , "N", "S")
+  hemisphere <-
+    ifelse(substr(hemisphere, 1, 1) %in% c("n", "N") , "N", "S")
 
   # Create a chronological sequence of months starting with the numeric month
   # given as the clim.rel.per.begin argument
-  mon.seq <- rep(1:12, 2) # A list of months representing 2 whole calendar years.
-  mon.seq <- mon.seq[rel.per.begin:length(mon.seq)][1:12] # 12 months in a row
+  mon.seq <-
+    rep(1:12, 2) # A list of months representing 2 whole calendar years.
+  mon.seq <-
+    mon.seq[rel.per.begin:length(mon.seq)][1:12] # 12 months in a row
   # This seq of months will then be relevant to a particular current growth year, though the
   # months span 2 calendar years. According to standard practice, for N hemisphere tree rings, the
   # growth year is the later calendar year. In the S hemisphere, it is the earlier calendar year.
 
   # Print the relevant climate period
   if (silent == FALSE) {
-    cat("You have specified the following months for your relevant climate period in the\n",
-        hemisphere, "hemisphere:", mon.seq, "\n")
+    cat(
+      "You have specified the following months for your relevant climate period in the\n",
+      hemisphere,
+      "hemisphere:",
+      mon.seq,
+      "\n"
+    )
   }
 
   # The operations below assume that the climate data is arranged by month, then year.
   # Let's ensure this is the case.
-  clim <- clim[order(clim$year, clim$month),]
+  clim <- clim[order(clim$year, clim$month), ]
 
   # Define the "growth year" based on the hemisphere argument
   if (hemisphere %in% "S") {
     if (silent == FALSE) {
-      message("\nAssuming Southern hemisphere conventions for linking growth years
-    and climate years (see ?n_mon_corr for details)\n")
+      message(
+        "\nAssuming Southern hemisphere conventions for linking growth years
+    and climate years (see ?n_mon_corr for details)\n"
+      )
     }
     offset <- rel.per.begin - 1
-    clim$growyear <- c(rep(min(clim[,"year"]) - 1, offset), clim[,"year"][1:(length(clim[,"year"]) - offset)])
+    clim$growyear <-
+      c(rep(min(clim[, "year"]) - 1, offset), clim[, "year"][1:(length(clim[, "year"]) - offset)])
 
   } else {
     if (silent == FALSE) {
-      message("\nAssuming Northern hemisphere conventions for linking growth years
-    and climate years (see ?n_mon_corr for details)\n")
+      message(
+        "\nAssuming Northern hemisphere conventions for linking growth years
+    and climate years (see ?n_mon_corr for details)\n"
+      )
     }
     offset <- 12 - rel.per.begin + 1
-    clim$growyear <- c(clim[,"year"][(offset + 1):length(clim[,"year"])], rep(max(clim[,"year"]) + 1, offset))
+    clim$growyear <-
+      c(clim[, "year"][(offset + 1):length(clim[, "year"])], rep(max(clim[, "year"]) + 1, offset))
 
   }
 
@@ -377,18 +408,18 @@ n_mon_corr <- function(rw = NULL,
 
   # Find the complete years in the climate data
   clim.complete <- aggregate(month ~ growyear, data = clim, length)
-  clim.complete <- clim.complete[clim.complete$month == 12,]
-  clim <- clim[clim[,"growyear"] %in% clim.complete[,"growyear"],]
+  clim.complete <- clim.complete[clim.complete$month == 12, ]
+  clim <- clim[clim[, "growyear"] %in% clim.complete[, "growyear"], ]
 
   # Find min and max complete years for the correlations, i.e., the complete overlap
-  min.y <- max(min(rw[,"year"]), min(clim[,"growyear"]))
-  max.y <- min(max(rw[,"year"]), max(clim[,"growyear"]))
+  min.y <- max(min(rw[, "year"]), min(clim[, "growyear"]))
+  max.y <- min(max(rw[, "year"]), max(clim[, "growyear"]))
 
   # Create a vector of all possible combinations of months
   # Regular calendar year first
   mos.mat <- expand.grid(mon.seq, mon.seq)
 
-  mos <- apply(mos.mat, MARGIN = 1, FUN = \(x){
+  mos <- apply(mos.mat, MARGIN = 1, FUN = \(x) {
     seq(from = which(mon.seq %in% x[1]),
         to = which(mon.seq %in% x[2]))
   })
@@ -426,127 +457,154 @@ n_mon_corr <- function(rw = NULL,
   # 1 + the max lag
   lag.seq <- 0:max.lag
 
-  lag.list <- lapply(lag.seq, FUN = function(l){
+  lag.list <- lapply(
+    lag.seq,
+    FUN = function(l) {
+      # Run through all the month aggregates
+      cor.res.dfs <- lapply(mos, FUN = \(x) {
+        # Aggregate the variable of interest for the given month sequence
+        clim.mo <-
+          aggregate(formula(paste(clim.var, "growyear", sep = "~")),
+                    data = clim[clim$month %in% x,],
+                    FUN = \(z) {
+                      ifelse(agg.fun %in% "mean", mean(z), sum(z))
+                    })
 
-    # Run through all the month aggregates
-    cor.res.dfs <- lapply(mos, FUN = \(x){
-      # Aggregate the variable of interest for the given month sequence
-      clim.mo <- aggregate(formula(paste(clim.var, "growyear", sep = "~")),
-                           data = clim[clim$month %in% x, ],
-                           FUN = \(z){ifelse(agg.fun %in% "mean", mean(z), sum(z))})
+        # The months vector in the desired order.
+        month.vec <- ifelse(length(x) > 1,
+                            paste(x[1], x[length(x)], sep = ":"),
+                            paste(x))
 
-      # The months vector in the desired order.
-      month.vec <- ifelse(length(x) > 1,
-                          paste(x[1], x[length(x)], sep = ":"),
-                          paste(x))
+        # attach rw to the climate data
+        clim.mo.new <- clim.mo
+        clim.mo.new$growyear <- clim.mo.new$growyear + l
+        clim.mo.new <-
+          merge(clim.mo.new, rw, by.x = "growyear", by.y = "year")
+        clim.mo.new$lag <- ifelse(l == 0, paste(l), paste0("-", l))
+        clim.mo.new$months <- month.vec
 
-      # attach rw to the climate data
-      clim.mo.new <- clim.mo
-      clim.mo.new$growyear <- clim.mo.new$growyear + l
-      clim.mo.new <- merge(clim.mo.new, rw, by.x = "growyear", by.y = "year")
-      clim.mo.new$lag <- ifelse(l == 0, paste(l), paste0("-", l))
-      clim.mo.new$months <- month.vec
+        # Remove any ties from the data
+        clim.mo.new <-
+          clim.mo.new[which(!duplicated(clim.mo.new[, clim.var])), ]
+        clim.mo.new <-
+          clim.mo.new[which(!duplicated(clim.mo.new[, rw.col])), ]
 
-      # Remove any ties from the data
-      clim.mo.new <- clim.mo.new[which(!duplicated(clim.mo.new[,clim.var])),]
-      clim.mo.new <- clim.mo.new[which(!duplicated(clim.mo.new[,rw.col])),]
+        # If we want to convert climate & rw to ARIMA residuals (aka, "prewhitening"), do it here
+        if (prewhiten == TRUE) {
+          # Save the raw data before prewhitening
+          clim.mo.orig <- clim.mo.new
 
-      # If we want to convert climate & rw to ARIMA residuals (aka, "prewhitening"), do it here
-      if (prewhiten == TRUE) {
-        # Save the raw data before prewhitening
-        clim.mo.orig <- clim.mo.new
+          # 1st the climate
+          arima.mod.clim <-
+            auto.arima(clim.mo.new[!is.na(clim.mo.new[, clim.var]), clim.var],
+                       seasonal = FALSE)
+          clim.mo.new[!is.na(clim.mo.new[, clim.var]), clim.var] <-
+            residuals(arima.mod.clim) |> as.numeric()
+          # Now the tree rings
+          arima.mod.rw <-
+            auto.arima(clim.mo.new[!is.na(clim.mo.new[, rw.col]), rw.col],
+                       seasonal = FALSE)
+          clim.mo.new[!is.na(clim.mo.new[, rw.col]), rw.col] <-
+            residuals(arima.mod.rw) |> as.numeric()
+        }
 
-        # 1st the climate
-        arima.mod.clim <- auto.arima(clim.mo.new[!is.na(clim.mo.new[, clim.var]), clim.var],
-                                     seasonal = FALSE)
-        clim.mo.new[!is.na(clim.mo.new[, clim.var]), clim.var] <- residuals(arima.mod.clim) |> as.numeric()
-        # Now the tree rings
-        arima.mod.rw <- auto.arima(clim.mo.new[!is.na(clim.mo.new[, rw.col]), rw.col],
-                                   seasonal = FALSE)
-        clim.mo.new[!is.na(clim.mo.new[, rw.col]), rw.col] <- residuals(arima.mod.rw) |> as.numeric()
-      }
-
-      # Run the correlation test between climate and rw
-      if (auto.corr == TRUE) {
-        if (corr.method %in% "pearson") {
-          ct <- cor.test(clim.mo.new[, clim.var], clim.mo.new[, rw.col],
-                         method = corr.method, alternative = "two.sided")
-          # put the results together in a data.frame
-          result <- data.frame(months = month.vec,
-                               coef = ct$estimate[[1]],
-                               p = ct$p.value[[1]],
-                               ci.lo = ct$conf.int[1],
-                               ci.hi = ct$conf.int[2])
-        } else { # if spearman or kendall
-          ct <- corTESTsrd(clim.mo.new[,clim.var], clim.mo.new[, rw.col],
+        # Run the correlation test between climate and rw
+        if (auto.corr == TRUE) {
+          if (corr.method %in% "pearson") {
+            ct <- cor.test(clim.mo.new[, clim.var],
+                           clim.mo.new[, rw.col],
                            method = corr.method,
-                           iid = FALSE, alternative = "two.sided")
-          # put the results together in a data.frame
-          result <- data.frame(months = month.vec,
-                               coef = ct[["rho"]],
-                               p = ct[["pval"]])
-        }
-      } else {
-        ct <- cor.test(clim.mo.new[,clim.var], clim.mo.new[, rw.col], method = corr.method)
-
-        # put the results together in a data.frame
-        if (corr.method %in% "pearson") {
-
-          result <- data.frame(months = month.vec,
-                               coef = ct$estimate[[1]],
-                               p = ct$p.value[[1]],
-                               ci.lo = ct$conf.int[1],
-                               ci.hi = ct$conf.int[2])
+                           alternative = "two.sided")
+            # put the results together in a data.frame
+            result <- data.frame(
+              months = month.vec,
+              coef = ct$estimate[[1]],
+              p = ct$p.value[[1]],
+              ci.lo = ct$conf.int[1],
+              ci.hi = ct$conf.int[2]
+            )
+          } else {
+            # if spearman or kendall
+            ct <-
+              corTESTsrd(
+                clim.mo.new[, clim.var],
+                clim.mo.new[, rw.col],
+                method = corr.method,
+                iid = FALSE,
+                alternative = "two.sided"
+              )
+            # put the results together in a data.frame
+            result <- data.frame(months = month.vec,
+                                 coef = ct[["rho"]],
+                                 p = ct[["pval"]])
+          }
         } else {
-          result <- data.frame(months = month.vec,
-                               coef = ct$estimate[[1]],
-                               p = ct$p.value[[1]])
+          ct <-
+            cor.test(clim.mo.new[, clim.var], clim.mo.new[, rw.col], method = corr.method)
+
+          # put the results together in a data.frame
+          if (corr.method %in% "pearson") {
+            result <- data.frame(
+              months = month.vec,
+              coef = ct$estimate[[1]],
+              p = ct$p.value[[1]],
+              ci.lo = ct$conf.int[1],
+              ci.hi = ct$conf.int[2]
+            )
+          } else {
+            result <- data.frame(
+              months = month.vec,
+              coef = ct$estimate[[1]],
+              p = ct$p.value[[1]]
+            )
+          }
         }
-      }
-      # return the correlation results and the data.frame of the merged climate and rw data
-      if (prewhiten == TRUE) {
-        list(result, clim.mo.new, clim.mo.orig)
-      } else {
-        list(result, clim.mo.new)
-      }
-    })
+        # return the correlation results and the data.frame of the merged climate and rw data
+        if (prewhiten == TRUE) {
+          list(result, clim.mo.new, clim.mo.orig)
+        } else {
+          list(result, clim.mo.new)
+        }
+      })
 
-    cor.results <- lapply(cor.res.dfs, FUN = \(x) {
-      x[[1]]
-    }) |> do.call(what = "rbind")
-
-    cor.results$sig <- ifelse(cor.results$p >= 0.05, "Not sig.", "Sig.")
-
-    cor.results$lag <- ifelse(l == 0, paste(l), paste0("-", l))
-
-    cor.df <- lapply(cor.res.dfs, FUN = \(x) {
-      x[[2]]
-    }) |> do.call(what = "rbind")
-
-    cor.df$lag <- ifelse(l == 0, paste(l), paste0("-", l))
-
-    if (prewhiten == TRUE) {
-      cor.raw.df <- lapply(cor.res.dfs, FUN = \(x) {
-        x[[3]]
+      cor.results <- lapply(cor.res.dfs, FUN = \(x) {
+        x[[1]]
       }) |> do.call(what = "rbind")
 
-      cor.raw.df$lag <- ifelse(l == 0, paste(l), paste0("-", l))
+      cor.results$sig <-
+        ifelse(cor.results$p >= 0.05, "Not sig.", "Sig.")
 
-      # Return all the results
-      list(cor.results, cor.df, cor.raw.df)
-    } else {
-      # Return all the results
-      list(cor.results, cor.df)
+      cor.results$lag <- ifelse(l == 0, paste(l), paste0("-", l))
+
+      cor.df <- lapply(cor.res.dfs, FUN = \(x) {
+        x[[2]]
+      }) |> do.call(what = "rbind")
+
+      cor.df$lag <- ifelse(l == 0, paste(l), paste0("-", l))
+
+      if (prewhiten == TRUE) {
+        cor.raw.df <- lapply(cor.res.dfs, FUN = \(x) {
+          x[[3]]
+        }) |> do.call(what = "rbind")
+
+        cor.raw.df$lag <- ifelse(l == 0, paste(l), paste0("-", l))
+
+        # Return all the results
+        list(cor.results, cor.df, cor.raw.df)
+      } else {
+        # Return all the results
+        list(cor.results, cor.df)
+      }
     }
-  })
+  )
 
   lag.res <- lapply(lag.list, FUN = \(x) {
     x[[1]] # 1st list element contains the results
   }) |> do.call(what = "rbind")
   # Make the lag a factor
-  lag.res$lag <- factor(lag.res$lag, levels = lag.seq*-1)
+  lag.res$lag <- factor(lag.res$lag, levels = lag.seq * -1)
   # sort correlation results by correlation coef
-  lag.res <- lag.res[order(lag.res$coef, decreasing = T),]
+  lag.res <- lag.res[order(lag.res$coef, decreasing = T), ]
   # order the months as a factor
   lag.res$months <- factor(lag.res$months, levels = mos.fac)
 
@@ -554,7 +612,7 @@ n_mon_corr <- function(rw = NULL,
     x[[2]] # 2nd list element contains the data used in the correlations
   }) |> do.call(what = "rbind")
   # Make the lag a factor
-  lag.df$lag <- factor(lag.df$lag, levels = lag.seq*-1)
+  lag.df$lag <- factor(lag.df$lag, levels = lag.seq * -1)
   # order the months as a factor
   lag.df$months <- factor(lag.df$months, levels = mos.fac)
 
@@ -563,7 +621,7 @@ n_mon_corr <- function(rw = NULL,
       x[[3]] # 2nd list element contains the data used in the correlations
     }) |> do.call(what = "rbind")
     # Make the lag a factor
-    lag.raw.df$lag <- factor(lag.raw.df$lag, levels = lag.seq*-1)
+    lag.raw.df$lag <- factor(lag.raw.df$lag, levels = lag.seq * -1)
     # order the months as a factor
     lag.raw.df$months <- factor(lag.raw.df$months, levels = mos.fac)
   }
@@ -571,15 +629,20 @@ n_mon_corr <- function(rw = NULL,
   # Set up a data.frame for the plots - add some variables that are useful for plotting, but not
   # for the main output.
   if (plots == TRUE) {
-
     plot.df <- lag.res
-    for (i in 1:nrow(plot.df)){
-      plot.df$start.mo[i] <- as.numeric(strsplit(as.character(plot.df$months), ":")[[i]][1])
+    for (i in 1:nrow(plot.df)) {
+      plot.df$start.mo[i] <-
+        as.numeric(strsplit(as.character(plot.df$months), ":")[[i]][1])
     }
-    for (i in 1:nrow(plot.df)){
-      plot.df$end.mo[i] <- as.numeric(ifelse(length(strsplit(as.character(plot.df$months), ":")[[i]]) == 2,
-                                             strsplit(as.character(plot.df$months), ":")[[i]][2],
-                                             strsplit(as.character(plot.df$months), ":")[[i]][1]))
+    for (i in 1:nrow(plot.df)) {
+      plot.df$end.mo[i] <-
+        as.numeric(ifelse(
+          length(strsplit(as.character(
+            plot.df$months
+          ), ":")[[i]]) == 2,
+          strsplit(as.character(plot.df$months), ":")[[i]][2],
+          strsplit(as.character(plot.df$months), ":")[[i]][1]
+        ))
     }
 
     # Unlist these and make sure they are numeric.
@@ -589,53 +652,92 @@ n_mon_corr <- function(rw = NULL,
 
     # Build a nice title for the plots
     if (prewhiten == TRUE) {
-      title <- ifelse(is.null(rw.name), paste0("Correlations with ", clim.var, " (prewhitened)"),
-                      paste0(rw.name, " correlations with ", clim.var, " (prewhitened)"))
+      title <-
+        ifelse(
+          is.null(rw.name),
+          paste0("Correlations with ", clim.var, " (prewhitened)"),
+          paste0(rw.name, " correlations with ", clim.var, " (prewhitened)")
+        )
     } else {
-      title <- ifelse(is.null(rw.name), paste0("Correlations with ", clim.var),
-                      paste0(rw.name, " correlations with ", clim.var))
+      title <-
+        ifelse(
+          is.null(rw.name),
+          paste0("Correlations with ", clim.var),
+          paste0(rw.name, " correlations with ", clim.var)
+        )
     }
 
     # Make the plot
     out.plot <- ggplot(plot.df) +
       geom_point(aes(factor(start.mo, levels = mon.seq), # start points
                      coef, color = sig),
-                 shape = 18, size = 2) +
+                 shape = 18,
+                 size = 2) +
       geom_point(aes(factor(end.mo, levels = mon.seq), # end points
                      coef, color = sig),
-                 shape = 124, size = 2) +
-      geom_segment(aes(x = factor(start.mo, levels = mon.seq), # lines connecting
-                       xend = factor(end.mo, levels = mon.seq),
-                       y = coef, yend = coef, color = sig)) +
+                 shape = 124,
+                 size = 2) +
+      geom_segment(aes(
+        x = factor(start.mo, levels = mon.seq),
+        # lines connecting
+        xend = factor(end.mo, levels = mon.seq),
+        y = coef,
+        yend = coef,
+        color = sig
+      )) +
       scale_x_discrete(breaks = mon.seq, labels = mon.seq) +
-      scale_y_continuous(breaks = seq(-1,1, by = 0.1)) +
+      scale_y_continuous(breaks = seq(-1, 1, by = 0.1)) +
       xlab("Month") +
       ylab(paste0("Correlation coefficient\n(", corr.method, ")")) +
-      scale_color_manual(name = "", values = c("grey80","black")) +
+      scale_color_manual(name = "", values = c("grey80", "black")) +
       theme_bw() +
-      facet_wrap(~lag, ncol = 1, strip.position	= "right") +
-      ggtitle(label = title,
-              subtitle = paste0("Monthly climate ",
-                                agg.fun, "s with annual lag 0:",
-                                max.lag, " (overlapping years ", min.y, "-", max.y, ")"))
+      facet_wrap( ~ lag, ncol = 1, strip.position	= "right") +
+      ggtitle(
+        label = title,
+        subtitle = paste0(
+          "Monthly climate ",
+          agg.fun,
+          "s with annual lag 0:",
+          max.lag,
+          " (overlapping years ",
+          min.y,
+          "-",
+          max.y,
+          ")"
+        )
+      )
 
     if (prewhiten == TRUE) {
       out.list <- list(lag.res, lag.df, lag.raw.df, out.plot)
-      names(out.list) <- c("Correlation results", "Correlation data (prewhitened)",
-                           "Correlation data (raw)", "Results plots")
+      names(out.list) <-
+        c(
+          "Correlation results",
+          "Correlation data (prewhitened)",
+          "Correlation data (raw)",
+          "Results plots"
+        )
     } else {
       out.list <- list(lag.res, lag.df, out.plot)
-      names(out.list) <- c("Correlation results", "Correlation data", "Results plots")
+      names(out.list) <-
+        c("Correlation results",
+          "Correlation data",
+          "Results plots")
     }
 
     return(out.list)
   } else {
     if (prewhiten == TRUE) {
       out.list <- list(lag.res, lag.df, lag.raw.df)
-      names(out.list) <- c("Correlation results", "Correlation data (prewhitened)", "Correlation data (raw)")
+      names(out.list) <-
+        c(
+          "Correlation results",
+          "Correlation data (prewhitened)",
+          "Correlation data (raw)"
+        )
     } else {
       out.list <- list(lag.res, lag.df)
-      names(out.list) <- c("Correlation results", "Correlation data")
+      names(out.list) <-
+        c("Correlation results", "Correlation data")
     }
 
     return(out.list)
