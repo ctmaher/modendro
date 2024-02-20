@@ -5,9 +5,11 @@
 #' (3 columns: year, series, rw). This is useful for getting your data ready for plotting in ggplot or
 #' for correlation analyses.
 #'
+#'
 #' @param rwl A rwl-type data.frame (e.g., read in by \code{\link[dplR]{read.rwl}}). Essentially a data.frame with columns names as series IDs and years as rownames.
-#' @param dat.name Character vector of length 1 representing the column name you want for the the tree ring data. Default is "rw".
-#' @param omit.NAs Logical vector indicating whether to keep NAs in the output or not. Default is TRUE. This can cause issues if missing rings are represented with NA.
+#' @param series.name Character vector of length 1 for the column name you want for the series IDs. Default is "series", but perhaps "tree" or "sample" is more appropriate for your work.
+#' @param dat.name Character vector of length 1 for the column name you want for the the tree ring data. Default is "rw".
+#' @param trim Logical vector indicating whether to trim off NA sequences at the beginning or end of individual series. Default is TRUE. Will not remove missing rings that are represented with NA (i.e., NA values within the series).
 #'
 #' @return A data.frame with 3 columns: 1) "year", 2) "series", 3) dat.name ("rw", "rw.mm", "bai.mm" or whatever you name this)
 #'
@@ -26,8 +28,9 @@
 
 
 rwl_longer <- function(rwl = NULL,
+                       series.name = "series",
                        dat.name = "rw",
-                       omit.NAs = TRUE) {
+                       trim = TRUE) {
   ## Error catching & warnings
   #
   stopifnot(
@@ -66,16 +69,27 @@ rwl_longer <- function(rwl = NULL,
     idvar = "year",
     ids = x$year,
     times = series.cols,
-    timevar = "series",
+    timevar = series.name,
     v.names = dat.name,
     varying = list(series.cols),
     direction = "long",
     new.row.names = 1:(length(series.cols) * nrow(rwl))
   )
-  if (omit.NAs == TRUE) {
-    long.rwl |>
-      na.omit()
-  } else {
+  if (trim == TRUE) {
+    # Find the earliest & latest years that have rw values
+    long.rwl.nonas <-  na.omit(long.rwl)
+    long.rwl.nonas.split <- split(long.rwl.nonas, f = long.rwl.nonas[, series.name])
+    year.spans <- lapply(long.rwl.nonas.split, FUN = \(series) {
+      data.frame(series = unique(series[, series.name]),
+                 min.year = series[, "year"] |> min(),
+                 max.year = series[, "year"] |> max())
+    })
+    long.rwl.split <- split(long.rwl, f = long.rwl[, series.name])
+    long.rwl.trim <- mapply(FUN = \(series.dfs, end.years) {
+      series.dfs[series.dfs[, "year"] %in% end.years[, "min.year"]:end.years[, "max.year"], ]
+    }, series.dfs = long.rwl.split, end.years = year.spans,
+    SIMPLIFY = FALSE) |> do.call(what = "rbind")
+    } else { # just return everything, NAs & all.
     long.rwl
   }
 }

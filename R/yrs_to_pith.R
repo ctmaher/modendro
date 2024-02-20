@@ -90,7 +90,9 @@ yrs_to_pith <- function(rwl = NULL,
 
 
   xdf <- rwl_longer(rwl,
-                    omit.NAs = TRUE)
+                    series.name = "series",
+                    dat.name = "rw",
+                    trim = TRUE)
   # Split by series
   xdf.list <- split(xdf, f = xdf$series)
 

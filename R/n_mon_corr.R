@@ -128,13 +128,14 @@
 #'
 #' # Convert rwl to long format using modendro's rwl_longer() function
 #' rwl.ex.long <- modendro::rwl_longer(rwl.ex,
+#' series.name = "tree",
 #' dat.name = "rw.mm",
-#' omit.NAs = TRUE)
+#' trim = TRUE)
 #'
 #' # split the data.frame into a list based on ID
-#' rwl.ex.long.list <- split(rwl.ex.long, f = rwl.ex.long$series)
+#' rwl.ex.long.list <- split(rwl.ex.long, f = rwl.ex.long$tree)
 #'
-#' # Use mapply to run n_mon_corr for each series.
+#' # Use mapply to run n_mon_corr for each "tree"
 #' # Note that the clim data is the same for each.
 #' # Also note that plots = FALSE and silent = TRUE so that these don't clog the plotting window and console.
 #' n_mon_corr.out.list <- mapply(FUN = \(x, y) {
@@ -152,7 +153,7 @@
 #' # Outputs are the same as above, but nested in one more list dimension
 #' head(n_mon_corr.out.list[[1]][["Correlation results"]])
 #'
-#' # It might be helpful to rbind the individual series outputs into data.frames
+#' # It might be helpful to rbind the individual tree outputs into data.frames
 #'
 #' data.df <- lapply(n_mon_corr.out.list, FUN = \(x, y) {
 #' x[["Correlation data"]]
@@ -162,18 +163,18 @@
 #' head(data.df)
 #'
 #' results.df <- mapply(FUN = \(x, y) {
-#'  x[["Correlation results"]]$series <- y
+#'  x[["Correlation results"]]$tree <- y
 #'  x[["Correlation results"]]
 #' }, x = n_mon_corr.out.list, y = names(n_mon_corr.out.list), SIMPLIFY = FALSE) |>
 #'  do.call(what = "rbind") |> as.data.frame()
 #'
 #' head(results.df)
 #'
-#' # Now it is possible to do things like find out how many series have significant correlations
+#' # Now it is possible to do things like find out how many trees have significant correlations
 #' # for each month combination (these are random series so results are not meaningful):
 #' results.df$sig <- ifelse(results.df$p < 0.05, "Sig.","Not sig.")
-#' results.agg <- aggregate(series ~ months + sig, data = results.df, length)
-#' results.agg[order(results.agg$series, decreasing = TRUE),] |> head()
+#' results.agg <- aggregate(tree ~ months + sig, data = results.df, length)
+#' results.agg[order(results.agg$tree, decreasing = TRUE),] |> head()
 
 
 n_mon_corr <- function(rw = NULL,
@@ -289,9 +290,9 @@ n_mon_corr <- function(rw = NULL,
   clim[, "year"] <- as.integer(clim[, "year"])
   clim[, "month"] <- as.integer(clim[, "month"])
 
-  # Get the year from row names
-  if (any(substr(colnames(rw), 1, 1) %in% c("Y", "y")) == FALSE) {
-    rw[, "year"] <- rownames(rw) |> as.numeric()
+  # Clarify the year variable
+  if (any(substr(colnames(rw), 1, 1) %in% c("Y", "y")) == FALSE) { # If there is no column named "Year" or "year"
+    rw[, "year"] <- rownames(rw) |> as.numeric() # Assume the rownames contain year
   } else {
     colnames(rw)[which((substr(
       colnames(rw), start = 1, stop = 1
