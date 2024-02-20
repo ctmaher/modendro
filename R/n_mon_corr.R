@@ -324,13 +324,13 @@ n_mon_corr <- function(rw = NULL,
   if (any(rw.year.seq.diff != 1)) {
     paste("Year", rw.year.seq[which(rw.year.seq.diff > 1)], "is missing from ring width data.")
   }
-  stopifnot("Ring width data does not have complete continuous years." =
+  stopifnot("Ring width data does not have complete continuous years in annual steps." =
               all(rw.year.seq.diff == 1))
 
   if (any(clim.year.seq.diff != 1)) {
     paste("Year", clim.year.seq[which(clim.year.seq.diff > 1)], "is missing from climate data.")
   }
-  stopifnot("Climate data does not have complete continuous years." =
+  stopifnot("Climate data does not have complete continuous years in annual steps." =
               all(clim.year.seq.diff == 1))
 
 
