@@ -202,7 +202,11 @@ n_mon_corr <- function(rw = NULL,
       data.class(clim) %in% "matrix"
   )
 
-
+  stopifnot(
+    "clim or rw does not have a year column? (name sould start with 'y' or 'Y')" =
+      any(substr(colnames(rw), 1, 1) %in% c("Y", "y")) == TRUE |
+      any(substr(colnames(clim), 1, 1) %in% c("Y", "y")) == TRUE
+  )
 
   match.test <- clim.var %in% colnames(clim)
   stopifnot("Arg clim.var must match one unique column name in clim" =
