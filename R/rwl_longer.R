@@ -23,7 +23,7 @@
 #' # Many 0 value rings in this collection
 #' data("ca533")
 #'
-#' ca533.long <- rwl_longer(ca533, dat.name = "rw.mm", omit.NAs = TRUE)
+#' ca533.long <- rwl_longer(ca533, dat.name = "rw.mm", trim = TRUE)
 #' head(ca533.long)
 
 
@@ -54,8 +54,8 @@ rwl_longer <- function(rwl = NULL,
       is.character(dat.name)
   )
 
-  stopifnot("omit.NAs must be a logical vector (TRUE or FALSE)" =
-              is.logical(omit.NAs))
+  stopifnot("trim must be a logical vector (TRUE or FALSE)" =
+              is.logical(trim))
 
   # Get the series names before we add a year column
   series.cols <- colnames(rwl)
