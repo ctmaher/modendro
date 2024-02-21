@@ -89,12 +89,12 @@ rwl_longer <- function(rwl = NULL,
       series.dfs[series.dfs[, "year"] %in% end.years[, "min.year"]:end.years[, "max.year"], ]
     }, series.dfs = long.rwl.split, end.years = year.spans,
     SIMPLIFY = FALSE) |> do.call(what = "rbind")
-    long.rwl.trim
 
     if (any(is.na(long.rwl.trim[,dat.name])) == TRUE) {
       warning("NA values found within tree ring series. Are NAs used to represent missing rings? 0 would be better.")
     }
 
+    long.rwl.trim
     } else { # just return everything, NAs & all.
     long.rwl
   }
