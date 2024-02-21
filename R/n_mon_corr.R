@@ -326,17 +326,19 @@ n_mon_corr <- function(rw = NULL,
   clim.year.seq <- unique(clim[, "year"])
   clim.year.seq.diff <-
     clim.year.seq[order(clim.year.seq)] |> diff()
-  if (any(rw.year.seq.diff != 1)) {
+  if (any(rw.year.seq.diff != 1) == TRUE) {
     paste("Year", rw.year.seq[which(rw.year.seq.diff > 1)], "is missing from ring width data.")
   }
   stopifnot("Ring width data does not have complete continuous years in annual steps." =
-              all(rw.year.seq.diff == 1))
+              all(rw.year.seq.diff == 1) == TRUE
+            )
 
-  if (any(clim.year.seq.diff != 1)) {
+  if (any(clim.year.seq.diff != 1) == TRUE) {
     paste("Year", clim.year.seq[which(clim.year.seq.diff > 1)], "is missing from climate data.")
   }
   stopifnot("Climate data does not have complete continuous years in annual steps." =
-              all(clim.year.seq.diff == 1))
+              all(clim.year.seq.diff == 1) == TRUE
+            )
 
 
   # Give a warning & maybe stop the function if there is autocorrelation in the tree ring series
