@@ -138,7 +138,7 @@
 #' # Use mapply to run n_mon_corr for each "tree"
 #' # Note that the clim data is the same for each.
 #' # Also note that plots = FALSE and silent = TRUE so that these don't clog the plotting window and console.
-#' n_mon_corr.out.list <- mapply(FUN = \(x, y) {
+#' n_mon_corr.out.list <- lapply(rwl.ex.long.list, FUN = \(x) {
 #' n_mon_corr(rw = x,
 #' rw.col = "rw.mm",
 #' clim = clim,
@@ -147,8 +147,7 @@
 #' hemisphere = "S",
 #' plots = FALSE,
 #' silent = TRUE)
-#' }, x = rwl.ex.long.list, y = names(rwl.ex.long.list),
-#' SIMPLIFY = FALSE)
+#' })
 #'
 #' # Outputs are the same as above, but nested in one more list dimension
 #' head(n_mon_corr.out.list[[1]][["Correlation results"]])
