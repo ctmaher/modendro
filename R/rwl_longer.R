@@ -23,7 +23,7 @@
 #' # Many 0 value rings in this collection
 #' data("ca533")
 #'
-#' ca533.long <- rwl_longer(ca533, dat.name = "rw.mm", trim = TRUE)
+#' ca533.long <- rwl_longer(rwl = ca533, dat.name = "rw.mm", trim = TRUE)
 #' head(ca533.long)
 
 
@@ -90,7 +90,8 @@ rwl_longer <- function(rwl = NULL,
     }, series.dfs = long.rwl.split, end.years = year.spans,
     SIMPLIFY = FALSE) |> do.call(what = "rbind")
     long.rwl.trim
-    if (any(is.na(long.rwl.trim[,dat.name]))) {
+
+    if (any(is.na(long.rwl.trim[,dat.name])) == TRUE) {
       warning("NA values found within tree ring series. Are NAs used to represent missing rings? 0 would be better.")
     }
 
