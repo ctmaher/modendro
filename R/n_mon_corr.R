@@ -136,7 +136,8 @@
 #' rwl.ex.long.list <- split(rwl.ex.long, f = rwl.ex.long$tree)
 #'
 #' # Use mapply to run n_mon_corr for each "tree"
-#' # Note that the clim data is the same for each.
+#' # Note that in our example, the clim data is the same for all series.
+#' # You will need a different processes if you have climate and tree ring series grouped by site or plot.
 #' # Also note that plots = FALSE and silent = TRUE so that these don't clog the plotting window and console.
 #' n_mon_corr.out.list <- lapply(rwl.ex.long.list, FUN = \(x) {
 #' n_mon_corr(rw = x,
