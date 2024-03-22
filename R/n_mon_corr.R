@@ -48,8 +48,7 @@
 #' a collection of cross-dated tree ring series and have properly detrended them, standardized them, and dealt
 #' with temporal autocorrelation.
 #'
-#' The default correlation test method is Pearson product moment correlation coefficient, although this might
-#' not be appropriate for your analysis.
+#' The default correlation test method is Spearman rank correlation coefficient
 #'
 #' A note on tree ring analyses based in the Southern hemisphere:
 #' \code{\link{n_mon_corr}} is designed to work in both the Northern and Southern hemispheres. Hemisphere matters
@@ -611,7 +610,7 @@ n_mon_corr <- function(rw = NULL,
   # Make the lag a factor
   lag.res$lag <- factor(lag.res$lag, levels = lag.seq * -1)
   # sort correlation results by correlation coef
-  lag.res <- lag.res[order(lag.res$coef, decreasing = T), ]
+  lag.res <- lag.res[order(lag.res$coef, decreasing = TRUE), ]
   # order the months as a factor
   lag.res$months <- factor(lag.res$months, levels = mos.fac)
 
