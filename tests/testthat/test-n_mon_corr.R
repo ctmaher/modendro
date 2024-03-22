@@ -63,7 +63,8 @@ test_that("Essential function works - and returns a vector", {
                            rw.col = "std", rw.name = "Synthetic", silent = TRUE))
 })
 ####
-test_that("The order of months in the input climate data has no effect on the accuracy of the output", {
+test_that("The order of months in the input climate data has no effect on the accuracy of the
+          output", {
   mat.test <- matrix(nrow = 50, ncol = 10)
   rownames(mat.test) <- 1:50
   colnames(mat.test) <- 1:10
