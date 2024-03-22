@@ -86,8 +86,8 @@ Exploring a wide range of plausible growth-climate relationships can be a useful
 a collection of cross-dated tree ring series and have properly detrended them, standardized them, and dealt
 with temporal autocorrelation.
 
-The default correlation test method is Pearson product moment correlation coefficient, although this might
-not be appropriate for your analysis.
+The default correlation test method is Spearman rank correlation. This will be ±equivalent
+to Pearson for linear relationships, but will also capture any non-linear relationships.
 
 A note on tree ring analyses based in the Southern hemisphere:
 \code{\link{n_mon_corr}} is designed to work in both the Northern and Southern hemispheres. Hemisphere matters

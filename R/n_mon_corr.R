@@ -48,7 +48,8 @@
 #' a collection of cross-dated tree ring series and have properly detrended them, standardized them, and dealt
 #' with temporal autocorrelation.
 #'
-#' The default correlation test method is Spearman rank correlation coefficient
+#' The default correlation test method is Spearman rank correlation. This will be ±equivalent
+#' to Pearson for linear relationships, but will also capture any non-linear relationships.
 #'
 #' A note on tree ring analyses based in the Southern hemisphere:
 #' \code{\link{n_mon_corr}} is designed to work in both the Northern and Southern hemispheres. Hemisphere matters
@@ -674,22 +675,26 @@ n_mon_corr <- function(rw = NULL,
     }
 
     # Make the plot
+    # These 3 lines are to deal with NOTEs from check()
+    x_var1 <- "start.mo"
+    x_var2 <- "end.mo"
+    col_var <- "sig"
     out.plot <- ggplot(plot.df) +
-      geom_point(aes(factor(start.mo, levels = mon.seq), # start points
-                     coef, color = sig),
+      geom_point(aes(factor(.data[[x_var1]], levels = mon.seq), # start points
+                     coef, color = .data[[col_var]]),
                  shape = 18,
                  size = 2) +
-      geom_point(aes(factor(end.mo, levels = mon.seq), # end points
-                     coef, color = sig),
+      geom_point(aes(factor(.data[[x_var2]], levels = mon.seq), # end points
+                     coef, color = .data[[col_var]]),
                  shape = 124,
                  size = 2) +
       geom_segment(aes(
-        x = factor(start.mo, levels = mon.seq),
+        x = factor(.data[[x_var1]], levels = mon.seq),
         # lines connecting
-        xend = factor(end.mo, levels = mon.seq),
+        xend = factor( .data[[col_var]], levels = mon.seq),
         y = coef,
         yend = coef,
-        color = sig
+        color = .data[[col_var]]
       )) +
       scale_x_discrete(breaks = mon.seq, labels = mon.seq) +
       scale_y_continuous(breaks = seq(-1, 1, by = 0.1)) +
