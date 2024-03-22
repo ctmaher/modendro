@@ -22,95 +22,126 @@ n_mon_corr(
 )
 }
 \arguments{
-\item{rw}{a tree ring series in "long format" with at least two columns representing the year and the tree ring data. Could be individual tree series or a chronology. Not restricted to ring widths.}
+\item{rw}{a tree ring series in "long format" with at least two columns representing the year
+and the tree ring data. Could be individual tree series or a chronology. Not technically
+restricted to ring widths.}
 
 \item{rw.col}{character vector - the colname of the tree ring data series.}
 
-\item{clim}{a \code{data.frame} with at least 3 columns: year, month (numeric), and a climate variable.}
+\item{clim}{a \code{data.frame} with at least 3 columns: year, month (numeric), and a
+climate variable.}
 
-\item{clim.var}{character vector - the colname of the climate variable of interest in the \code{clim} data.frame.}
+\item{clim.var}{character vector - the colname of the climate variable of interest in the \code{clim}
+data.frame.}
 
-\item{rel.per.begin}{an integer month representing the beginning of the climatically relevant period to the growth year (always a 12 month period).
-This will include the "water year" of the calendar year before growth. E.g., 10 for N hemisphere, 4 for S hemisphere. See details below for more info.}
+\item{rel.per.begin}{an integer month representing the beginning of the climatically relevant
+period to the growth year (always a 12 month period).
+This will include the "water year" of the calendar year before growth. E.g., 10 for N hemisphere,
+4 for S hemisphere. See details below for more info.}
 
-\item{hemisphere}{a character vector specifying which hemisphere your tree ring data - & climate data - comes from ("N" or "S").
-Conventions for assigning growth years - and thus aligning tree ring and climate data - are different for N and S hemisphere.}
+\item{hemisphere}{a character vector specifying which hemisphere your tree ring data - &
+climate data - comes from ("N" or "S").
+Conventions for assigning growth years - and thus aligning tree ring and climate data - are
+different for N and S hemisphere.}
 
-\item{agg.fun}{character vector specifying the function to use for aggregating monthly climate combinations.
-Options are "mean" or "sum", e.g., for temperature or precipitation data, respectively. Default is "mean".}
+\item{agg.fun}{character vector specifying the function to use for aggregating monthly
+climate combinations. Options are "mean" or "sum", e.g., for temperature or precipitation data,
+respectively. Default is "mean".}
 
-\item{max.lag}{numeric vector specifying how many years of lag to calculate calculations for. Default is 1 year.}
+\item{max.lag}{numeric vector specifying how many years of lag to calculate calculations for.
+Default is 1 year.}
 
-\item{prewhiten}{logical vector specifying whether or not to convert tree ring & climate time series to ARIMA residuals (aka "prewhitening"). A "best fit" ARIMA model is automatically selected using \code{\link[forecast]{auto.arima}}.
-This removes autocorrelation in a time series, leaving only the high-frequency variation. This is common practice before using standard methods for cross-correlations. Default is FALSE.}
+\item{prewhiten}{logical vector specifying whether or not to convert tree ring & climate time
+series to ARIMA residuals (aka "prewhitening"). A "best fit" ARIMA model is automatically
+selected using \code{\link[forecast]{auto.arima}}.
+This removes autocorrelation in a time series, leaving only the high-frequency variation.
+This is common practice before using standard methods for cross-correlations. Default is FALSE.}
 
-\item{auto.corr}{logical vector specifying whether there is temporal autocorrelation in either your tree ring or climate time series (there typically is autocorrelation, unless both are "prewhitened").
-If TRUE (the default), & corr.method is "spearman" or "kendall", then the \code{\link[corTESTsrd]{corTESTsrd}}function is used to compute modified significance testing to account for autocorrelation (From Lun et al. 2022).
-Caution! Currently auto.corr = TRUE & corr.method = "Pearson" doesn't make any adjustments. This may be included in the future.}
+\item{auto.corr}{logical vector specifying whether there is temporal autocorrelation in
+either your tree ring or climate time series (there typically is autocorrelation,
+unless both are "prewhitened").
+If TRUE (the default), & corr.method is "spearman" or "kendall", then the
+\code{\link[corTESTsrd]{corTESTsrd}} function is used to compute modified significance
+testing to account for autocorrelation (From Lun et al. 2022).
+Caution! Currently auto.corr = TRUE & corr.method = "Pearson" doesn't make any adjustments.}
 
-\item{corr.method}{character vector specifying which correlation method to use. Default is \code{"spearman"}. Options are \code{c("pearson", "kendall", "spearman")}.
+\item{corr.method}{character vector specifying which correlation method to use. Default is
+\code{"spearman"}. Options are \code{c("pearson", "kendall", "spearman")}.
 Passes to \code{\link[stats]{cor.test}} or to \code{\link[corTESTsrd]{corTESTsrd}}.}
 
-\item{rw.name}{character vector - the name of your tree ring series (optional). This is used in the title of your plot.
-If you produce many plots, this helps keep them identifiable.}
+\item{rw.name}{character vector - the name of your tree ring series (optional).
+This is used in the title of your plot. If you produce many plots, this helps keep them
+identifiable.}
 
 \item{plots}{logical vector indicating whether or not to produce plots. Default is TRUE.}
 
-\item{silent}{logical vector indicating whether messages about relevant period and hemisphere conventions will be printed. Default is FALSE.}
+\item{silent}{logical vector indicating whether messages about relevant period and hemisphere
+conventions will be printed. Default is FALSE.}
 }
 \value{
-A 2-4 element list containing data.frames of the correlation results, the data used in the correlations (both prewhitened and raw if prewhiten = TRUE), and the default plots of the same data.
+A 2-4 element list containing data.frames of the correlation results, the data used
+in the correlations (both prewhitened and raw if prewhiten = TRUE), and the default plots
+of the same data.
 }
 \description{
-Exploratory data analysis (EDA) function to compute correlations between tree ring data and a monthly climate variable
-aggregated for every combination (lengths 1:12) of consecutive months inside of a 12-month long "relevant climate period" that could conceivably be relevant
-to growth in any given year.
+Exploratory data analysis (EDA) function to compute correlations between tree ring data and a
+monthly climate variable aggregated for every combination (lengths 1:12) of consecutive months
+inside of a 12-month long "relevant climate period" that could conceivably be relevant to growth
+in any given year.
 
-The ideas behind the relevant climate period are that climate no longer has an effect on radial growth after growth has stopped &
-that current year's growth could have been influenced by climate in any month AFTER the previous year's growth stopped.
+The ideas behind the relevant climate period are that climate no longer has an effect on radial
+growth after growth has stopped & that current year's growth could have been influenced by
+climate in any month AFTER the previous year's growth stopped.
 
-The user specifies the beginning month of the relevant climate period - this is the 1st month after radial growth stops
-(i.e., the 1st month of the fall season). For example, if radial growth typically terminates sometime in September, the user would enter
-\code{rel.per.begin = 10} to specify a relevant climatic period that starts in October of the previous year and ends in September of
-the next year (i.e., the calendar year of growth). In this way the relevant climatic period covers the "water year" months leading
-up to the growing period and only extends through the months when growth occurs. It is nonsensical to include months after
+The user specifies the beginning month of the relevant climate period - this is the 1st month
+after radial growth stops (i.e., the 1st month of the fall season). For example, if radial
+growth typically terminates sometime in September, the user would enter \code{rel.per.begin = 10}
+to specify a relevant climatic period that starts in October of the previous year and ends in
+September of the next year (i.e., the calendar year of growth). In this way the relevant
+climatic period covers the "water year" months leading up to the growing period and only extends
+through the months when growth occurs. It is generally nonsensical to include months after
 radial growth stops - doing so may result in spurious correlations.
 
-Compared to methods that force rigidly-defined seasons of a fixed length, this approach should facilitate discovery of potentially more meaningful growth-climate relationships.
+Compared to methods that force rigidly-defined seasons of a fixed length, this approach should
+facilitate discovery of potentially more meaningful growth-climate relationships.
 
-Fair warning: this is a basic function that will accept any tree ring data and climate data in the proper format.
-It is the user's responsibility to make sure that your data is appropriate to the analyses.
+Fair warning: this is a basic function that will accept any tree ring data and climate data in
+the proper format. It is the user's responsibility to make sure that your data is appropriate
+to the analyses.
 }
 \details{
-Exploring a wide range of plausible growth-climate relationships can be a useful first step once you have
-a collection of cross-dated tree ring series and have properly detrended them, standardized them, and dealt
-with temporal autocorrelation.
+Exploring a wide range of plausible growth-climate relationships can be a useful first step once
+you have a collection of cross-dated tree ring series and have properly detrended them,
+standardized them, etc.
 
 The default correlation test method is Spearman rank correlation. This will be ±equivalent
 to Pearson for linear relationships, but will also capture any non-linear relationships.
 
 A note on tree ring analyses based in the Southern hemisphere:
-\code{\link{n_mon_corr}} is designed to work in both the Northern and Southern hemispheres. Hemisphere matters
-for tree ring growth-climate relationships because tree ring formation in the Southern hemisphere typically
-spans two calendar years (e.g., starting in Nov 2000 and ending in Mar of 2001).
-It was Schulman's (1956) protocol to assign the earlier calendar year to the tree rings in the Southern hemisphere,
-i.e., the calendar year in which growth began. \code{\link{n_mon_corr}} assumes your data follows this standard as well.
+\code{\link{n_mon_corr}} is designed to work in both the Northern and Southern hemispheres.
+Hemisphere matters for tree ring growth-climate relationships because tree ring formation in the
+Southern hemisphere typically spans two calendar years (e.g., starting in Nov 2000 and ending
+in Mar of 2001). It was Schulman's (1956) protocol to assign the earlier calendar year to the
+tree rings in the Southern hemisphere, i.e., the calendar year in which growth began.
+\code{\link{n_mon_corr}} assumes your data follows this standard as well.
 This has implications for how the climate data is aligned with the treering data.
-The current implementation handles this implicitly by assuming that if \code{rel.per.begin} is between 1:6,
-this is a S. hemisphere analysis and the current "growth year" is the same as the calendar year of \code{rel.per.begin}.
-If \code{rel.per.begin} is between 7:12, it is assumed that the is a N. hemisphere analysis and the current "growth year"
-is the calendar year following \code{rel.per.begin}. E.g., if \code{rel.per.begin = 4}, the climatically relevant period
-will be defined as months \code{c(4,5,6,7,8,9,10,11,12,1,2,3)} with the calendar year of the FIRST 9 months as the
-"growth year". If \code{rel.per.begin = 10}, the climatically relevant period
-will be defined as months \code{c(10,11,12,1,2,3,4,5,6,7,8,9)} with the calendar year of the LAST 9 months as the
+The current implementation handles this implicitly by assuming that if \code{rel.per.begin} is
+between 1:6, this is a S. hemisphere analysis and the current "growth year" is the same as the
+calendar year of \code{rel.per.begin}. If \code{rel.per.begin} is between 7:12, it is assumed that the
+is a N. hemisphere analysis and the current "growth year" is the calendar year following
+\code{rel.per.begin}. E.g., if \code{rel.per.begin = 4}, the climatically relevant period will be defined
+as months \code{c(4,5,6,7,8,9,10,11,12,1,2,3)} with the calendar year of the FIRST 9 months as the
+"growth year". If \code{rel.per.begin = 10}, the climatically relevant period will be defined as
+months \code{c(10,11,12,1,2,3,4,5,6,7,8,9)} with the calendar year of the LAST 9 months as the
 "growth year".
 
 Interpreting the plots:
-The plots show a 12-month sequence of consecutive months on the x-axis & the correlation coefficient on the y-axis.
-The diamonds indicate the starting month of an n-month aggregate period, small vertical bars the end. Horizontal lines connect
-the start and end months for periods > 1 month. Significant correlations (as determined by \code{\link[stats]{cor.test}}) are shown
-in black, no significant ones in grey. Plot panel labels (right-hand side of plots) indicate lag years: 0 = current year,
--1 = previous year, -2 = 2 years back.
+The plots show a 12-month sequence of consecutive months on the x-axis & the correlation
+coefficient on the y-axis. The diamonds indicate the starting month of an n-month aggregate
+period, small vertical bars the end. Horizontal lines connect the start and end months for
+periods > 1 month. Significant correlations (as determined by \code{\link[stats]{cor.test}})
+are shown in black, no significant ones in grey. Plot panel labels (right-hand side of plots)
+indicate lag years: 0 = current year, -1 = previous year, -2 = 2 years back.
 }
 \examples{
 # Make some synthetic stand-in tree ring data
@@ -162,8 +193,10 @@ rwl.ex.long.list <- split(rwl.ex.long, f = rwl.ex.long$tree)
 
 # Use mapply to run n_mon_corr for each "tree"
 # Note that in our example, the clim data is the same for all series.
-# You will need a different processes if you have climate and tree ring series grouped by site or plot.
-# Also note that plots = FALSE and silent = TRUE so that these don't clog the plotting window and console.
+# You will need a different processes if you have climate and tree ring series grouped by site
+# or plot.
+# Also note that plots = FALSE and silent = TRUE so that these don't clog the plotting window
+# and console.
 n_mon_corr.out.list <- lapply(rwl.ex.long.list, FUN = \(x) {
 n_mon_corr(rw = x,
 rw.col = "rw.mm",
@@ -202,7 +235,10 @@ results.agg <- aggregate(tree ~ months + sig, data = results.df, length)
 results.agg[order(results.agg$tree, decreasing = TRUE),] |> head()
 }
 \references{
-Schulman, E. (1956) \emph{Dendroclimatic changes in semiarid America}, University of Arizona Press.
+Schulman, E. (1956) \emph{Dendroclimatic changes in semiarid America},
+University of Arizona Press.
 
-Lun, D., S. Fischer, A. Viglione, and G. Blöschl. (2022). Significance testing of rank cross-correlations between autocorrelated time series with short-range dependence, \emph{Journal of Applied Statistics}:1–17.
+Lun, D., S. Fischer, A. Viglione, and G. Blöschl. (2022). Significance testing of rank
+cross-correlations between autocorrelated time series with short-range dependence,
+\emph{Journal of Applied Statistics}:1–17.
 }
