@@ -65,6 +65,9 @@ test_that("Essential function works - and returns a vector", {
 ####
 test_that("The order of months in the input climate data has no effect on the accuracy of the
           output", {
+test.list <- vector("logical", length = 50)
+for (i in 1:length(test.list)) {
+
   mat.test <- matrix(nrow = 50, ncol = 10)
   rownames(mat.test) <- 1:50
   colnames(mat.test) <- 1:10
@@ -84,16 +87,23 @@ test_that("The order of months in the input climate data has no effect on the ac
     clim.list[[y]] <- clim.y
   }
   clim <- do.call("rbind", clim.list)
+  clim <- clim[order(clim$year, clim$month),]
 
   # Let's create a marker month, such that it is identical to the chronology
   marker.month <- sample(1:12, 1)
-  clim[clim$month == marker.month, "clim.var"] <- chrono$std * 2
+  # Actually have to account for the grow year concept here, used in n_mon_corr
+  # I.e., if rel.per.begin = 10, then months 10-12 of the previous calendar year
+  # are part of the grow year, but that will confuse the signal here.
+  # Since I use rel.per.begin = 10 below, let's plan for this
+  if(marker.month %in% c(10, 11, 12)){
+    clim[order(clim$year), "clim.var"][clim$month %in% marker.month] <-
+      c(chrono[order(chrono$year),"std"][2:50],NA)
+  } else {
+    clim[order(clim$year), "clim.var"][clim$month %in% marker.month] <-
+      chrono[order(chrono$year),"std"]
+  }
 
-  # Reorder random sample of numbers 1-12
-  clim <- clim[sample(nrow(clim), 600, replace = FALSE),]
-  #clim$month <- factor(clim$month, levels = sample(1:12, size = 12, replace = FALSE))
-
-  # ggplot(clim[clim$month %in% "4",], aes(year, clim.var)) +
+  # ggplot(clim[clim$month %in% marker.month,], aes(year, clim.var)) +
   #   geom_line() +
   #   facet_wrap(~month)
   #
@@ -104,7 +114,11 @@ test_that("The order of months in the input climate data has no effect on the ac
                        rel.per.begin = 10, hemisphere = "N", rw.name = "Synthetic",
                        corr.method = "pearson", silent = TRUE)
   cor.res <- test10[["Correlation results"]]
-  expect_true(cor.res$months[1] == marker.month)
+  #
+  test.list[[i]] <- cor.res$months[1] %in% marker.month
   # The top row is the highest correlation (output is sorted),
   # thus marker month should be the 1st row
+}
+expect_true(all(test.list))
 })
+

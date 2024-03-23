@@ -8,20 +8,20 @@
 #'
 #' @details
 #' These plots are designed to illustrate how the \code{\link{ci_detect}} process works & visualize
-#'the final results for each tree ring series.
-#' Correspondingly, there are two kinds of plots (if no disturbances were detected, the function
-#' returns a message instead of a plot). The 1st plot type demonstrates the iterative disturbance
-#' detection and removal steps. The top panel of this plot shows the detection step for the current
-#' disturbance (iteration number is displayed in the plot title). The grey rectangle underlies the
-#' time period corresponding to the disturbance, with the raw autoregressive residuals as the grey
-#' line, the moving window mean in orange, and the Tukey Biweight Robust Mean and detection
-#' thresholds as the horizontal black line and dotted lines, respectively. The bottom panel shows
-#' the disturbance removal steps of curve fitting and subtraction on the detrended & transformed
-#' ring width series. The blue (releases) or red (suppressions) line segment represents the fitted
-#' curve. The thin line segment represents the original series the curve was fitted to. The thicker
-#' black line is the resulting "disturbance-free" series after the fitted curve is subtracted.
-#' See \code{\link{ci_detect}} for more details on the processes. The shared x-axis for both panels
-#' marks evenly placed years and the estimated starting year of the disturbance.
+#' the final results for each tree ring series. Correspondingly, there are two kinds of plots (if
+#' no disturbances were detected, the function returns a message instead of a plot). The 1st plot
+#' type demonstrates the iterative disturbance detection and removal steps. The top panel of this
+#' plot shows the detection step for the current disturbance (iteration number is displayed in the
+#' plot title). The grey rectangle underlies the time period corresponding to the disturbance, with
+#' the raw autoregressive residuals as the grey line, the moving window mean in orange, and the
+#' Tukey Biweight Robust Mean and detection thresholds as the horizontal black line and dotted
+#' lines, respectively. The bottom panel shows the disturbance removal steps of curve fitting and
+#' subtraction on the detrended & transformed ring width series. The blue (releases) or red
+#' (suppressions) line segment represents the fitted curve. The thin line segment represents the
+#' original series the curve was fitted to. The thicker black line is the resulting
+#' "disturbance-free" series after the fitted curve is subtracted. See \code{\link{ci_detect}}
+#' for more details on the processes. The shared x-axis for both panels marks evenly placed years
+#' and the estimated starting year of the disturbance.
 #'
 #' The second plot type shows the entire final "disturbance-free" series as a thick black line, the
 #' original series as a thin grey line, and releases & disturbances as blue & red vertical lines,
@@ -125,10 +125,11 @@ plot_ci_detect <- function(ci_output) {
   combined_list <- Map(rbind.data.frame, or_series, ci_series)
 
   # Now to extract the relevant information about the disturbances
-  # The structure of the disturbance iterations list is 1) the iterations, 2a) the entire corrected rwi series for all IDs,
-  # 2b) the dataframes of disturbance metadata (for just the disturbance period) for all IDs or a message that says "No disturbances detected".
-  # Take the disturbance metadata dataframes for each series and add the iteration number, then bind all of them together
-  # for each series ID.
+  # The structure of the disturbance iterations list is 1) the iterations, 2a) the entire corrected
+  # rwi series for all IDs, 2b) the dataframes of disturbance metadata (for just the disturbance
+  # period) for all IDs or a message that says "No disturbances detected".
+  # Take the disturbance metadata dataframes for each series and add the iteration number,
+  # then bind all of them together for each series ID.
 
   whole_series <-
     lapply(ci_output[["Disturbance removal iterations"]], FUN = \(x) {
@@ -355,8 +356,9 @@ plot_ci_detect <- function(ci_output) {
             values_to = "value"
           )
         # add 1 year each before and after to the rwi - this is for plotting aesthetics
-        # without this, the disturbance section appears to float above/below the disturbance-free series.
-        # However, don't do this if the disturbance period reaches the beginning or end of the original series
+        # without this, the disturbance section appears to float above/below the disturbance-free
+        # series. However, don't do this if the disturbance period reaches the beginning or end of
+        # the original series
         cor_series_iter <-
           det_iter[det_iter$type %in% "Detrended resids.", ]
         min_dist_year1 <- min(dist_long$year, na.rm = TRUE) - 1
