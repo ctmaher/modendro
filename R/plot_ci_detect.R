@@ -247,7 +247,7 @@ plot_ci_detect <- function(ci_output) {
   # make sure the order matches
   dist_curves_split <- split(dist_curves_df, dist_curves_df$series)[orig.IDs]
   # make sure the order matches
-  dist_detection_split <- split(dist_detection_df, dist_detection_df$series)[orig.IDs]x
+  dist_detection_split <- split(dist_detection_df, dist_detection_df$series)[orig.IDs]
 
 
   ## The disturbance detection & removal iteration plots

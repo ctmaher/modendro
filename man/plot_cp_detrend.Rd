@@ -10,10 +10,12 @@ plot_cp_detrend(cp_out)
 \item{cp_out}{A list produced by the \code{\link{cp_detrend}} function}
 }
 \value{
-A list of output plots showing the power transformation and detrending processes for each series.
+A list of output plots showing the power transformation and detrending processes for
+each series.
 }
 \description{
-Takes the output from \code{\link{cp_detrend}} and makes a list of plots that show the Cook & Peters (1997) process for each series.
+Takes the output from \code{\link{cp_detrend}} and makes a list of plots that show the Cook &
+Peters (1997) process for each series.
 }
 \examples{
 
@@ -26,7 +28,8 @@ ca533_cp_plots[[1]]
 
 }
 \references{
-Cook, E. R., and Peters, K. (1997) Calculating unbiased tree-ring indices for the study of climatic and environmental change.
+Cook, E. R., and Peters, K. (1997) Calculating unbiased tree-ring indices for the study of
+climatic and environmental change.
 \emph{The Holocene}, \strong{7}(3), 361-370.
 }
 \seealso{
