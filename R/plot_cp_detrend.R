@@ -1,15 +1,18 @@
 #' Plot the cp_detrend process
 #'
 #' @description
-#' Takes the output from \code{\link{cp_detrend}} and makes a list of plots that show the Cook & Peters (1997) process for each series.
+#' Takes the output from \code{\link{cp_detrend}} and makes a list of plots that show the Cook &
+#' Peters (1997) process for each series.
 #'
 #'
 #' @param cp_out A list produced by the \code{\link{cp_detrend}} function
 #'
-#' @return A list of output plots showing the power transformation and detrending processes for each series.
+#' @return A list of output plots showing the power transformation and detrending processes for
+#' each series.
 #'
 #' @references
-#' Cook, E. R., and Peters, K. (1997) Calculating unbiased tree-ring indices for the study of climatic and environmental change.
+#' Cook, E. R., and Peters, K. (1997) Calculating unbiased tree-ring indices for the study of
+#' climatic and environmental change.
 #' \emph{The Holocene}, \strong{7}(3), 361-370.
 #'
 #' @seealso \code{\link{cp_detrend}}, \code{\link{pwr_t_rwl}}, \code{\link{find_opt_pwr}}
@@ -150,7 +153,13 @@ plot_cp_detrend <- function(cp_out) {
                              length.out = 6) |>
           round(digits = -1)
 
-        ggplot2::ggplot(x, aes(year, value, color = type)) +
+
+        # Have to reference variables in an odd way so that check() doesn't throw a note
+        x_val <- "year"
+        y_val <- "value"
+        col_val <- "type"
+        # Plot
+        ggplot(x, aes(.data[[x_val]], .data[[y_val]], color = .data[[col_val]])) +
           scale_color_manual(values = c("black", "black", "blue"),
                              guide = "none") +
           geom_line(linewidth = 0.4, na.rm = TRUE) +

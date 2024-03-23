@@ -1,31 +1,41 @@
 #' Plot the ci_detect processes & final results
 #'
 #' @description
-#' Takes the nested output list from \code{\link{ci_detect}}  and makes a list of plots that show the process for each series.
+#' Takes the nested output list from \code{\link{ci_detect}}  and makes a list of plots that show
+#' the process for each series.
 #'
 #' @param ci_output A list produced by the \code{\link{ci_detect}} function
 #'
 #' @details
-#' These plots are designed to illustrate how the \code{\link{ci_detect}} process works & visualize the final results for each tree ring series.
-#' Correspondingly, there are two kinds of plots (if no disturbances were detected, the function returns a message instead of a plot).
-#' The 1st plot type demonstrates the iterative disturbance detection and removal steps. The top
-#' panel of this plot shows the detection step for the current disturbance (iteration number is displayed in the plot title).
-#' The grey rectangle underlies the time period corresponding to the disturbance, with the raw autoregressive residuals as the grey line,
-#' the moving window mean in orange, and the Tukey Biweight Robust Mean and detection thresholds as the horizontal black line and dotted lines, respectively.
-#' The bottom panel shows the disturbance removal steps of curve fitting and subtraction on the detrended & transformed ring width series.
-#' The blue (releases) or red (suppressions) line segment represents the fitted curve. The thin line segment represents the original series the curve was fitted to.
-#' The thicker black line is the resulting "disturbance-free" series after the fitted curve is subtracted. See \code{\link{ci_detect}} for more details on the processes.
-#' The shared x-axis for both panels marks evenly placed years and the estimated starting year of the disturbance.
+#' These plots are designed to illustrate how the \code{\link{ci_detect}} process works & visualize
+#'the final results for each tree ring series.
+#' Correspondingly, there are two kinds of plots (if no disturbances were detected, the function
+#' returns a message instead of a plot). The 1st plot type demonstrates the iterative disturbance
+#' detection and removal steps. The top panel of this plot shows the detection step for the current
+#' disturbance (iteration number is displayed in the plot title). The grey rectangle underlies the
+#' time period corresponding to the disturbance, with the raw autoregressive residuals as the grey
+#' line, the moving window mean in orange, and the Tukey Biweight Robust Mean and detection
+#' thresholds as the horizontal black line and dotted lines, respectively. The bottom panel shows
+#' the disturbance removal steps of curve fitting and subtraction on the detrended & transformed
+#' ring width series. The blue (releases) or red (suppressions) line segment represents the fitted
+#' curve. The thin line segment represents the original series the curve was fitted to. The thicker
+#' black line is the resulting "disturbance-free" series after the fitted curve is subtracted.
+#' See \code{\link{ci_detect}} for more details on the processes. The shared x-axis for both panels
+#' marks evenly placed years and the estimated starting year of the disturbance.
 #'
-#' The second plot type shows the entire final "disturbance-free" series as a thick black line, the original series as a thin grey line,
-#' and releases & disturbances as blue & red vertical lines, respectively. Only the estimated disturbance start years are shown on the x-axis.
-#' These results are shown in the original units (ring width), with the long term age/size trend reintroduced & the power transformation reversed.
+#' The second plot type shows the entire final "disturbance-free" series as a thick black line, the
+#' original series as a thin grey line, and releases & disturbances as blue & red vertical lines,
+#' respectively. Only the estimated disturbance start years are shown on the x-axis. These results
+#' are shown in the original units (ring width), with the long term age/size trend reintroduced &
+#' the power transformation reversed.
 #'
 #'
-#' @return A nested list of output plots illustrating the disturbance detection & removal iterations (1st list element)
-#' for each tree ring series & the final result of the disturbance-free series after all iterations (2nd list element).
+#' @return A nested list of output plots illustrating the disturbance detection & removal
+#' iterations (1st list element) for each tree ring series & the final result of the
+#' disturbance-free series after all iterations (2nd list element).
 #'
-#' @seealso \code{\link{ci_detect}}, \code{\link{dist_det_rem}}, \code{\link{cp_detrend}}, \code{\link{plot_cp_detrend}}
+#' @seealso \code{\link{ci_detect}}, \code{\link{dist_det_rem}}, \code{\link{cp_detrend}},
+#' \code{\link{plot_cp_detrend}}
 #'
 #' @import ggplot2
 #' @import cowplot
@@ -41,10 +51,12 @@
 #' ca533_ci_plots <- plot_ci_detect(ca533_ci)
 #' names(ca533_ci_plots) # See what each list element contains
 #' # The first element contains the disturbance detection & removal processes & their iterations
-#' # this will display all iterations - scroll backward through your plotting window to see them all.
+#' # this will display all iterations - scroll backward through your plotting window to see
+#' # them all.
 #' ca533_ci_plots[[1]][['CAM011']]
 #'
-#' # The second element contains a plot of the final series compared to the original, with the disturbances indicated
+#' # The second element contains a plot of the final series compared to the original,
+#' # with the disturbances indicated
 #' ca533_ci_plots[[2]][['CAM011']]
 #'
 #' # If you wanted to write these plots to pdf to browse them more freely,
@@ -60,7 +72,8 @@
 #' # ggsave(
 #' # filename = paste0("ca533_ci_iter_plots/", n, "_ci_iter_plots.pdf"),
 #' # plot = marrangeGrob(p, nrow = length(p), ncol = 1),
-#' # width = 10, height = length(p)*4 # choose wise values here to make sure your plots aren't squished
+#' # width = 10, height = length(p)*4 # choose wise values here to make sure your plots
+#' # aren't squished
 #' # )
 #' # }, p = ca533_ci_plots[[1]][sapply(ca533_ci_plots[[1]], FUN = \(x) !is.character(x))],
 #' # n = names(ca533_ci_plots[[1]][sapply(ca533_ci_plots[[1]], FUN = \(x) !is.character(x))])
@@ -69,11 +82,13 @@
 #' # For the final plots (not run):
 #' # ggsave(
 #' # filename = "ca533_final_ci_plots.pdf",
-#' # plot = marrangeGrob(ca533_ci_plots[[2]][sapply(ca533_ci_plots[[2]], FUN = \(x) !is.character(x))], nrow=1, ncol=1),
+#' # plot = marrangeGrob(ca533_ci_plots[[2]][sapply(ca533_ci_plots[[2]],
+#' # FUN = \(x) !is.character(x))], nrow=1, ncol=1),
 #' # width = 10, height = 4 # choose wise values here to make sure your plots aren't squished
 #' # )
 #'
-#' # You can also use the `modendro` function `plot_cp_detrend()` to make plots of just intial detrending & transformaton steps.
+#' # You can also use the `modendro` function `plot_cp_detrend()` to make plots of just intial
+#' # detrending & transformaton steps.
 #' # The required input is the 4th element in the `ci_detect()` output.
 #' ca533_cp_plots <- plot_cp_detrend(ca533_ci[[5]])
 #' ca533_cp_plots[[1]]
@@ -229,8 +244,10 @@ plot_ci_detect <- function(ci_output) {
   dist_curves_df$year <- dist_curves_df$year |> as.numeric()
 
   # Now split the dfs into lists by series.
-  dist_curves_split <- split(dist_curves_df, dist_curves_df$series)[orig.IDs] # make sure the order matches
-  dist_detection_split <- split(dist_detection_df, dist_detection_df$series)[orig.IDs] # make sure the order matches
+  # make sure the order matches
+  dist_curves_split <- split(dist_curves_df, dist_curves_df$series)[orig.IDs]
+  # make sure the order matches
+  dist_detection_split <- split(dist_detection_df, dist_detection_df$series)[orig.IDs]x
 
 
   ## The disturbance detection & removal iteration plots
@@ -265,7 +282,8 @@ plot_ci_detect <- function(ci_output) {
         stable_lev <-
           c("AR residuals", "TBRM", "Detection thresh.", " ")
         det_no_transRW$type <-
-          factor(det_no_transRW$type, levels = c(stable_lev, type_fac[!c(type_fac %in% stable_lev)]))
+          factor(det_no_transRW$type,
+                 levels = c(stable_lev, type_fac[!c(type_fac %in% stable_lev)]))
 
         # set up x-axis breaks for the detection & removal plots:
         dist_year <- min(rem_iter$year, na.rm = TRUE)
@@ -285,9 +303,14 @@ plot_ci_detect <- function(ci_output) {
         }
 
         ## Detection plots
+        # Have to reference variables in an odd way so that check() doesn't throw a note
+        x_val <- "year"
+        y_val <- "value"
+        col_lt_val <- "type"
         dist_det_plot <-
           ggplot(na.omit(det_no_transRW),
-                 aes(year, value, color = type, linetype = type)) +
+                 aes(.data[[x_val]], .data[[y_val]],
+                     color = .data[[col_lt_val]], linetype = .data[[col_lt_val]])) +
           scale_color_manual(
             name = NULL,
             values = c("grey80", "black", "black", "black", "orange")
@@ -313,8 +336,8 @@ plot_ci_detect <- function(ci_output) {
             legend.key = element_blank(),
             legend.position = "top"
           ) +
-          #coord_fixed(ratio = 45) +
-          facet_wrap( ~ process, strip.position = "right") + # Use the single factor level to label the plot
+          # Use the single factor level to label the plot
+          facet_wrap( ~ process, strip.position = "right") +
           ggtitle(paste0(
             "Series ID: ",
             det_iter$series,
@@ -394,9 +417,15 @@ plot_ci_detect <- function(ci_output) {
         rem_series$process <-
           "Removal"
 
+        # Have to reference variables in an odd way so that check() doesn't throw a note
+        x_val <- "year"
+        y_val <- "value"
+        col_lt_val <- "type"
+        # Plot
         dist_rem_plot <-
           ggplot(na.omit(rem_series),
-                 aes(year, value, color = type, linewidth = type)) +
+                 aes(.data[[x_val]], .data[[y_val]],
+                     color = .data[[col_lt_val]], linewidth = .data[[col_lt_val]])) +
           scale_color_manual(name = element_blank(),
                              values = c("black", "grey20", curve_col)) +
           scale_linewidth_manual(name = element_blank(), values = c(0.75, 0.25, 0.5)) +
@@ -418,7 +447,8 @@ plot_ci_detect <- function(ci_output) {
             parse(text = dist_long$eq[[1]])
           )) +
           #coord_fixed(ratio = 45) +
-          facet_wrap( ~ process, strip.position = "right") # Use a single factor level to label the plot
+          # Use a single factor level to label the plot
+          facet_wrap( ~ process, strip.position = "right")
 
         # Plot the two panels together
         plot_grid(
@@ -437,7 +467,8 @@ plot_ci_detect <- function(ci_output) {
   ###
   ## The final output plots (after all iterations)
   # output of this process is a list
-  ## use the collapsed iterations in dist_detection_split to derive the first year of each disturbance
+  # use the collapsed iterations in dist_detection_split to derive
+  # the first year of each disturbance
 
   dist_start_dir <- lapply(dist_curves_split, FUN = \(x) {
     # Control for the series with no detected disturbances
@@ -475,7 +506,8 @@ plot_ci_detect <- function(ci_output) {
         # add rw values (for yend) for the geom_segment data
         dist_free <- dat[dat$type %in% "Disturb.-free", ]
         dist <- merge(dist, dist_free[, c("year", "rw")], by = "year")
-        # Also need to control the colors for all 3 possible cases (1 release, 1 suppression, or both)
+        # Also need to control the colors for all 3 possible cases
+        # (1 release, 1 suppression, or both)
         if (length(unique(dist$dir)) == 2) {
           col_val <- c("blue", "red")
         } else {
@@ -483,17 +515,23 @@ plot_ci_detect <- function(ci_output) {
         }
 
         # Make the plot
-        ggplot(dat, aes(year,
-                        rw,
-                        linewidth = type,)) +
+        # Have to reference variables in an odd way so that check() doesn't throw a note
+        x_val <- "year"
+        y_val <- "rw"
+        col_lt_val <- "type"
+        col_var2 <- "dir"
+        # Plot
+        ggplot(dat, aes(.data[[x_val]],
+                        .data[[y_val]],
+                        linewidth = .data[[col_lt_val]],)) +
           geom_segment(
             data = dist,
             aes(
-              x = year,
-              xend = year,
+              x = .data[[x_val]],
+              xend = .data[[x_val]],
               y = -Inf,
-              yend = rw,
-              color = dir
+              yend = .data[[y_val]],
+              color = .data[[col_var2]]
             ),
             linewidth = 0.75,
             inherit.aes = FALSE
