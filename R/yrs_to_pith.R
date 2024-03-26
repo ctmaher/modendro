@@ -148,6 +148,7 @@ yrs_to_pith <- function(rwl = NULL,
   merged.att
 
   } else { # for method == 'dist'
+    if (method %in% "dist") {
     # Find how many rings add up to the missing d2pith
     dist.agg <- lapply(xdf.list, FUN = \(z) {
       # Make sure the order is correct
@@ -172,6 +173,7 @@ yrs_to_pith <- function(rwl = NULL,
     merged.att$y2pith <- (merged.att$d2pith / merged.att$mean.rw) |> round(digits = 0)
 
     merged.att
+    }
   }
 
   # Make a histogram
@@ -180,7 +182,7 @@ yrs_to_pith <- function(rwl = NULL,
       geom_histogram(binwidth = 5) +
       xlab(paste("Estimated years to pith;n/",
                  ifelse(method %in% "rings",
-                        "method = 'rings', mean of innermost", n.rings, "rings",
+                        paste("method = 'rings', mean of innermost", n.rings, "rings"),
                         "method = 'dist'")))
   }
 
