@@ -7,42 +7,64 @@
 yrs_to_pith(
   rwl = NULL,
   d2pith = NULL,
-  method = "simple",
+  method = "rings",
   n.rings = 5,
-  diam.df = NULL
+  diam.df = NULL,
+  plot.hist = TRUE
 )
 }
 \arguments{
-\item{rwl}{A rwl-type data.frame (e.g., read in by \code{\link[dplR]{read.rwl}}). Essentially a data.frame with columns names as series IDs and years as rownames.}
+\item{rwl}{A rwl-type data.frame (e.g., read in by \code{\link[dplR]{read.rwl}}). Essentially a
+data.frame with columns names as series IDs and years as row names.}
 
-\item{d2pith}{A data.frame with at least 2 columns: 1) "series", representing the series names, 2) "d2pith", representing the estimated distances to pith from innermost measured rings.
-If \code{method = "modeled"} , a 3rd "pith.offset" column is required where this is an initial estimate of years to pith.
-This is only used to identify those series that had pith in the core (taken as those with pith.offset = 1).}
+\item{d2pith}{A data.frame with at least 2 columns: 1) "series", representing the series names,
+2) "d2pith", representing the estimated distances to pith from innermost measured rings.}
 
-\item{method}{Character vector of length 1 indicating which method to use, "simple", or "modeled". Default is "simple". See details below.}
+\item{method}{Character vector of length 1 indicating which method to use, \code{"rings"}, or
+\code{"dist"}. Default is "rings". See details below.}
 
-\item{n.rings}{Numeric vector of length 1 representing the number of rings (years) you want to use as an aggregate. For \code{method = "simple"} only.}
+\item{n.rings}{Numeric vector of length 1 representing the number of rings (years) you want to
+use as an aggregate. For \code{method = "rings"} only.}
 
-\item{diam.df}{A data.frame containing series names and the outside diameter measurements associated with the tree those series belong to. For \code{method = "modeled"} only.}
+\item{diam.df}{A data.frame containing series names and the outside diameter measurements
+associated with the tree those series belong to. For \code{method = "modeled"} only.}
+
+\item{plot.hist}{Logical vector that turns on or off a histogram of the estimated years to pith.
+This is an important guide to choosing the method or setting \code{n.rings} for method \code{"rings"}. See
+details below.}
 }
 \value{
-A data.frame with 3 columns: 1) "series", 2) "d2pith", 3) "pith.offset".
+A data.frame with 3 columns: 1) "series", 2) "d2pith", 3) "y2pith".
 }
 \description{
-Function to estimate the number of years to pith from estimated distance to pith, like that determined in CooRecorder. Other methods are fine too,
-as long as the input data.frame is formatted in the same way (see \code{d2pith} argument below). The simple method (the default) uses the arithmetic mean of n.rings
-to apply over the estimated distance, rounded to the nearest whole year.
+Function to estimate the number of years to pith from estimated distance to pith, like that
+determined in CooRecorder. The way you determine distance to pith is not important, as long as
+the input data.frame is formatted in the same way (see \code{d2pith} argument below). The \code{"rings"}
+method (the default) uses the arithmetic mean of n.rings to apply over the estimated
+distance, rounded to the nearest whole year.
 }
 \details{
-There are a number of methods to estimate distance to and years to pith in core samples that don't contain pith,
-from the old transparency method (citation?) to the Duncan (1989) method. CooRecorder (https://www.cybis.se/forfun/dendro/helpcoorecorder7/distanceToPith/index.htm)
-has it's own intuitive method that is like a flexible version of the transparency method. CooRecorder has the additional benefit that
-distance to pith estimates are essentially seamless with ring measurements. Estimating years to pith in CooRecorder, however, is somewhat cumbersome.
-This function is designed to save time by doing the calculations necessary for each series all at once.
+There are a number of methods to estimate distance to and years to pith in core samples that
+don't contain pith, from the old transparency method (citation?) to the Duncan (1989) method. I
+assume that the user has some familiarity with these methods before using \code{yrs_to_pith()}.
+CooRecorder (https://www.cybis.se/forfun/dendro/helpcoorecorder7/distanceToPith/index.htm)
+has it's own intuitive method that is like a flexible version of the transparency method.
+CooRecorder has the additional benefit that distance to pith estimates are essentially seamless
+with ring measurements. Estimating years to pith in CooRecorder, however, is somewhat cumbersome.
+This function is designed to save time by doing the calculations necessary for each series all
+at once.
 
-Not implemented yet: The "modeled" method is an experimental idea that uses a generalized additive model (GAM) and a number of
-series from your site that have pith.offset = 1 (i.e., from cores that contained pith). More is better, and hopefully
-coverage of the diameter range is adequate to predict for the series that don't contain pith.
+Method "rings" is what most researchers will be familiar with - this is simply the mean of the
+specified innermost \code{n.rings}. The default is 5 rings, but this may be too few for some samples
+or datasets. Use the 'plot.hist' output to check this - if you have some extreme values (large
+values of y2pith), you may need to increase \code{n.rings} or switch to method "dist". Extreme y2pith
+values can arise from large d2pith values and/or if the innermost n.rings happen to be very
+narrow. The take home message is that the value of \code{n.rings} is not allowing a robust enough
+estimate of average ring width to apply over d2pith. Method "dist" attempts to circumvent the
+estimation of a "Goldilocks" \code{n.rings} value by using instead the number of rings that add up to
+d2pith instead (\code{n.rings} is variable). I.e., we use the mean ring width over the innermost
+\emph{distance} equal to d2pith. Defaults to the mean of 5 innermost rings if d2pith yields less
+than 5 rings.
 }
 \examples{
 # Examples to come
@@ -51,5 +73,7 @@ coverage of the diameter range is adequate to predict for the series that don't 
 
 }
 \references{
-Duncan, R. P. (1989). An Evaluation of Errors in Tree Ring Age Estimates Based on Increment Cores in Kahikatea (Dacrycarpus dacrydioides). \emph{New Zealand Natural Sciences} \strong{16}, 31–37.
+Duncan, R. P. (1989). An Evaluation of Errors in Tree Ring Age Estimates Based on Increment
+Cores in Kahikatea (Dacrycarpus dacrydioides). \emph{New Zealand Natural Sciences} \strong{16},
+31–37.
 }
