@@ -53,7 +53,7 @@
 #' depend on have a large sample size - either multiple radii per tree, many trees, or both.
 #'
 #'
-#' @return A data.frame with 3 columns: 1) "series", 2) "d2pith", 3) "y2pith".
+#' @return A data.frame with at least 4 columns: c("series", "d2pith", "mean.rw", "y2pith").
 #'
 #' @references
 #' Duncan, R. P. (1989). An Evaluation of Errors in Tree Ring Age Estimates Based on Increment
@@ -75,7 +75,7 @@
 
 yrs_to_pith <- function(rwl = NULL,
                         d2pith = NULL,
-                        method = "rings",
+                        method = "dist",
                         n.rings = 5,
                         diam.df = NULL,
                         plot.hist = TRUE) {
@@ -145,12 +145,12 @@ yrs_to_pith <- function(rwl = NULL,
   z <- z[order(z$year),] # Make sure the order is correct
   mean(z[1:n.rings, "rw"], na.rm = TRUE)
   }) |> do.call(what = "rbind") |> as.data.frame()
-  colnames(n.rings.agg) <- paste("mean.rw", n.rings, sep = ".")
+  colnames(n.rings.agg) <- "mean.rw" #paste("mean.rw", n.rings, sep = ".")
   n.rings.agg$series <- rownames(n.rings.agg)
 
   # merge the attributes and the mean.rw by series
   merged.att <- merge(d2pith, n.rings.agg, by = "series")
-  merged.att$y2pith <- (merged.att$d2pith / merged.att[, paste("mean.rw", n.rings, sep = ".")]) |>
+  merged.att$y2pith <- (merged.att$d2pith / merged.att[, "mean.rw"]) |>
     round(digits = 0)
 
   } else { # for method == 'dist'

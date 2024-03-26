@@ -7,7 +7,7 @@
 yrs_to_pith(
   rwl = NULL,
   d2pith = NULL,
-  method = "rings",
+  method = "dist",
   n.rings = 5,
   diam.df = NULL,
   plot.hist = TRUE
@@ -36,7 +36,7 @@ This is an important guide to choosing the method or setting \code{n.rings} for 
 details below.}
 }
 \value{
-A data.frame with 3 columns: 1) "series", 2) "d2pith", 3) "y2pith".
+A data.frame with at least 4 columns: c("series", "d2pith", "mean.rw", "y2pith").
 }
 \description{
 Function to estimate the number of years to pith from estimated distance to pith, like that
