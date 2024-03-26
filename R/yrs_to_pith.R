@@ -25,14 +25,14 @@
 #'
 #' @details
 #' There are a number of methods to estimate distance to and years to pith in core samples that
-#' don't contain pith, from the old transparency method (citation?) to the Duncan (1989) method. I
-#' assume that the user has some familiarity with these methods before using `yrs_to_pith()`.
-#' CooRecorder (https://www.cybis.se/forfun/dendro/helpcoorecorder7/distanceToPith/index.htm)
-#' has it's own intuitive method that is like a flexible version of the transparency method.
+#' don't contain pith, from the old transparency method (Applequist 1956) to the Duncan (1989) and
+#' Bakker (2005) methods. I assume that the user has some familiarity with these methods before
+#' using `yrs_to_pith()`. CooRecorder
+#' (https://www.cybis.se/forfun/dendro/helpcoorecorder7/distanceToPith/index.htm) has it's own
+#' intuitive method that is like a flexible version of the transparency method.
 #' CooRecorder has the additional benefit that distance to pith estimates are essentially seamless
-#' with ring measurements. Estimating years to pith in CooRecorder, however, is somewhat cumbersome.
-#' This function is designed to save time by doing the calculations necessary for each series all
-#' at once.
+#' with ring measurements. This function is designed to save time by doing the calculations
+#' necessary for each series all at once.
 #'
 #' Method "rings" is what most researchers will be familiar with - this is simply the mean of the
 #' specified innermost `n.rings`. The default is 5 rings, but this may be too few for some samples
@@ -56,6 +56,12 @@
 #' @return A data.frame with at least 4 columns: c("series", "d2pith", "mean.rw", "y2pith").
 #'
 #' @references
+#' Applequist, M. B. (1958). A simple pith locator for use with off-center increment cores.
+#' \emph{Journal of Forestry} \strong{56(2)}, 141.
+#'
+#' Bakker, J. D. (2005). A new, proportional method for reconstructing historical tree diameters.
+#' \emph{Canadian Journal of Forest Research} \strong{35}, 2515–2520.
+#'
 #' Duncan, R. P. (1989). An Evaluation of Errors in Tree Ring Age Estimates Based on Increment
 #' Cores in Kahikatea (Dacrycarpus dacrydioides). \emph{New Zealand Natural Sciences} \strong{16},
 #' 31–37.
