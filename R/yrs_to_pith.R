@@ -153,8 +153,6 @@ yrs_to_pith <- function(rwl = NULL,
   merged.att$y2pith <- (merged.att$d2pith / merged.att[, paste("mean.rw", n.rings, sep = ".")]) |>
     round(digits = 0)
 
-  merged.att
-
   } else { # for method == 'dist'
     if (method %in% "dist") {
     # Find how many rings add up to the missing d2pith
@@ -180,7 +178,6 @@ yrs_to_pith <- function(rwl = NULL,
     merged.att <- merge(d2pith, dist.agg, by = "series")
     merged.att$y2pith <- (merged.att$d2pith / merged.att$mean.rw) |> round(digits = 0)
 
-    merged.att
     }
   }
 
@@ -193,5 +190,7 @@ yrs_to_pith <- function(rwl = NULL,
                         paste("method = 'rings', mean of innermost", n.rings, "rings"),
                         paste("method = 'dist', with min. of", n.rings, "rings"))))
   }
+
+  merged.att
 
 }
