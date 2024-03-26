@@ -46,6 +46,12 @@
 #' \emph{distance} equal to d2pith. Defaults to the mean of innermost `n.rings` if d2pith yields
 #' less than `n.rings`.
 #'
+#' Both methods provided here rely on the same assumption: that the missing sequence of the
+#' innermost rings can be estimated by using the n innermost measured rings. This of course may be
+#' wrong. Series with strong age/size trends, for example, are characterized by changes in ring
+#' width, often most strongly near the pith. The accuracy of either method might ultimately
+#' depend on have a large sample size - either multiple radii per tree, many trees, or both.
+#'
 #'
 #' @return A data.frame with 3 columns: 1) "series", 2) "d2pith", 3) "y2pith".
 #'

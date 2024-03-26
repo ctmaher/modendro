@@ -67,6 +67,12 @@ estimation of a "Goldilocks" \code{n.rings} value by using instead the number of
 d2pith instead (\code{n.rings} is variable). I.e., we use the mean ring width over the innermost
 \emph{distance} equal to d2pith. Defaults to the mean of innermost \code{n.rings} if d2pith yields
 less than \code{n.rings}.
+
+Both methods provided here rely on the same assumption: that the missing sequence of the
+innermost rings can be estimated by using the n innermost measured rings. This of course may be
+wrong. Series with strong age/size trends, for example, are characterized by changes in ring
+width, often most strongly near the pith. The accuracy of either method might ultimately
+depend on have a large sample size - either multiple radii per tree, many trees, or both.
 }
 \examples{
 # Examples to come
