@@ -24,7 +24,9 @@ data.frame with columns names as series IDs and years as row names.}
 \code{"dist"}. Default is "rings". See details below.}
 
 \item{n.rings}{Numeric vector of length 1 representing the number of rings (years) you want to
-use as an aggregate. For \code{method = "rings"} only.}
+use as an aggregate in \code{method = "rings"}. For \code{method = "dist"}, \code{n.rings} sets the "floor" of
+the number of rings to be aggregated. Default is 5 rings, which is really the minimum you should
+use for a mean.}
 
 \item{diam.df}{A data.frame containing series names and the outside diameter measurements
 associated with the tree those series belong to. For \code{method = "modeled"} only.}
@@ -63,8 +65,8 @@ narrow. The take home message is that the value of \code{n.rings} is not allowin
 estimate of average ring width to apply over d2pith. Method "dist" attempts to circumvent the
 estimation of a "Goldilocks" \code{n.rings} value by using instead the number of rings that add up to
 d2pith instead (\code{n.rings} is variable). I.e., we use the mean ring width over the innermost
-\emph{distance} equal to d2pith. Defaults to the mean of 5 innermost rings if d2pith yields less
-than 5 rings.
+\emph{distance} equal to d2pith. Defaults to the mean of innermost \code{n.rings} if d2pith yields
+less than \code{n.rings}.
 }
 \examples{
 # Examples to come

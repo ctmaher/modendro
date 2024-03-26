@@ -14,7 +14,9 @@
 #' @param method Character vector of length 1 indicating which method to use, `"rings"`, or
 #' `"dist"`. Default is "rings". See details below.
 #' @param n.rings Numeric vector of length 1 representing the number of rings (years) you want to
-#' use as an aggregate. For `method = "rings"` only.
+#' use as an aggregate in `method = "rings"`. For `method = "dist"`, `n.rings` sets the "floor" of
+#' the number of rings to be aggregated. Default is 5 rings, which is really the minimum you should
+#' use for a mean.
 #' @param diam.df A data.frame containing series names and the outside diameter measurements
 #' associated with the tree those series belong to. For `method = "modeled"` only.
 #' @param plot.hist Logical vector that turns on or off a histogram of the estimated years to pith.
@@ -41,8 +43,8 @@
 #' estimate of average ring width to apply over d2pith. Method "dist" attempts to circumvent the
 #' estimation of a "Goldilocks" `n.rings` value by using instead the number of rings that add up to
 #' d2pith instead (`n.rings` is variable). I.e., we use the mean ring width over the innermost
-#' \emph{distance} equal to d2pith. Defaults to the mean of 5 innermost rings if d2pith yields less
-#' than 5 rings.
+#' \emph{distance} equal to d2pith. Defaults to the mean of innermost `n.rings` if d2pith yields
+#' less than `n.rings`.
 #'
 #'
 #' @return A data.frame with 3 columns: 1) "series", 2) "d2pith", 3) "y2pith".
@@ -159,8 +161,8 @@ yrs_to_pith <- function(rwl = NULL,
       z$cum.rw <- cumsum(z[,"rw"])
       # Control for small d2pith
       these.rings <- z[z$cum.rw < this.series.d2pith$d2pith, "rw"]
-      if (length(these.rings) < 5) {
-        these.rings <- z[1:5, "rw"] # default to innermost 5 rings if dist yields fewer
+      if (length(these.rings) < n.rings) {
+        these.rings <- z[1:n.rings, "rw"] # default to innermost n.rings if dist yields fewer
       }
       # Get the mean of all the ring widths while the cumulative width is less than d2pith
       mean(these.rings, na.rm = TRUE)
@@ -178,12 +180,12 @@ yrs_to_pith <- function(rwl = NULL,
 
   # Make a histogram
   if (plot.hist == TRUE) {
-    ggplot(merged.att, aes(y = y2pith)) +
+    ggplot(merged.att, aes(x = y2pith)) +
       geom_histogram(binwidth = 5) +
-      xlab(paste("Estimated years to pith;n/",
+      xlab(paste("Estimated years to pith;\n",
                  ifelse(method %in% "rings",
                         paste("method = 'rings', mean of innermost", n.rings, "rings"),
-                        "method = 'dist'")))
+                        paste("method = 'dist', with min. of", n.rings, "rings"))))
   }
 
 }
