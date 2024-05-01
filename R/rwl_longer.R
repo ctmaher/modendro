@@ -1,17 +1,23 @@
 #' Convert rwl-format dataframes/matrices to long format
 #'
 #' @description
-#' Simple function to convert rwl-format data (columns are series, rows are yeqrs) to long format
-#' (3 columns: year, series, rw). This is useful for getting your data ready for plotting in ggplot or
-#' for correlation analyses.
+#' Simple function to convert rwl-format data (columns are series, rows are years) to long format
+#' (3 columns: year, series, rw). This is useful for getting your data ready for plotting in ggplot
+#' or for correlation analyses.
 #'
 #'
-#' @param rwl A rwl-type data.frame (e.g., read in by \code{\link[dplR]{read.rwl}}). Essentially a data.frame with columns names as series IDs and years as rownames.
-#' @param series.name Character vector of length 1 for the column name you want for the series IDs. Default is "series", but perhaps "tree" or "sample" is more appropriate for your work.
-#' @param dat.name Character vector of length 1 for the column name you want for the the tree ring data. Default is "rw".
-#' @param trim Logical vector indicating whether to trim off NA sequences at the beginning or end of individual series. Default is TRUE. Will not remove missing rings that are represented with NA (i.e., NA values within the series).
+#' @param rwl A rwl-type data.frame (e.g., read in by \code{\link[dplR]{read.rwl}}). Essentially a
+#' data.frame with columns names as series IDs and years as rownames.
+#' @param series.name Character vector of length 1 for the column name you want for the series IDs.
+#' Default is "series", but perhaps "tree" or "sample" is more appropriate for your work.
+#' @param dat.name Character vector of length 1 for the column name you want for the the tree ring
+#' data. Default is "rw".
+#' @param trim Logical vector indicating whether to trim off NA sequences at the beginning or end
+#' of individual series. Default is TRUE. Will not remove missing rings that are represented with NA
+#' (i.e., NA values within the series).
 #'
-#' @return A data.frame with 3 columns: 1) "year", 2) "series", 3) dat.name ("rw", "rw.mm", "bai.mm" or whatever you name this)
+#' @return A data.frame with 3 columns: 1) "year", 2) "series", 3) dat.name ("rw", "rw.mm", "bai.mm"
+#' or whatever you name this)
 #'
 #' @import stats
 #' @import dplR
@@ -91,11 +97,12 @@ rwl_longer <- function(rwl = NULL,
     SIMPLIFY = FALSE) |> do.call(what = "rbind")
 
     if (any(is.na(long.rwl.trim[,dat.name])) == TRUE) {
-      warning("NA values found within tree ring series. Are NAs used to represent missing rings? 0 would be better.")
+      warning("NA values found within tree ring series. Are NAs used to represent missing rings? 0
+              would be better.")
     }
 
-    long.rwl.trim
+    as.data.frame(long.rwl.trim)
     } else { # just return everything, NAs & all.
-    long.rwl
+      as.data.frame(long.rwl)
   }
 }

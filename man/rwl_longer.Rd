@@ -7,21 +7,27 @@
 rwl_longer(rwl = NULL, series.name = "series", dat.name = "rw", trim = TRUE)
 }
 \arguments{
-\item{rwl}{A rwl-type data.frame (e.g., read in by \code{\link[dplR]{read.rwl}}). Essentially a data.frame with columns names as series IDs and years as rownames.}
+\item{rwl}{A rwl-type data.frame (e.g., read in by \code{\link[dplR]{read.rwl}}). Essentially a
+data.frame with columns names as series IDs and years as rownames.}
 
-\item{series.name}{Character vector of length 1 for the column name you want for the series IDs. Default is "series", but perhaps "tree" or "sample" is more appropriate for your work.}
+\item{series.name}{Character vector of length 1 for the column name you want for the series IDs.
+Default is "series", but perhaps "tree" or "sample" is more appropriate for your work.}
 
-\item{dat.name}{Character vector of length 1 for the column name you want for the the tree ring data. Default is "rw".}
+\item{dat.name}{Character vector of length 1 for the column name you want for the the tree ring
+data. Default is "rw".}
 
-\item{trim}{Logical vector indicating whether to trim off NA sequences at the beginning or end of individual series. Default is TRUE. Will not remove missing rings that are represented with NA (i.e., NA values within the series).}
+\item{trim}{Logical vector indicating whether to trim off NA sequences at the beginning or end
+of individual series. Default is TRUE. Will not remove missing rings that are represented with NA
+(i.e., NA values within the series).}
 }
 \value{
-A data.frame with 3 columns: 1) "year", 2) "series", 3) dat.name ("rw", "rw.mm", "bai.mm" or whatever you name this)
+A data.frame with 3 columns: 1) "year", 2) "series", 3) dat.name ("rw", "rw.mm", "bai.mm"
+or whatever you name this)
 }
 \description{
-Simple function to convert rwl-format data (columns are series, rows are yeqrs) to long format
-(3 columns: year, series, rw). This is useful for getting your data ready for plotting in ggplot or
-for correlation analyses.
+Simple function to convert rwl-format data (columns are series, rows are years) to long format
+(3 columns: year, series, rw). This is useful for getting your data ready for plotting in ggplot
+or for correlation analyses.
 }
 \examples{
 library(dplR)
