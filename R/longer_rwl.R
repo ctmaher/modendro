@@ -5,7 +5,10 @@
 #' data (columns are series, rows are years). This is useful for grouping and reassubling data.
 #'
 #'
-#' @param df A long-format data.frame with 3 columns ("year", "series", "rw")
+#' @param df A long-format data.frame with "year" & "series" columns and a data column, specified
+#' by the dat.name argument
+#' @param dat.name A character vector specifying the name of the tree ring data
+#' (e.g., "rw", "bai.cm2", "d13C", etc.)
 #'
 #' @return A data.frame with series names as columns and years as rownames.
 #'
@@ -23,7 +26,7 @@
 #' head(ca533.long)
 
 
-longer_rwl <- function(df = NULL) {
+longer_rwl <- function(df = NULL, dat.name = NULL) {
   ## Error catching & warnings
   #
   stopifnot(
@@ -33,12 +36,31 @@ longer_rwl <- function(df = NULL) {
       data.class(df) %in% "matrix"
   )
 
+  stopifnot(
+    "dat.name must be a character vector of length 1" =
+      is.character(dat.name) |
+      length(dat.name) == 1
+  )
+
+
+  stopifnot(
+    "df does not contain columns 'year' or 'series'" =
+      any(colnames(df) %in% "year") |
+      any(colnames(df) %in% "series")
+  )
+
+  stopifnot(
+    "df does not contain column matching dat.name argument" =
+      any(colnames(df) %in% dat.name)
+  )
+
+
   # Get the series names before we add a year column
   series <- unique(df[, "series"])
 
 
   wide.rwl <- stats::reshape(
-    df,
+    df[, c("year", "series", dat.name)],
     idvar = "year",
     ids = x$year,
     times = series,

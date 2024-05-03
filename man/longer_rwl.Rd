@@ -4,10 +4,14 @@
 \alias{longer_rwl}
 \title{Convert long format ring-width data to rwl-format}
 \usage{
-longer_rwl(df = NULL)
+longer_rwl(df = NULL, dat.name = NULL)
 }
 \arguments{
-\item{df}{A long-format data.frame with 3 columns ("year", "series", "rw")}
+\item{df}{A long-format data.frame with "year" & "series" columns and a data column, specified
+by the dat.name argument}
+
+\item{dat.name}{A character vector specifying the name of the tree ring data
+(e.g., "rw", "bai.cm2", "d13C", etc.)}
 }
 \value{
 A data.frame with series names as columns and years as rownames.
