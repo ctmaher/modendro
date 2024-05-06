@@ -28,4 +28,11 @@ data("ca533")
 
 ca533.long <- rwl_longer(rwl = ca533, dat.name = "rw.mm", trim = TRUE)
 head(ca533.long)
+
+# Convert it back to rwl-like format
+
+ca533.rwl <- longer_rwl(df = ca533.long, dat.name = "rw.mm")
+head(ca533.rwl)
+all(ca533.rwl \%in\% ca533)
+
 }
