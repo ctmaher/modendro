@@ -15,6 +15,9 @@
 #' @param trim Logical vector indicating whether to trim off NA sequences at the beginning or end
 #' of individual series. Default is TRUE. Will not remove missing rings that are represented with NA
 #' (i.e., NA values within the series).
+#' @param na.warn Logical vector indicating whether to give a warning when there are NAs in the
+#' middle of measurments in the rwl or not (i.e., indicating a missing ring). Mostly for internal
+#' `modendro` use.
 #'
 #' @return A data.frame with 3 columns: 1) "year", 2) "series", 3) dat.name ("rw", "rw.mm", "bai.mm"
 #' or whatever you name this)
@@ -36,7 +39,8 @@
 rwl_longer <- function(rwl = NULL,
                        series.name = "series",
                        dat.name = "rw",
-                       trim = TRUE) {
+                       trim = TRUE,
+                       na.warn = TRUE) {
   ## Error catching & warnings
   #
   stopifnot(
@@ -96,9 +100,11 @@ rwl_longer <- function(rwl = NULL,
     }, series.dfs = long.rwl.split, end.years = year.spans,
     SIMPLIFY = FALSE) |> do.call(what = "rbind")
 
+    if (na.warn == TRUE) {
     if (any(is.na(long.rwl.trim[,dat.name])) == TRUE) {
       warning("NA values found within tree ring series. Are NAs used to represent missing rings? 0
               would be better.")
+    }
     }
 
     as.data.frame(long.rwl.trim)

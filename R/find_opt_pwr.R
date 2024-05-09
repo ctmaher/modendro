@@ -109,9 +109,11 @@ find_opt_pwr <- function(rwl, universal = FALSE, ID.group.substr = NULL) {
 
   # Make into long-format dfs using the modendro function rwl_longer
 
-  diffs.long <- rwl_longer(diffs, series.name = "series", dat.name = "diff", trim = TRUE)
+  diffs.long <- rwl_longer(diffs, series.name = "series",
+                           dat.name = "diff", trim = TRUE, na.warn = FALSE)
 
-  lmean.long <- rwl_longer(lmean, series.name = "series", dat.name = "lmean", trim = TRUE)
+  lmean.long <- rwl_longer(lmean, series.name = "series",
+                           dat.name = "lmean", trim = TRUE, na.warn = FALSE)
 
   diff.lmean <- merge(diffs.long, lmean.long, by = c("year","series"))
   diff.lmean$series <- factor(diff.lmean$series, levels = orig.IDs)
