@@ -4,11 +4,14 @@
 \alias{longer_rwl}
 \title{Convert long format ring-width data to rwl-format}
 \usage{
-longer_rwl(df = NULL, dat.name = NULL)
+longer_rwl(df = NULL, series.name = NULL, dat.name = NULL)
 }
 \arguments{
 \item{df}{A long-format data.frame with "year" & "series" columns and a data column, specified
 by the dat.name argument}
+
+\item{series.name}{Character vector of length 1 for the column name representing series IDs.
+E.g., "series", "tree", or "sample".}
 
 \item{dat.name}{A character vector specifying the name of the tree ring data
 (e.g., "rw", "bai.cm2", "d13C", etc.)}
@@ -26,12 +29,12 @@ library(dplR)
 # Many 0 value rings in this collection
 data("ca533")
 
-ca533.long <- rwl_longer(rwl = ca533, dat.name = "rw.mm", trim = TRUE)
+ca533.long <- rwl_longer(rwl = ca533, series.name = "series", dat.name = "rw.mm", trim = TRUE)
 head(ca533.long)
 
 # Convert it back to rwl-like format
 
-ca533.rwl <- longer_rwl(df = ca533.long, dat.name = "rw.mm")
+ca533.rwl <- longer_rwl(df = ca533.long, series.name = "series", dat.name = "rw.mm")
 head(ca533.rwl)
 all(ca533.rwl \%in\% ca533)
 

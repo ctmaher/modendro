@@ -7,6 +7,8 @@
 #'
 #' @param df A long-format data.frame with "year" & "series" columns and a data column, specified
 #' by the dat.name argument
+#' @param series.name Character vector of length 1 for the column name representing series IDs.
+#' E.g., "series", "tree", or "sample".
 #' @param dat.name A character vector specifying the name of the tree ring data
 #' (e.g., "rw", "bai.cm2", "d13C", etc.)
 #'
@@ -22,24 +24,30 @@
 #' # Many 0 value rings in this collection
 #' data("ca533")
 #'
-#' ca533.long <- rwl_longer(rwl = ca533, dat.name = "rw.mm", trim = TRUE)
+#' ca533.long <- rwl_longer(rwl = ca533, series.name = "series", dat.name = "rw.mm", trim = TRUE)
 #' head(ca533.long)
 #'
 #' # Convert it back to rwl-like format
 #'
-#' ca533.rwl <- longer_rwl(df = ca533.long, dat.name = "rw.mm")
+#' ca533.rwl <- longer_rwl(df = ca533.long, series.name = "series", dat.name = "rw.mm")
 #' head(ca533.rwl)
 #' all(ca533.rwl %in% ca533)
 #'
 
 
-longer_rwl <- function(df = NULL, dat.name = NULL) {
+longer_rwl <- function(df = NULL, series.name = NULL, dat.name = NULL) {
   ## Error catching & warnings
   stopifnot(
     "df is not an object of class 'data.frame', or 'matrix'" =
       data.class(df) %in% "rwl" |
       data.class(df) %in% "data.frame" |
       data.class(df) %in% "matrix"
+  )
+
+  stopifnot(
+    "series.name must be a character vector of length 1" =
+      is.character(series.name) |
+      length(series.name) == 1
   )
 
   stopifnot(
@@ -50,9 +58,13 @@ longer_rwl <- function(df = NULL, dat.name = NULL) {
 
 
   stopifnot(
-    "df does not contain columns 'year' or 'series'" =
-      any(colnames(df) %in% "year") |
-      any(colnames(df) %in% "series")
+    "df does not contain column 'year'" =
+      any(colnames(df) %in% "year")
+  )
+
+  stopifnot(
+    "df does not contain column matching series.name argument" =
+      any(colnames(df) %in% series.name)
   )
 
   stopifnot(
@@ -62,15 +74,15 @@ longer_rwl <- function(df = NULL, dat.name = NULL) {
 
 
   # Get the series names before we add a year column
-  series <- unique(df[, "series"])
+  series <- unique(df[, series.name])
 
 
   wide.rwl <- stats::reshape(
-    df[, c("year", "series", dat.name)],
+    df[, c("year", series.name, dat.name)],
     idvar = "year",
     ids = x$year,
     times = series,
-    timevar = "series",
+    timevar = series.name,
     varying = list(series),
     direction = "wide"#,
     #new.row.names = min(df[, "year"]):max(df[, "year"])
