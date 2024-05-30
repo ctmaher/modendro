@@ -141,7 +141,8 @@ yrs_to_pith <- function(rwl = NULL,
   xdf <- rwl_longer(rwl,
                     series.name = "series",
                     dat.name = "rw",
-                    trim = TRUE)
+                    trim = TRUE,
+                    na.warn = FALSE)
   # Split by series
   xdf.list <- split(xdf, f = xdf$series)
 
@@ -189,7 +190,8 @@ yrs_to_pith <- function(rwl = NULL,
 
   # Make a histogram
   if (plot.hist == TRUE) {
-    ggplot(merged.att, aes(x = y2pith)) +
+    x_val <- "y2pith" # Strange work-around to "no visible binding for global variable" NOTE
+    ggplot(merged.att, aes(x = .data[[x_val]])) +
       geom_histogram(binwidth = 5) +
       xlab(paste("Estimated years to pith;\n",
                  ifelse(method %in% "rings",

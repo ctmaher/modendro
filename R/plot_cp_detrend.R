@@ -38,11 +38,17 @@ plot_cp_detrend <- function(cp_out) {
     orig.IDs <- colnames(rw)
     rw[, "year"] <-
       rownames(cp_out[["Raw ring widths"]]) |> as.numeric()
-    long.rw <- tidyr::pivot_longer(rw,
-                                   cols = -year,
-                                   names_to = "series" ,
-                                   values_to = "value") |>
-      as.data.frame()
+    # long.rw <- tidyr::pivot_longer(rw,
+    #                                cols = -year,
+    #                                names_to = "series" ,
+    #                                values_to = "value") |>
+    #   as.data.frame()
+    long.rw <- rwl_longer(rwl = rw[,!(colnames(rw) %in% "year")],
+                          series.name = "series",
+                          dat.name = "value",
+                          trim = TRUE,
+                          na.warn = FALSE)
+
     long.rw$type <- "rw"
 
 
@@ -50,38 +56,54 @@ plot_cp_detrend <- function(cp_out) {
     trans <- as.data.frame(cp_out[["Transformed ring widths"]][,orig.IDs])
     trans[, "year"] <-
       rownames(cp_out[["Transformed ring widths"]]) |> as.numeric()
-    long.trans <- tidyr::pivot_longer(
-      trans,
-      cols = -year,
-      names_to = "series" ,
-      values_to = "value"
-    )
+    long.trans <- rwl_longer(rwl = trans[,!(colnames(trans) %in% "year")],
+                          series.name = "series",
+                          dat.name = "value",
+                          trim = TRUE,
+                          na.warn = FALSE)
+    # long.trans <- tidyr::pivot_longer(
+    #   trans,
+    #   cols = -year,
+    #   names_to = "series" ,
+    #   values_to = "value"
+    # )
     long.trans$type <- "pwr.t_cu"
 
     curv <- as.data.frame(cp_out[["Detrend curves"]][,orig.IDs])
     curv[, "year"] <-
       rownames(cp_out[["Detrend curves"]]) |> as.numeric()
-    long.curv <- tidyr::pivot_longer(
-      curv,
-      cols = -year,
-      names_to = "series" ,
-      values_to = "value"
-    ) |>
-      as.data.frame()
+    long.curv <- rwl_longer(rwl = curv[,!(colnames(curv) %in% "year")],
+                             series.name = "series",
+                             dat.name = "value",
+                             trim = TRUE,
+                             na.warn = FALSE)
+    # long.curv <- tidyr::pivot_longer(
+    #   curv,
+    #   cols = -year,
+    #   names_to = "series" ,
+    #   values_to = "value"
+    # ) |>
+    #   as.data.frame()
     long.curv$type <- "pwr.t_cu"
 
     detr <- as.data.frame(cp_out[["Resid. detrended series"]][,orig.IDs])
     detr[, "year"] <-
       rownames(cp_out[["Resid. detrended series"]]) |> as.numeric()
-    long.detr <- tidyr::pivot_longer(
-      detr,
-      cols = -year,
-      names_to = "series" ,
-      values_to = "value"
-    ) |>
-      as.data.frame()
+    long.detr <- rwl_longer(rwl = detr[,!(colnames(detr) %in% "year")],
+                            series.name = "series",
+                            dat.name = "value",
+                            trim = TRUE,
+                            na.warn = FALSE)
+    # long.detr <- tidyr::pivot_longer(
+    #   detr,
+    #   cols = -year,
+    #   names_to = "series" ,
+    #   values_to = "value"
+    # ) |>
+    #   as.data.frame()
     long.detr$type <- "de"
 
+    # rbind all the long-format data.frames together
     all.df <- rbind(long.rw, long.trans, long.detr) |>
       na.omit() |> as.data.frame()
 
@@ -155,6 +177,7 @@ plot_cp_detrend <- function(cp_out) {
 
 
         # Have to reference variables in an odd way so that check() doesn't throw a note
+        # Strange work-around to "no visible binding for global variable" NOTE
         x_val <- "year"
         y_val <- "value"
         col_val <- "type"
