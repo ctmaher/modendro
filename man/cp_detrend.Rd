@@ -108,9 +108,10 @@ ca533_cp[[1]][[1]] # The output of the first series
 
 # You can conveniently make plots using the plot_cp_detrend() function
 ca533_cp_plots <- plot_cp_detrend(ca533_cp)
-# You can also save these plots (they are ggplot objects)
-# to disk with something like this:
+
+# You can also save these plots (they are ggplot objects) to disk with something like this:
 # Create a new directory for the plots (there could be a lot!)
+\dontrun{
 cp_plot_dir <- paste0(getwd(),"/CP_plots")
 dir.create(cp_plot_dir)
 # Apply ggsave() to each plot:
@@ -122,6 +123,7 @@ mapply(FUN = \(x, y) {
         height = 14,
         units = "cm")
 }, x = ca533_cp_plots, y = names(ca533_cp_plots))
+}
 }
 \references{
 Cook, E. R., and Peters, K. (1997) Calculating unbiased tree-ring indices for the study of

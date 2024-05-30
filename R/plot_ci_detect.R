@@ -79,7 +79,7 @@
 #' n = names(ca533_ci_plots[[1]][sapply(ca533_ci_plots[[1]], FUN = \(x) !is.character(x))])
 #' )
 #'
-#' # For the final plots (not run):
+#' # For the final plots:
 #' ggsave(
 #' filename = "ca533_final_ci_plots.pdf",
 #' plot = marrangeGrob(ca533_ci_plots[[2]][sapply(ca533_ci_plots[[2]],
