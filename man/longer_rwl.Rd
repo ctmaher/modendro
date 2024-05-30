@@ -20,8 +20,9 @@ E.g., "series", "tree", or "sample".}
 A data.frame with series names as columns and years as rownames.
 }
 \description{
-Simple function to convert long format tree ring data (3 columns: year, series, rw) to rwl-format
-data (columns are series, rows are years). This is useful for grouping and reassubling data.
+Simple function to convert long format tree ring data (3 columns: year, series, rw) to
+rwl-format data (columns are series, rows are years). This is useful for grouping and
+reassembling data.
 }
 \examples{
 library(dplR)

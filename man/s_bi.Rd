@@ -10,10 +10,12 @@ s_bi(x)
 \item{x}{a numeric vector}
 }
 \value{
-a 2-column, 1-row data.frame with 2 estimates of s_bi: the main one from the Hoaglin et al book & the Kafadar (1979) version that the authors also mention.
+a 2-column, 1-row data.frame with 2 estimates of s_bi: the main one from the Hoaglin et
+al book & the Kafadar (1979) version that the authors also mention.
 }
 \description{
-This function calculates the biweight scale (s_bi) - a robust variance estimator based on the biweight robust mean.
+This function calculates the biweight scale (s_bi) - a robust variance estimator based on the
+biweight robust mean.
 From Hoaglin et al. 1983 p.417, eq. 3.
 }
 \details{
@@ -24,5 +26,6 @@ s_bi(rnorm(100))
 
 }
 \references{
-Hoaglin, D. C., F. Mosteller, and J. W. Tukey. 1983. Understanding robust and exploratory data analysis. New York: Wiley.
+Hoaglin, D. C., F. Mosteller, and J. W. Tukey. 1983. Understanding robust and exploratory data
+analysis. New York: Wiley.
 }

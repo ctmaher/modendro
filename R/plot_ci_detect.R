@@ -63,7 +63,6 @@
 #' # you could do the following steps (will write to your working directory):
 #'
 #' library(ggplot2)
-#' library(gridExtra)
 #'
 #' # For the iteration plots:
 #' dir.create("ca533_ci_iter_plots") # create a folder first

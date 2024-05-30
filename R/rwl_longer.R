@@ -13,14 +13,14 @@
 #' @param dat.name Character vector of length 1 for the column name you want for the the tree ring
 #' data. Default is "rw".
 #' @param trim Logical vector indicating whether to trim off NA sequences at the beginning or end
-#' of individual series. Default is TRUE. Will not remove missing rings that are represented with NA
-#' (i.e., NA values within the series).
+#' of individual series. Default is TRUE. Will not remove missing rings that are represented with
+#' NA (i.e., NA values within the series).
 #' @param na.warn Logical vector indicating whether to give a warning when there are NAs in the
 #' middle of measurments in the rwl or not (i.e., indicating a missing ring). Mostly for internal
 #' `modendro` use.
 #'
-#' @return A data.frame with 3 columns: 1) "year", 2) "series", 3) dat.name ("rw", "rw.mm", "bai.mm"
-#' or whatever you name this)
+#' @return A data.frame with 3 columns: 1) "year", 2) "series", 3) dat.name ("rw", "rw.mm",
+#' "bai.mm" or whatever you name this)
 #'
 #' @import stats
 #' @import dplR

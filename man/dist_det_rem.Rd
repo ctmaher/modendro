@@ -2,68 +2,107 @@
 % Please edit documentation in R/dist_det_rem.R
 \name{dist_det_rem}
 \alias{dist_det_rem}
-\title{Supporting function for ci_detect - statistical detection and removal of disturbances in tree ring series}
+\title{Supporting function for ci_detect - statistical detection and removal of disturbances in tree
+ring series}
 \usage{
 dist_det_rem(rwi, min.win = 9, max.win = 30, thresh = 3.29, dist.span = 1.25)
 }
 \arguments{
 \item{rwi}{A rwl object of detrended residual series produced by \code{\link{cp_detrend}}.}
 
-\item{min.win}{The minimum disturbance length in years (i.e., a moving window) to search for. The default is 9.}
+\item{min.win}{The minimum disturbance length in years (i.e., a moving window) to search for.
+The default is 9.}
 
-\item{max.win}{The maximum disturbance length in years (i.e., a moving window) to search for. The default is 30.}
+\item{max.win}{The maximum disturbance length in years (i.e., a moving window) to search for.
+The default is 30.}
 
-\item{thresh}{The disturbance detection threshold, corresponding to the number of deviations from the robust mean. The default is 3.29, following Druckenbrod et al. 2013.}
+\item{thresh}{The disturbance detection threshold, corresponding to the number of deviations
+from the robust mean. The default is 3.29, following Druckenbrod et al. 2013.}
 
-\item{dist.span}{Parameter to determine the wiggliness of the loess splines fit to disturbance periods (when Hugershoff fits fail). Higher numbers = more wiggles. Passes to \code{\link[stats]{loess}}. The default is 1.25.}
+\item{dist.span}{Parameter to determine the wiggliness of the loess splines fit to disturbance
+periods (when Hugershoff fits fail). Higher numbers = more wiggles. Passes to
+\code{\link[stats]{loess}}. The default is 1.25.}
 }
 \value{
 A named list with the following elements:
 \enumerate{
-\item "Corrected RWI" - a list of the final 'disturbance-free' series after all iterations are done.
-\item "Disturbance curves" - a list of the curves fitted to each disturbance detected within each series.
-\item "Disturbance detection" - a list of data.frames containing the AR residuals, a moving average series, series robust means, and detection thresholds for the max disturbance detected. Mostly for plotting disturbance iterations in \code{\link{plot_ci_detect}}.
+\item "Corrected RWI" - a list of the final 'disturbance-free' series after all iterations
+are done.
+\item "Disturbance curves" - a list of the curves fitted to each disturbance detected within
+each series.
+\item "Disturbance detection" - a list of data.frames containing the AR residuals, a moving
+average series, series robust means, and detection thresholds for the max disturbance detected.
+Mostly for plotting disturbance iterations in \code{\link{plot_ci_detect}}.
 }
 }
 \description{
-This function implements the disturbance detection and removal steps for the curve intervention detection techniques described by Druckenbrod et al. 2013,
-Rydval et al. 2016, and Rydval et al. 2018. The function works on a collection of transformed ring width series. Iterations
-are performed with \code{\link{ci_detect}}.
+This function implements the disturbance detection and removal steps for the curve intervention
+detection techniques described by Druckenbrod et al. 2013,
+Rydval et al. 2016, and Rydval et al. 2018. The function works on a collection of transformed
+ring width series. Iterations are performed with \code{\link{ci_detect}}.
 }
 \details{
-The basic process that \code{dist_det_rem} performs is to take standardized tree ring series (specifically the output from the Cook & Peters (1997) process, as implemented by \code{\link{cp_detrend}} in \code{\link{ci_detect}}),
-fit AR models (using the Burg method) to them and extract the residuals. The AR models are also "backcasted" to estimate residuals for the 1st n years which are NAs (n being equal to the AR order).
-Backcasting involves reversing each series then fitting AR models of the same order as the original. Then, we compute moving averages of various window lengths. Disturbances are defined as moving average values that fall outside
-the threshold of number of deviations from the robust mean (default is 3.29), computed for each series and each moving average window length. The largest deviation - the largest absolute value of the difference between
-the moving average value & the (negative or positive) threshold - for each series is selected first. Thus the largest magnitude disturbance could be a suppression or a release.
-This defines the onset year and duration of the disturbance. A modified version of a Hugershoff curve (Warren & MacWilliam 1981) is then fit (via \code{\link[stats]{nls}}) to the disturbance period and beyond (all the way to the end of the series)
-transformed, detrended residual series (not the AR residuals), with slightly different coefficients than the Hugershoff curve used by Rydval et al. Namely, the following values are fixed: \emph{b} = 1, and \emph{d} = Tukey Biweight robust mean of the remainder
-of the transformed series after the disturbance, or 0 if the disturbance covers the end of the series. The \emph{d} term acts like an intercept. The Warren & MacWilliam curve has a \emph{t} coefficient which we use here.
-These modifications allow for more robust fitting (reduced parameters require fewer degrees of freedom). Setting the \emph{b} term to 1 allows the beginning y values of the Hugershoff curve to go above or below 0 (more directly determined by \emph{t}), which helps in minimizing artifacts from poor fit in the early years of a disturbance period.
+The basic process that \code{dist_det_rem} performs is to take standardized tree ring series
+(specifically the output from the Cook & Peters (1997) process, as implemented by
+\code{\link{cp_detrend}} in \code{\link{ci_detect}}), fit AR models (using the Burg method) to
+them and extract the residuals. The AR models are also "backcasted" to estimate residuals for
+the 1st n years which are NAs (n being equal to the AR order). Backcasting involves reversing
+each series then fitting AR models of the same order as the original. Then, we compute moving
+averages of various window lengths. Disturbances are defined as moving average values that fall
+outside the threshold of number of deviations from the robust mean (default is 3.29), computed
+for each series and each moving average window length. The largest deviation - the largest
+absolute value of the difference between the moving average value & the (negative or positive)
+threshold - for each series is selected first. Thus the largest magnitude disturbance could be
+a suppression or a release. This defines the onset year and duration of the disturbance.
+A modified version of a Hugershoff curve (Warren & MacWilliam 1981) is then fit
+(via \code{\link[stats]{nls}}) to the disturbance period and beyond (all the way to the end
+of the series) transformed, detrended residual series (not the AR residuals), with slightly
+different coefficients than the Hugershoff curve used by Rydval et al. Namely, the following
+values are fixed: \emph{b} = 1, and \emph{d} = Tukey Biweight robust mean of the remainder of
+the transformed series after the disturbance, or 0 if the disturbance covers the end of the
+series. The \emph{d} term acts like an intercept. The Warren & MacWilliam curve has a \emph{t}
+coefficient which we use here. These modifications allow for more robust fitting (reduced
+parameters require fewer degrees of freedom). Setting the \emph{b} term to 1 allows the
+beginning y values of the Hugershoff curve to go above or below 0 (more directly determined
+by \emph{t}), which helps in minimizing artifacts from poor fit in the early years of a
+disturbance period.
 
-While the Hugershoff curve fitting is reasonably robust, \code{\link[stats]{nls}} occasionally fails to converge. Additionally, the  In these cases a \code{\link[stats]{loess}} spline
-is fit to the disturbance period only instead (not the whole remainder of the series as in the Hugershoff).
-The wiggliness of these splines can be adjusted using the \code{dist.span} argument. For both methods, the resulting fitted curve is subtracted from the series.
+While the Hugershoff curve fitting is reasonably robust, \code{\link[stats]{nls}} occasionally
+fails to converge. Additionally, the  In these cases a \code{\link[stats]{loess}} spline is fit
+to the disturbance period only instead (not the whole remainder of the series as in the
+Hugershoff). The wiggliness of these splines can be adjusted using the \code{dist.span} argument.
+For both methods, the resulting fitted curve is subtracted from the series.
 
-If the arithmetic mean RWI ± 2sd of 15 years or the disturbance window length (whichever is longer) before the disturbance year does not contain 0, then the robust mean of this before period is
-added back to the curve-series difference. If the interval does contain 0 or the disturbance is very near the start of the series (i.e., < 15 years), no value is added to the difference.
-This is done to avoid artifacts from the disturbance removal process when the RWI values near a disturbance are not near 0 (which is the series mean of transformed detrended residuals).
-This seems to be a fairly robust method, but be sure to inspect the "Disturbance detection & removal plots" & "Final disturbance-free series plots" of \code{\link{ci_detect}} (\code{\link{plot_ci_detect}}) to be sure.
+If the arithmetic mean RWI ± 2sd of 15 years or the disturbance window length (whichever is
+longer) before the disturbance year does not contain 0, then the robust mean of this before
+period is added back to the curve-series difference. If the interval does contain 0 or the
+disturbance is very near the start of the series (i.e., < 15 years), no value is added to the
+difference. This is done to avoid artifacts from the disturbance removal process when the RWI
+values near a disturbance are not near 0 (which is the series mean of transformed detrended
+residuals). This seems to be a fairly robust method, but be sure to inspect the "Disturbance
+detection & removal plots" & "Final disturbance-free series plots" of \code{\link{ci_detect}}
+(\code{\link{plot_ci_detect}}) to be sure.
 }
 \references{
-Druckenbrod, D. L., N. Pederson, J. Rentch, and E. R. Cook. (2013) A comparison of times series approaches for dendroecological reconstructions of past canopy disturbance events.
+Druckenbrod, D. L., N. Pederson, J. Rentch, and E. R. Cook. (2013) A comparison of times series
+approaches for dendroecological reconstructions of past canopy disturbance events.
 \emph{Forest Ecology and Management}, \strong{302}, 23–33.
 
-Rydval, M., D. Druckenbrod, K. J. Anchukaitis, and R. Wilson. (2016) Detection and removal of disturbance trends in tree-ring series for dendroclimatology.
+Rydval, M., D. Druckenbrod, K. J. Anchukaitis, and R. Wilson. (2016) Detection and removal of
+disturbance trends in tree-ring series for dendroclimatology.
 \emph{Canadian Journal of Forest Research}, \strong{401}, 387–401.
 
-Rydval, M., D. L. Druckenbrod, M. Svoboda, V. Trotsiuk, P. Janda, M. Mikoláš, V. Čada, R. Bače, M. Teodosiu, and R. Wilson. (2018) Influence of sampling and disturbance history on climatic sensitivity of temperature limited conifers.
+Rydval, M., D. L. Druckenbrod, M. Svoboda, V. Trotsiuk, P. Janda, M. Mikoláš, V. Čada, R. Bače,
+M. Teodosiu, and R. Wilson. (2018) Influence of sampling and disturbance history on climatic
+sensitivity of temperature limited conifers.
 \emph{The Holocene}, \strong{28}(10), 1574-1587.
 
-Cook, E. R., and Peters, K. (1997) Calculating unbiased tree-ring indices for the study of climatic and environmental change.
+Cook, E. R., and Peters, K. (1997) Calculating unbiased tree-ring indices for the study of
+climatic and environmental change.
 \emph{The Holocene}, \strong{7}(3), 361-370.
 
-Warren, W. G., and S. L. MacWilliam. 1981. Test of a new method for removing the growth trend from dendrochronological data.
+Warren, W. G., and S. L. MacWilliam. 1981. Test of a new method for removing the growth trend
+from dendrochronological data.
 \emph{Tree Ring Bulletin} \strong{41}, 55–66.
 }
 \seealso{

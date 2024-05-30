@@ -15,20 +15,31 @@ cp_detrend(
 )
 }
 \arguments{
-\item{rwl}{A rwl-type data.frame (e.g., read in by \code{\link[dplR]{read.rwl}}). Essentially a data.frame with columns names as series IDs and years as rownames.}
+\item{rwl}{A rwl-type data.frame (e.g., read in by \code{\link[dplR]{read.rwl}}). Essentially a
+data.frame with columns names as series IDs and years as rownames.}
 
-\item{universal.pwr.t}{A logical vector indicating whether to compute a single "universal" optimal power of transformation for all series within a group (if \code{TRUE} and arg \code{ID.group.substr} is unspecified, will assume all series in the rwl). If \code{FALSE}, the function estimates a separate optimal power for each individual series (the default).}
+\item{universal.pwr.t}{A logical vector indicating whether to compute a single "universal"
+optimal power of transformation for all series within a group (if \code{TRUE} and arg
+\code{ID.group.substr} is unspecified, will assume all series in the rwl). If \code{FALSE}, the
+function estimates a separate optimal power for each individual series (the default).}
 
-\item{pwr.t.ID.group.substr}{A numeric vector of length 2 that determines a sub grouping for calculating "universal" optimal power of transformation. Ulitmately passes to \code{\link[base]{substr}} as the start (1st number) and stop (2nd number) args to split the series IDs in your rwl into groups (performed in \code{\link{find_opt_pwr}}).}
+\item{pwr.t.ID.group.substr}{A numeric vector of length 2 that determines a sub grouping for
+calculating "universal" optimal power of transformation. Ulitmately passes to
+\code{\link[base]{substr}} as the start (1st number) and stop (2nd number) args to split the
+series IDs in your rwl into groups (performed in \code{\link{find_opt_pwr}}).}
 
-\item{detrend.method}{Character string of the detrending method to use. Passes to \code{\link[dplR]{detrend}}.}
+\item{detrend.method}{Character string of the detrending method to use. Passes to
+\code{\link[dplR]{detrend}}.}
 
-\item{nyrs}{Numeric vector, used in dplR's \code{\link[dplR]{detrend}} function for the \code{"Spline"} and \code{"AgeDepSpline"} methods.}
+\item{nyrs}{Numeric vector, used in dplR's \code{\link[dplR]{detrend}} function for the
+\code{"Spline"} and \code{"AgeDepSpline"} methods.}
 
-\item{pos.slope}{Should positive slopes be allowed in the detrending curves? Generally this should be FALSE (the default),
-but when used in \code{\link{ci_detect}} it is TRUE to detect deviations from any long term trend. Passes to \code{\link[dplR]{detrend}}.}
+\item{pos.slope}{Should positive slopes be allowed in the detrending curves? Generally this
+should be FALSE (the default), but when used in \code{\link{ci_detect}} it is TRUE to detect
+deviations from any long term trend. Passes to \code{\link[dplR]{detrend}}.}
 
-\item{standardize}{Logical vector indicating whether to standardize the output detrended & transformed residuals (default is TRUE). See details for more information.}
+\item{standardize}{Logical vector indicating whether to standardize the output detrended &
+transformed residuals (default is TRUE). See details for more information.}
 }
 \value{
 A named list with the following elements:
@@ -36,43 +47,53 @@ A named list with the following elements:
 \item "Resid. detrended series" - the residual detrended power transformed series.
 \item "Detrend curves" - the curves fitted to the transformed series.
 \item "Transformed ring widths" - the power transformed series (before detrending).
-\item "Transformation metadata" - a list of data.frames for each series about the type of transformation applied.
-\item "Detrending metadata" - a list of data.frames for each series about the detrending applied (from \code{\link[dplR]{detrend}}).
+\item "Transformation metadata" - a list of data.frames for each series about the type of
+transformation applied.
+\item "Detrending metadata" - a list of data.frames for each series about the detrending applied
+(from \code{\link[dplR]{detrend}}).
 \item "Raw ring widths" - the original rwl-data.frame
 }
 }
 \description{
-Compute variance-stabilized & residual detrended ring width indices that minimize the series end effect problems
-that can result from using ratios to derive detrended indices.
+Compute variance-stabilized & residual detrended ring width indices that minimize the series
+end effect problems that can result from using ratios to derive detrended indices.
 }
 \details{
-For decades, the most common method of removing long-term size/age trends from tree ring width series has been to fit a curve
-(e.g., a negative exponential equation) to the data, then divide the raw data by the predicted (trend) values.
-The resulting indices have ± stable variance for their duration and a mean of 1, and are ready to be aggregated
-together into chronologies with other series standardized via the same method. However, this method can introduce artificial
-trends in locations along the series where the trend line has a poor fit with the data, especially when the predicted values drop below 0.5.
-This is common at the end of series. The risk is that the researcher might obtain biased estimates of growth trends - i.e., enhanced growth
-increases or decreases.
+For decades, the most common method of removing long-term size/age trends from tree ring width
+series has been to fit a curve (e.g., a negative exponential equation) to the data, then divide
+the raw data by the predicted (trend) values. The resulting indices have ± stable variance for
+their duration and a mean of 1, and are ready to be aggregated together into chronologies with
+other series standardized via the same method. However, this method can introduce artificial
+trends in locations along the series where the trend line has a poor fit with the data,
+especially when the predicted values drop below 0.5. This is common at the end of series.
+The risk is that the researcher might obtain biased estimates of growth trends - i.e.,
+enhanced growth increases or decreases.
 
 Cook & Peters (1997) proposed the method employed here as a fix this problem.
-The basic steps are to estimate the optimal power of transformation via the local spread versus level relationship of each series,
-where local spread is defined as the absolute value of the first
-differences, S, (|rwt - rwt-1|) and the local level is the arithmetic mean of each pair of adjacent values, M, (rwt + rwt-1)/2.
-The spread versus level relationship is then modeled in a simple linear regression as log10(S) ~ log10(M). The optimal power of transformation
-is then estimated as p = |1-slope| of this regression model. If p ≤ 0.1 (i.e., slope is near 1), a log10() transformation is applied.
-If p > 1 (i.e., slope is near 0), no transformation is applied. Otherwise, p is applied to all the raw ring widths as rw^p.
+The basic steps are to estimate the optimal power of transformation via the local spread versus
+level relationship of each series, where local spread is defined as the absolute value of the
+first differences, S, (|rwt - rwt-1|) and the local level is the arithmetic mean of each pair
+of adjacent values, M, (rwt + rwt-1)/2. The spread versus level relationship is then modeled in
+a simple linear regression as log10(S) ~ log10(M). The optimal power of transformation is then
+estimated as p = |1-slope| of this regression model. If p ≤ 0.1 (i.e., slope is near 1), a
+log10() transformation is applied. If p > 1 (i.e., slope is near 0), no transformation is
+applied. Otherwise, p is applied to all the raw ring widths as rw^p.
 
-With no special accommodation, this power transformation process can produce odd results for 0 values (missing rings).
-Log transformation will obviously fail in these circumstances. To reduce these problems, 0 ring width values are replaced
-with the minimum value possible given the resolution of the data, which for tree ring data is typically 0.01 or 0.001 mm.
-If you have many 0 ring width values in your data, make sure to take a look at the output plots (you should do this anyway) to
-check for any weirdness.
+With no special accommodation, this power transformation process can produce odd results for
+0 values (missing rings). Log transformation will obviously fail in these circumstances.
+To reduce these problems, 0 ring width values are replaced with the minimum value possible
+given the resolution of the data, which for tree ring data is typically 0.01 or 0.001 mm. If
+you have many 0 ring width values in your data, make sure to take a look at the output plots
+(you should do this anyway) to check for any weirdness.
 
-The \code{standardize} argument indicates whether a standardization of the residual detrended series should be performed. This is
-an important consideration because of the variable transformations applied here can result in series with dramatically different
-variances - which will influence the any tree means or chronologies generated from these data. The standardization method we apply here is the same type found in
-the \code{dplR} function \code{\link[dplR]{detrend}} with the \code{method = "Ar"} option. This is done by adding the means of the original ring width series
-to the residual detrended series, then dividing the resulting series by their means. The results are series with a mean of 1 and similar variance.
+The \code{standardize} argument indicates whether a standardization of the residual detrended series
+should be performed. This is an important consideration because of the variable transformations
+applied here can result in series with dramatically different variances - which will influence
+the any tree means or chronologies generated from these data. The standardization method we
+apply here is the same type found in the \code{dplR} function \code{\link[dplR]{detrend}} with
+the \code{method = "Ar"} option. This is done by adding the means of the original ring width series
+to the residual detrended series, then dividing the resulting series by their means. The
+results are series with a mean of 1 and similar variance.
 }
 \examples{
 library(dplR)
@@ -103,7 +124,8 @@ mapply(FUN = \(x, y) {
 }, x = ca533_cp_plots, y = names(ca533_cp_plots))
 }
 \references{
-Cook, E. R., and Peters, K. (1997) Calculating unbiased tree-ring indices for the study of climatic and environmental change.
+Cook, E. R., and Peters, K. (1997) Calculating unbiased tree-ring indices for the study of
+climatic and environmental change.
 \emph{The Holocene}, \strong{7}(3), 361-370.
 }
 \seealso{

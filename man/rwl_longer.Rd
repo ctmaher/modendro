@@ -23,16 +23,16 @@ Default is "series", but perhaps "tree" or "sample" is more appropriate for your
 data. Default is "rw".}
 
 \item{trim}{Logical vector indicating whether to trim off NA sequences at the beginning or end
-of individual series. Default is TRUE. Will not remove missing rings that are represented with NA
-(i.e., NA values within the series).}
+of individual series. Default is TRUE. Will not remove missing rings that are represented with
+NA (i.e., NA values within the series).}
 
 \item{na.warn}{Logical vector indicating whether to give a warning when there are NAs in the
 middle of measurments in the rwl or not (i.e., indicating a missing ring). Mostly for internal
 \code{modendro} use.}
 }
 \value{
-A data.frame with 3 columns: 1) "year", 2) "series", 3) dat.name ("rw", "rw.mm", "bai.mm"
-or whatever you name this)
+A data.frame with 3 columns: 1) "year", 2) "series", 3) dat.name ("rw", "rw.mm",
+"bai.mm" or whatever you name this)
 }
 \description{
 Simple function to convert rwl-format data (columns are series, rows are years) to long format

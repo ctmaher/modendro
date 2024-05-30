@@ -21,7 +21,7 @@ data.frame with columns names as series IDs and years as row names.}
 2) "d2pith", representing the estimated distances to pith from innermost measured rings.}
 
 \item{method}{Character vector of length 1 indicating which method to use, \code{"rings"}, or
-\code{"dist"}. Default is "rings". See details below.}
+\code{"dist"}. Default is "dist". See details below.}
 
 \item{n.rings}{Numeric vector of length 1 representing the number of rings (years) you want to
 use as an aggregate in \code{method = "rings"}. For \code{method = "dist"}, \code{n.rings} sets the "floor" of

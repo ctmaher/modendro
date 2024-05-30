@@ -12,7 +12,7 @@
 #' @param d2pith A data.frame with at least 2 columns: 1) "series", representing the series names,
 #' 2) "d2pith", representing the estimated distances to pith from innermost measured rings.
 #' @param method Character vector of length 1 indicating which method to use, `"rings"`, or
-#' `"dist"`. Default is "rings". See details below.
+#' `"dist"`. Default is "dist". See details below.
 #' @param n.rings Numeric vector of length 1 representing the number of rings (years) you want to
 #' use as an aggregate in `method = "rings"`. For `method = "dist"`, `n.rings` sets the "floor" of
 #' the number of rings to be aggregated. Default is 5 rings, which is really the minimum you should

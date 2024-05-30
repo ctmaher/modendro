@@ -36,8 +36,8 @@ data.frame.}
 
 \item{rel.per.begin}{an integer month representing the beginning of the climatically relevant
 period to the growth year (always a 12 month period).
-This will include the "water year" of the calendar year before growth. E.g., 10 for N hemisphere,
-4 for S hemisphere. See details below for more info.}
+This will include the "water year" of the calendar year before growth. E.g., 10 for N
+hemisphere, 4 for S hemisphere. See details below for more info.}
 
 \item{hemisphere}{a character vector specifying which hemisphere your tree ring data - &
 climate data - comes from ("N" or "S").

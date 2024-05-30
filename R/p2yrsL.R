@@ -1,17 +1,27 @@
-#' Highlight interannual variability in tree ring series by computing ring width as the proportion of the last 2 years, limited by a variance cut-off
+#' Highlight interannual variability in tree ring series by computing ring width as the proportion
+#' of the last 2 years, limited by a variance cut-off
 #'
 #' @description
-#' This function implements Lars-Ake Larsson's (author of the popular CooRecorder and CDendro programs) proportion of the last two years
-#' (limited) P2YrsL standardizing. This is calculated as i = rw(c)/rw(c) + rw(c-1),
-#' with a cut off of 2.6x the SD for the whole series (for details see: https://cdendro.se/wiki/index.php/Normalization).
-#' The cut off is imposed to reduce (not eliminate!) the chances that you will get spurious correlations because of the alignment of relatively tiny rings in a reference and the series you are evaluating.
+#' This function implements Lars-Ake Larsson's (author of the popular CooRecorder and CDendro
+#' programs) proportion of the last two years (limited) P2YrsL standardizing. This is calculated
+#' as i = rw(c)/rw(c) + rw(c-1), with a cut off of 2.6x the SD for the whole series
+#' (for details see: https://cdendro.se/wiki/index.php/Normalization).
+#' The cut off is imposed to reduce (not eliminate!) the chances that you will get spurious
+#' correlations because of the alignment of relatively tiny rings in a reference and the series
+#' you are evaluating.
 #'
-#' P2YrsL is similar in concept to computing AR residuals (aka "prewhitening") - the default in dplR. P2YrsL is the default in CDendro and CooRecorder.
-#' The essential element of both approaches is that we remove the mid- to low-frequency variation
-#' and highlight the high-frequency for cross-dating purposes only. The high-frequency variation facilitates checking both statistical (correlations) and visual (comparing the squiggly line plots of two series) correspondence of two series.
+#' P2YrsL is similar in concept to computing AR residuals (aka "prewhitening") - the default in
+#' dplR. P2YrsL is the default in CDendro and CooRecorder. The essential element of both approaches
+#' is that we remove the mid- to low-frequency variation and highlight the high-frequency for
+#' cross-dating purposes only. The high-frequency variation facilitates checking both
+#' statistical (correlations) and visual (comparing the squiggly line plots of two series)
+#' correspondence of two series.
 #'
-#' @param rwl A rwl object (read in by dplR's \code{\link[dplR]{read.rwl}}). Essentially a data.frame with columns names as series IDs and years as rownames.
-#' @param limit A numeric vector specifying the number of standard deviations beyond the mean to limit (cut off) the resulting series. Default is 2.6, the same value used in CDendro and CooRecorder.
+#' @param rwl A rwl object (read in by dplR's \code{\link[dplR]{read.rwl}}). Essentially a
+#' data.frame with columns names as series IDs and years as rownames.
+#' @param limit A numeric vector specifying the number of standard deviations beyond the mean to
+#' limit (cut off) the resulting series. Default is 2.6, the same value used in
+#' CDendro and CooRecorder.
 #'
 #' @details
 #' See https://cdendro.se/wiki/index.php/Normalization

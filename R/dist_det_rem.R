@@ -1,55 +1,94 @@
-#' Supporting function for ci_detect - statistical detection and removal of disturbances in tree ring series
+#' Supporting function for ci_detect - statistical detection and removal of disturbances in tree
+#' ring series
 #'
 #' @description
-#' This function implements the disturbance detection and removal steps for the curve intervention detection techniques described by Druckenbrod et al. 2013,
-#' Rydval et al. 2016, and Rydval et al. 2018. The function works on a collection of transformed ring width series. Iterations
-#' are performed with \code{\link{ci_detect}}.
+#' This function implements the disturbance detection and removal steps for the curve intervention
+#' detection techniques described by Druckenbrod et al. 2013,
+#' Rydval et al. 2016, and Rydval et al. 2018. The function works on a collection of transformed
+#' ring width series. Iterations are performed with \code{\link{ci_detect}}.
 #'
 #' @param rwi A rwl object of detrended residual series produced by \code{\link{cp_detrend}}.
-#' @param min.win The minimum disturbance length in years (i.e., a moving window) to search for. The default is 9.
-#' @param max.win The maximum disturbance length in years (i.e., a moving window) to search for. The default is 30.
-#' @param thresh The disturbance detection threshold, corresponding to the number of deviations from the robust mean. The default is 3.29, following Druckenbrod et al. 2013.
-#' @param dist.span Parameter to determine the wiggliness of the loess splines fit to disturbance periods (when Hugershoff fits fail). Higher numbers = more wiggles. Passes to \code{\link[stats]{loess}}. The default is 1.25.
+#' @param min.win The minimum disturbance length in years (i.e., a moving window) to search for.
+#' The default is 9.
+#' @param max.win The maximum disturbance length in years (i.e., a moving window) to search for.
+#' The default is 30.
+#' @param thresh The disturbance detection threshold, corresponding to the number of deviations
+#' from the robust mean. The default is 3.29, following Druckenbrod et al. 2013.
+#' @param dist.span Parameter to determine the wiggliness of the loess splines fit to disturbance
+#' periods (when Hugershoff fits fail). Higher numbers = more wiggles. Passes to
+#' \code{\link[stats]{loess}}. The default is 1.25.
 #'
 #' @details
-#' The basic process that `dist_det_rem` performs is to take standardized tree ring series (specifically the output from the Cook & Peters (1997) process, as implemented by \code{\link{cp_detrend}} in \code{\link{ci_detect}}),
-#' fit AR models (using the Burg method) to them and extract the residuals. The AR models are also "backcasted" to estimate residuals for the 1st n years which are NAs (n being equal to the AR order).
-#' Backcasting involves reversing each series then fitting AR models of the same order as the original. Then, we compute moving averages of various window lengths. Disturbances are defined as moving average values that fall outside
-#' the threshold of number of deviations from the robust mean (default is 3.29), computed for each series and each moving average window length. The largest deviation - the largest absolute value of the difference between
-#' the moving average value & the (negative or positive) threshold - for each series is selected first. Thus the largest magnitude disturbance could be a suppression or a release.
-#' This defines the onset year and duration of the disturbance. A modified version of a Hugershoff curve (Warren & MacWilliam 1981) is then fit (via \code{\link[stats]{nls}}) to the disturbance period and beyond (all the way to the end of the series)
-#' transformed, detrended residual series (not the AR residuals), with slightly different coefficients than the Hugershoff curve used by Rydval et al. Namely, the following values are fixed: \emph{b} = 1, and \emph{d} = Tukey Biweight robust mean of the remainder
-#' of the transformed series after the disturbance, or 0 if the disturbance covers the end of the series. The \emph{d} term acts like an intercept. The Warren & MacWilliam curve has a \emph{t} coefficient which we use here.
-#' These modifications allow for more robust fitting (reduced parameters require fewer degrees of freedom). Setting the \emph{b} term to 1 allows the beginning y values of the Hugershoff curve to go above or below 0 (more directly determined by \emph{t}), which helps in minimizing artifacts from poor fit in the early years of a disturbance period.
+#' The basic process that `dist_det_rem` performs is to take standardized tree ring series
+#' (specifically the output from the Cook & Peters (1997) process, as implemented by
+#' \code{\link{cp_detrend}} in \code{\link{ci_detect}}), fit AR models (using the Burg method) to
+#' them and extract the residuals. The AR models are also "backcasted" to estimate residuals for
+#' the 1st n years which are NAs (n being equal to the AR order). Backcasting involves reversing
+#' each series then fitting AR models of the same order as the original. Then, we compute moving
+#' averages of various window lengths. Disturbances are defined as moving average values that fall
+#' outside the threshold of number of deviations from the robust mean (default is 3.29), computed
+#' for each series and each moving average window length. The largest deviation - the largest
+#' absolute value of the difference between the moving average value & the (negative or positive)
+#' threshold - for each series is selected first. Thus the largest magnitude disturbance could be
+#' a suppression or a release. This defines the onset year and duration of the disturbance.
+#' A modified version of a Hugershoff curve (Warren & MacWilliam 1981) is then fit
+#' (via \code{\link[stats]{nls}}) to the disturbance period and beyond (all the way to the end
+#' of the series) transformed, detrended residual series (not the AR residuals), with slightly
+#' different coefficients than the Hugershoff curve used by Rydval et al. Namely, the following
+#' values are fixed: \emph{b} = 1, and \emph{d} = Tukey Biweight robust mean of the remainder of
+#' the transformed series after the disturbance, or 0 if the disturbance covers the end of the
+#' series. The \emph{d} term acts like an intercept. The Warren & MacWilliam curve has a \emph{t}
+#' coefficient which we use here. These modifications allow for more robust fitting (reduced
+#' parameters require fewer degrees of freedom). Setting the \emph{b} term to 1 allows the
+#' beginning y values of the Hugershoff curve to go above or below 0 (more directly determined
+#' by \emph{t}), which helps in minimizing artifacts from poor fit in the early years of a
+#' disturbance period.
 #'
-#' While the Hugershoff curve fitting is reasonably robust, \code{\link[stats]{nls}} occasionally fails to converge. Additionally, the  In these cases a \code{\link[stats]{loess}} spline
-#' is fit to the disturbance period only instead (not the whole remainder of the series as in the Hugershoff).
-#' The wiggliness of these splines can be adjusted using the `dist.span` argument. For both methods, the resulting fitted curve is subtracted from the series.
+#' While the Hugershoff curve fitting is reasonably robust, \code{\link[stats]{nls}} occasionally
+#' fails to converge. Additionally, the  In these cases a \code{\link[stats]{loess}} spline is fit
+#' to the disturbance period only instead (not the whole remainder of the series as in the
+#' Hugershoff). The wiggliness of these splines can be adjusted using the `dist.span` argument.
+#' For both methods, the resulting fitted curve is subtracted from the series.
 #'
-#' If the arithmetic mean RWI ± 2sd of 15 years or the disturbance window length (whichever is longer) before the disturbance year does not contain 0, then the robust mean of this before period is
-#' added back to the curve-series difference. If the interval does contain 0 or the disturbance is very near the start of the series (i.e., < 15 years), no value is added to the difference.
-#' This is done to avoid artifacts from the disturbance removal process when the RWI values near a disturbance are not near 0 (which is the series mean of transformed detrended residuals).
-#' This seems to be a fairly robust method, but be sure to inspect the "Disturbance detection & removal plots" & "Final disturbance-free series plots" of \code{\link{ci_detect}} (\code{\link{plot_ci_detect}}) to be sure.
+#' If the arithmetic mean RWI ± 2sd of 15 years or the disturbance window length (whichever is
+#' longer) before the disturbance year does not contain 0, then the robust mean of this before
+#' period is added back to the curve-series difference. If the interval does contain 0 or the
+#' disturbance is very near the start of the series (i.e., < 15 years), no value is added to the
+#' difference. This is done to avoid artifacts from the disturbance removal process when the RWI
+#' values near a disturbance are not near 0 (which is the series mean of transformed detrended
+#' residuals). This seems to be a fairly robust method, but be sure to inspect the "Disturbance
+#' detection & removal plots" & "Final disturbance-free series plots" of \code{\link{ci_detect}}
+#'  (\code{\link{plot_ci_detect}}) to be sure.
 #'
 #' @return A named list with the following elements:
-#' 1) "Corrected RWI" - a list of the final 'disturbance-free' series after all iterations are done.
-#' 2) "Disturbance curves" - a list of the curves fitted to each disturbance detected within each series.
-#' 3) "Disturbance detection" - a list of data.frames containing the AR residuals, a moving average series, series robust means, and detection thresholds for the max disturbance detected. Mostly for plotting disturbance iterations in \code{\link{plot_ci_detect}}.
+#' 1) "Corrected RWI" - a list of the final 'disturbance-free' series after all iterations
+#' are done.
+#' 2) "Disturbance curves" - a list of the curves fitted to each disturbance detected within
+#' each series.
+#' 3) "Disturbance detection" - a list of data.frames containing the AR residuals, a moving
+#' average series, series robust means, and detection thresholds for the max disturbance detected.
+#' Mostly for plotting disturbance iterations in \code{\link{plot_ci_detect}}.
 #'
 #' @references
-#' Druckenbrod, D. L., N. Pederson, J. Rentch, and E. R. Cook. (2013) A comparison of times series approaches for dendroecological reconstructions of past canopy disturbance events.
+#' Druckenbrod, D. L., N. Pederson, J. Rentch, and E. R. Cook. (2013) A comparison of times series
+#' approaches for dendroecological reconstructions of past canopy disturbance events.
 #' \emph{Forest Ecology and Management}, \strong{302}, 23–33.
 #'
-#' Rydval, M., D. Druckenbrod, K. J. Anchukaitis, and R. Wilson. (2016) Detection and removal of disturbance trends in tree-ring series for dendroclimatology.
+#' Rydval, M., D. Druckenbrod, K. J. Anchukaitis, and R. Wilson. (2016) Detection and removal of
+#' disturbance trends in tree-ring series for dendroclimatology.
 #' \emph{Canadian Journal of Forest Research}, \strong{401}, 387–401.
 #'
-#' Rydval, M., D. L. Druckenbrod, M. Svoboda, V. Trotsiuk, P. Janda, M. Mikoláš, V. Čada, R. Bače, M. Teodosiu, and R. Wilson. (2018) Influence of sampling and disturbance history on climatic sensitivity of temperature limited conifers.
+#' Rydval, M., D. L. Druckenbrod, M. Svoboda, V. Trotsiuk, P. Janda, M. Mikoláš, V. Čada, R. Bače,
+#' M. Teodosiu, and R. Wilson. (2018) Influence of sampling and disturbance history on climatic
+#' sensitivity of temperature limited conifers.
 #' \emph{The Holocene}, \strong{28}(10), 1574-1587.
 #'
-#' Cook, E. R., and Peters, K. (1997) Calculating unbiased tree-ring indices for the study of climatic and environmental change.
+#' Cook, E. R., and Peters, K. (1997) Calculating unbiased tree-ring indices for the study of
+#' climatic and environmental change.
 #' \emph{The Holocene}, \strong{7}(3), 361-370.
 #'
-#' Warren, W. G., and S. L. MacWilliam. 1981. Test of a new method for removing the growth trend from dendrochronological data.
+#' Warren, W. G., and S. L. MacWilliam. 1981. Test of a new method for removing the growth trend
+#' from dendrochronological data.
 #' \emph{Tree Ring Bulletin} \strong{41}, 55–66.
 #'
 #' @seealso \code{\link{ci_detect}}, \code{\link{plot_ci_detect}}
@@ -132,12 +171,14 @@ dist_det_rem <- function(rwi,
     SIMPLIFY = FALSE
   )
 
-  ## Compute moving window averages of various lengths - the length of the window corresponds to disturbance length
-  # the min.win sets the smallest possible size, and tradition has it that 20 is the longest period. We can
-  # reassess that later - maybe the user can just specify this, within reasonable limits (max = 1/3 of series?).
+  ## Compute moving window averages of various lengths - the length of the window corresponds to
+  # disturbance length the min.win sets the smallest possible size, and tradition has it that 20
+  # is the longest period. We can reassess that later - maybe the user can just specify this,
+  # within reasonable limits (max = 1/3 of series?).
 
   mov_avgs <- lapply(comp_resids[orig.IDs], \(x) {
-    # Cap max.win at 1/3 the series length. If not, detection becomes oversensitive for short series
+    # Cap max.win at 1/3 the series length. If not, detection becomes oversensitive for short
+    # series
     max.win <- min(max.win, round(nrow(x) / 3))
 
     win_lens <- min.win:max.win
@@ -159,10 +200,12 @@ dist_det_rem <- function(rwi,
     ma_list
   })
 
-  # The outer level of mov_avgs are each moving window length, with the series inside each of those
+  # The outer level of mov_avgs are each moving window length, with the series inside
+  # each of those
 
   ## Define upper and lower disturbance thresholds for each moving window length
-  # The threshold is by default 3.29 robust scales from the robust mean of each moving average series
+  # The threshold is by default 3.29 robust scales from the robust mean of each moving
+  # average series
   tbrms <- lapply(mov_avgs[orig.IDs], FUN = \(x) {
     lapply(x, FUN = \(x) {
       TukeyBiweight(x$value, const = 9, na.rm = TRUE)
@@ -211,13 +254,16 @@ dist_det_rem <- function(rwi,
   )
 
 
-  ## Identify disturbances for each series & each moving window size, select the largest among window sizes
-  # disturbance size is defined as the difference between the moving average and the threshold
-  # There is potential to bias detection toward the smallest window sizes if I use only the "raw" value of the
-  # moving average disturbances. The better metric needs to be relative to the threshold for each particular window size.
+  ## Identify disturbances for each series & each moving window size, select the largest among
+  # window sizes disturbance size is defined as the difference between the moving average and the
+  # threshold
+  # There is potential to bias detection toward the smallest window sizes if I use only the
+  # "raw" value of the moving average disturbances. The better metric needs to be relative to
+  # the threshold for each particular window size.
   # So that would be the abs of the difference between ma value & the (lo or hi) threshold.
 
-  # 1st step is to determine which ma values are outside of lo.vals & hi.vals, if any, for all ma window sizes
+  # 1st step is to determine which ma values are outside of lo.vals & hi.vals, if any, for all ma
+  # window sizes
   # These steps return index values for all disturbances
   pos_out <- mapply(
     FUN = \(x, y) {
@@ -274,7 +320,8 @@ dist_det_rem <- function(rwi,
   )
 
 
-  # Now find the largest disturbances for each series among all window sizes and record the window size and the index value.
+  # Now find the largest disturbances for each series among all window sizes and record the window
+  # size and the index value.
   # The index value will correspond to year.
 
   # First the whole list for all window lengths
@@ -337,9 +384,10 @@ dist_det_rem <- function(rwi,
     y = max_neg_out[orig.IDs],
     SIMPLIFY = FALSE
   )
-  # max_out contains some basic disturbance info - the index of the starting year of the disturbance (ie, year),
-  # the dev value of the disturbance (magnitude), the window length, and the direction of the disturbance.
-  # index_pos & win_len determine the subset over which to fit a curve (dist_curves, below).
+  # max_out contains some basic disturbance info - the index of the starting year of the
+  # disturbance (ie, year), the dev value of the disturbance (magnitude), the window length,
+  # and the direction of the disturbance. index_pos & win_len determine the subset over which to
+  # fit a curve (dist_curves, below).
   # Can also use win_len to choose the relevant mov_avgs, tbrms, and lo_ & hi_vals out thresholds
   # The AR residual series can be extracted...
 
@@ -387,7 +435,8 @@ dist_det_rem <- function(rwi,
   )
 
 
-  ## Fit curves to the largest disturbance from each series (the resid detrended series in cp_list),
+  ## Fit curves to the largest disturbance from each series (the resid detrended series
+  # in cp_list),
   # subtract the disturbance curve, store the records of everything.
   dist_curves <- mapply(
     FUN = \(x, y) {
@@ -407,7 +456,8 @@ dist_det_rem <- function(rwi,
         dist_period <-
           series_df[y[, "index_pos"]:(y[, "index_pos"] + y$win_len - 1),]
 
-        # Value of d in the Hugershoff equation will be 0 (the overall series mean) if the disturbance covers
+        # Value of d in the Hugershoff equation will be 0 (the overall series mean) if
+        # the disturbance covers
         # the end of the series
         d <- 0
         # Attach the rest of series if there is one
@@ -432,7 +482,8 @@ dist_det_rem <- function(rwi,
         ## Curve fitting
         # Hugershoff - fits to the detected period and the reminder of the series too
         # The formula is modified. t is an added parameter that controls how far above/below the
-        # initial fit can go beyond the asymptote. b = 1, always, to allow t to work. d = the mean of the series after
+        # initial fit can go beyond the asymptote. b = 1, always, to allow t to work. d = the
+        # mean of the series after
         # the disturbance period or 0.
         # d mainly controls the asymptote value. We get a better chance at a successful fit if
         # we set these parameters here.
@@ -487,7 +538,8 @@ dist_det_rem <- function(rwi,
         sse_dist_win0 <- sum((dist_period[1:y$win_len, "rwi"] - 0)^2)
         sd_diffs0 <- sd((dist_period[1:y$win_len, "rwi"] - 0))
 
-        if (data.class(hug_fit) %in% "try-error" | round(sse_dist_win, 3) >= round(sse_dist_win0, 3)) {
+        if (data.class(hug_fit) %in% "try-error" |
+            round(sse_dist_win, 3) >= round(sse_dist_win0, 3)) {
           # If the Hugershoff fit failed or the fit in the detected disturbance window was poor,
           # fit a spline instead.
           # if this option, we should only fit & subtract the disturbance period itself
@@ -527,14 +579,17 @@ dist_det_rem <- function(rwi,
           )
         }
 
-        # "Correct" the rwi values for the disturbance period by subtracting the fitted curve (aka, the residuals)
+        # "Correct" the rwi values for the disturbance period by subtracting the fitted curve
+        # (aka, the residuals)
         # Dynamic add.recent.rwi instead of a global option - use only when the mean ± 3sd of
-        # proximate (before) rwi values does not contain 0. If this interval does contain 0 or the disturbance
+        # proximate (before) rwi values does not contain 0. If this interval does contain 0 or
+        # the disturbance
         # is very near the beginning of the series, just use 0.
 
         per_len <- ifelse(y$win_len < 15, 15, y$win_len)
         b_dist <-
-          ((min(dist_period$year, na.rm = TRUE) - 1) - per_len):(min(dist_period$year, na.rm = TRUE) - 1)
+          ((min(dist_period$year, na.rm = TRUE) - 1) - per_len):
+          (min(dist_period$year, na.rm = TRUE) - 1)
         if (min(b_dist) < min(series_df$year) |
             # if there is no before or
             length(b_dist[b_dist %in% series_df$year]) < per_len) {

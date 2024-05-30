@@ -36,8 +36,8 @@
 #'  data.frame.
 #' @param rel.per.begin an integer month representing the beginning of the climatically relevant
 #' period to the growth year (always a 12 month period).
-#' This will include the "water year" of the calendar year before growth. E.g., 10 for N hemisphere,
-#'  4 for S hemisphere. See details below for more info.
+#' This will include the "water year" of the calendar year before growth. E.g., 10 for N
+#' hemisphere, 4 for S hemisphere. See details below for more info.
 #' @param hemisphere a character vector specifying which hemisphere your tree ring data - &
 #' climate data - comes from ("N" or "S").
 #' Conventions for assigning growth years - and thus aligning tree ring and climate data - are
@@ -383,7 +383,8 @@ n_mon_corr <- function(rw = NULL,
     cat(
       "Autocorrelation detected in rw, recommend choose auto.corr = TRUE &
         corr.method = c('spearman', 'kendall') to avoid spurious correlation results.
-        You can also select prewhiten = TRUE to produce ARIMA residuals of both rw and clim data.\n"
+        You can also select prewhiten = TRUE to produce ARIMA residuals of both rw
+      and clim data.\n"
     )
     # auto.corr <- readline(prompt = "Enter auto.corr (TRUE or FALSE) = ")
     # corr.method <- readline(prompt = "Enter corr.method ('spearman' or 'kendall') = ")

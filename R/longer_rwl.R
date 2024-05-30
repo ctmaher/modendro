@@ -1,8 +1,9 @@
 #' Convert long format ring-width data to rwl-format
 #'
 #' @description
-#' Simple function to convert long format tree ring data (3 columns: year, series, rw) to rwl-format
-#' data (columns are series, rows are years). This is useful for grouping and reassubling data.
+#' Simple function to convert long format tree ring data (3 columns: year, series, rw) to
+#' rwl-format data (columns are series, rows are years). This is useful for grouping and
+#' reassembling data.
 #'
 #'
 #' @param df A long-format data.frame with "year" & "series" columns and a data column, specified

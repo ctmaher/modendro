@@ -2,7 +2,8 @@
 % Please edit documentation in R/ci_detect.R
 \name{ci_detect}
 \alias{ci_detect}
-\title{Curve intervention detection - statistical identification and removal of disturbances in tree ring series}
+\title{Curve intervention detection - statistical identification and removal of disturbances in tree
+ring series}
 \usage{
 ci_detect(
   rwl,
@@ -16,55 +17,81 @@ ci_detect(
 )
 }
 \arguments{
-\item{rwl}{A rwl-type data.frame (e.g., read in by \code{\link[dplR]{read.rwl}}). Essentially a data.frame with columns names as series IDs and years as rownames.}
+\item{rwl}{A rwl-type data.frame (e.g., read in by \code{\link[dplR]{read.rwl}}). Essentially a
+data.frame with columns names as series IDs and years as rownames.}
 
-\item{detrend.method}{A character vector specifying the detrending method to use. Passes to \code{\link[dplR]{detrend}} via \code{\link{cp_detrend}}. Default is "Mean".}
+\item{detrend.method}{A character vector specifying the detrending method to use. Passes to
+\code{\link[dplR]{detrend}} via \code{\link{cp_detrend}}. Default is "Mean".}
 
-\item{nyrs}{A numeric vector that determines the flexibility of the \code{"AgeDepSpline"} or the \code{"Spline"} detrending methods. Passes to \code{\link[dplR]{detrend}}. The default is 50 years or 1/3 the series length.}
+\item{nyrs}{A numeric vector that determines the flexibility of the \code{"AgeDepSpline"} or
+the \code{"Spline"} detrending methods. Passes to \code{\link[dplR]{detrend}}. The default is 50
+years or 1/3 the series length.}
 
-\item{min.win}{The minimum disturbance length in years (i.e., a moving window) to search for. The default is 9.}
+\item{min.win}{The minimum disturbance length in years (i.e., a moving window) to search for.
+The default is 9.}
 
-\item{max.win}{The maximum disturbance length in years (i.e., a moving window) to search for. The default is the smallest of 30 years or 1/3 of the series length.}
+\item{max.win}{The maximum disturbance length in years (i.e., a moving window) to search for.
+The default is the smallest of 30 years or 1/3 of the series length.}
 
-\item{thresh}{The disturbance detection threshold, corresponding to the number of deviations from the robust mean. The default is 3.29, following Druckenbrod et al. 2013.}
+\item{thresh}{The disturbance detection threshold, corresponding to the number of deviations
+from the robust mean. The default is 3.29, following Druckenbrod et al. 2013.}
 
-\item{dist.span}{Parameter to determine the wiggliness of the loess splines fit to disturbances periods. Higher numbers = less wiggles. Passes to \code{\link[stats]{loess}}. The default is 1.25}
+\item{dist.span}{Parameter to determine the wiggliness of the loess splines fit to disturbances
+periods. Higher numbers = less wiggles. Passes to \code{\link[stats]{loess}}.
+The default is 1.25}
 
-\item{max.iter}{The maximum number of iterations to run the disturbance detection and removal processes. The default is 10.}
+\item{max.iter}{The maximum number of iterations to run the disturbance detection and removal
+processes. The default is 10.}
 }
 \value{
 A named list with the following elements:
 \enumerate{
-\item "Disturbance-free series" - an rwl-data.frame of the final 'disturbance-free' series in original units (ring width; typically mm).
-\item "Disturbance index" - an rwl-data.frame of the differences (in original units) between the original ring widths and the 'disturbance-free' series.
-\item "Detected disturbances" - a list of data.frames containing the AR residuals, a moving average series, series robust means, and detection thresholds for the max disturbance detected. Mostly for plotting disturbance iterations in \code{\link{plot_ci_detect}}.
-\item "Disturbance removal iterations" - a list of lists containing the details on each disturbance detected and removed for each iteration and each series.
+\item "Disturbance-free series" - an rwl-data.frame of the final 'disturbance-free' series in
+original units (ring width; typically mm).
+\item "Disturbance index" - an rwl-data.frame of the differences (in original units) between the
+original ring widths and the 'disturbance-free' series.
+\item "Detected disturbances" - a list of data.frames containing the AR residuals, a moving average
+series, series robust means, and detection thresholds for the max disturbance detected.
+Mostly for plotting disturbance iterations in \code{\link{plot_ci_detect}}.
+\item "Disturbance removal iterations" - a list of lists containing the details on each disturbance
+detected and removed for each iteration and each series.
 \item "Cook & Peters detrend" - the output from the \code{\link{cp_detrend}} function.
 }
 }
 \description{
-This function implements an analysis based on the curve intervention detection techniques described by Druckenbrod et al. 2013,
-Rydval et al. 2016, and Rydval et al. 2018. The modendro implementation differs from the version described by these authors. See Details for more information.
-The basic motivations for performing this analysis are to identify, quantify, & remove abrupt changes in radial growth. You might use
-this information to help make inferences about forest stand dynamics, insect outbreaks, or isolate a stronger climate signal, depending on your dendroecological or dendroclimatological tendencies.
-The main output are "disturbance-free" series that are in the original ring width units (e.g., mm).
+This function implements an analysis based on the curve intervention detection techniques
+described by Druckenbrod et al. 2013, Rydval et al. 2016, and Rydval et al. 2018. The modendro
+implementation differs from the version described by these authors. See Details for more
+information.
+The basic motivations for performing this analysis are to identify, quantify, & remove abrupt
+changes in radial growth. You might use this information to help make inferences about forest
+stand dynamics, insect outbreaks, or isolate a stronger climate signal, depending on your
+dendroecological or dendroclimatological tendencies.
+The main output are "disturbance-free" series that are in original ring width units (e.g., mm).
 }
 \details{
-Intervention detection is a statistical time series approach to identify and remove abrupt changes in radial growth. Disturbances are detected
-using moving averages of autoregressive residuals of transformed detrended ring width series. The "curve" part
-of curve intervention detection (CID) describes the type of line fitted to each period that is identified as a disturbance.
-The implementation here uses a version of the equation presented by Warren & MacWilliam (1981), with
-slightly different coefficients than the Hugershoff curve used by Rydval et al. Namely, the following values are fixed: b = 1, and d = 0.
-The Warren & MacWilliam curve has a 't' coefficient which we use here. These changes improve the robustness of the fits. Fitting is done
-via \code{\link[stats]{nls}}. A major difference for the \code{modendro} implementation of CID is that in the cases where the \code{\link[stats]{nls}} fits fail, a \code{\link[stats]{loess}} spline is fit
-instead. See \code{\link{dist_det_rem}} for more details.
+Intervention detection is a statistical time series approach to identify and remove abrupt
+changes in radial growth. Disturbances are detected using moving averages of autoregressive
+residuals of transformed detrended ring width series. The "curve" part of curve intervention
+detection (CID) describes the type of line fitted to each period that is identified as a
+disturbance. The implementation here uses a version of the equation presented by Warren &
+MacWilliam (1981), with slightly different coefficients than the Hugershoff curve used by
+Rydval et al. Namely, the following values are fixed: b = 1, and d = 0. The Warren & MacWilliam
+curve has a 't' coefficient which we use here. These changes improve the robustness of the fits.
+Fitting is done via \code{\link[stats]{nls}}. A major difference for the \code{modendro}
+implementation of CID is that in the cases where the \code{\link[stats]{nls}} fits fail,
+a \code{\link[stats]{loess}} spline is fit instead. See \code{\link{dist_det_rem}} for more
+details.
 
-The choice of initial detrending can have an effect on the subsequent disturbance detection and removal, so choose wisely. All detrending is done with
-inside the function with \code{\link{cp_detrend}} so that the resulting series are transformed to homogenize variance and are residuals with a mean of 0.
+The choice of initial detrending can have an effect on the subsequent disturbance detection and
+removal, so choose wisely. All detrending is done with inside the function with
+\code{\link{cp_detrend}} so that the resulting series are transformed to homogenize variance
+and are residuals with a mean of 0.
 
-The final steps of the process involve adding back the initial detrending curves and reversing the transformations so that the resulting "disturbance-free" series are in
-the original ring width units (typically mm). These series can then be treated as any other ring width series, with the type of detrending/standardization depending on
-the research goals.
+The final steps of the process involve adding back the initial detrending curves and reversing
+the transformations so that the resulting "disturbance-free" series are in the original ring
+width units (typically mm). These series can then be treated as any other ring width series,
+with the type of detrending/standardization depending on the research goals.
 }
 \examples{
 library(dplR)
@@ -83,7 +110,8 @@ spag.plot(co021.ci.out[["Disturbance index"]])
 
 # You can get more detailed plots from plot_ci_detect
 co021.ci.out.plots <- plot_ci_detect(co021.ci.out)
-co021.ci.out.plots[["Disturbance detection & removal plots"]][["641121"]] # outputs 5 plots (more if max.iter is increased)
+co021.ci.out.plots[["Disturbance detection & removal plots"]][["641121"]]
+# outputs 5 plots (more if max.iter is increased)
 co021.ci.out.plots[["Final disturbance-free series plots"]][["641121"]]
 
 # The power transformation and detrending steps can also be retrieved using plot_cp_detrend:
@@ -92,18 +120,24 @@ co021.detrend.plots[["641121"]]
 
 }
 \references{
-Druckenbrod, D. L., N. Pederson, J. Rentch, and E. R. Cook. (2013) A comparison of times series approaches for dendroecological reconstructions of past canopy disturbance events.
+Druckenbrod, D. L., N. Pederson, J. Rentch, and E. R. Cook. (2013) A comparison of times series
+approaches for dendroecological reconstructions of past canopy disturbance events.
 \emph{Forest Ecology and Management}, \strong{302}, 23–33.
 
-Rydval, M., D. Druckenbrod, K. J. Anchukaitis, and R. Wilson. (2016) Detection and removal of disturbance trends in tree-ring series for dendroclimatology.
+Rydval, M., D. Druckenbrod, K. J. Anchukaitis, and R. Wilson. (2016) Detection and removal of
+disturbance trends in tree-ring series for dendroclimatology.
 \emph{Canadian Journal of Forest Research}, \strong{401}, 387–401.
 
-Rydval, M., D. L. Druckenbrod, M. Svoboda, V. Trotsiuk, P. Janda, M. Mikoláš, V. Čada, R. Bače, M. Teodosiu, and R. Wilson. (2018) Influence of sampling and disturbance history on climatic sensitivity of temperature limited conifers.
+Rydval, M., D. L. Druckenbrod, M. Svoboda, V. Trotsiuk, P. Janda, M. Mikoláš, V. Čada, R. Bače,
+M. Teodosiu, and R. Wilson. (2018) Influence of sampling and disturbance history on climatic
+sensitivity of temperature limited conifers.
 \emph{The Holocene}, \strong{28}(10), 1574-1587.
 
-Warren, W. G., and S. L. MacWilliam. 1981. Test of a new method for removing the growth trend from dendrochronological data.
+Warren, W. G., and S. L. MacWilliam. 1981. Test of a new method for removing the growth trend
+from dendrochronological data.
 \emph{Tree Ring Bulletin} \strong{41}, 55–66.
 }
 \seealso{
-\code{\link{dist_det_rem}}, \code{\link{plot_ci_detect}}, \code{\link{cp_detrend}}, \code{\link{plot_cp_detrend}}
+\code{\link{dist_det_rem}}, \code{\link{plot_ci_detect}}, \code{\link{cp_detrend}},
+\code{\link{plot_cp_detrend}}
 }

@@ -7,36 +7,52 @@
 find_opt_pwr(rwl, universal = FALSE, ID.group.substr = NULL)
 }
 \arguments{
-\item{rwl}{A rwl object (read in by dplR's  \code{\link[dplR]{read.rwl}}). Essentially a data.frame with columns names as series IDs and years as rownames.}
+\item{rwl}{A rwl object (read in by dplR's  \code{\link[dplR]{read.rwl}}). Essentially a
+data.frame with columns names as series IDs and years as rownames.}
 
-\item{universal}{A logical vector indicating whether to compute a single "universal" optimal power for all series within a group (if \code{TRUE} and arg \code{ID.group.substr} is unspecified, will assume all series in the rwl). If \code{FALSE}, the function estimates a separate optimal power for each individual series.}
+\item{universal}{A logical vector indicating whether to compute a single "universal" optimal
+power for all series within a group (if \code{TRUE} and arg \code{ID.group.substr} is unspecified,
+will assume all series in the rwl). If \code{FALSE}, the function estimates a separate optimal power
+for each individual series.}
 
-\item{ID.group.substr}{A numeric vector of length 2 that determines a sub grouping for calculating "universal" optimal power. Passes to \code{\link[base]{substr}} as the start (1st number) and stop (2nd number) args to split the series IDs in your rwl into groups.}
+\item{ID.group.substr}{A numeric vector of length 2 that determines a sub grouping for
+calculating "universal" optimal power. Passes to \code{\link[base]{substr}} as the start
+(1st number) and stop (2nd number) args to split the series IDs in your rwl into groups.}
 }
 \value{
-A named numeric vector with the series IDs (colnames) and the estimated optimal power of transformation for each series -or- a numeric vector of length 1.
+A named numeric vector with the series IDs (colnames) and the estimated optimal power
+of transformation for each series -or- a numeric vector of length 1.
 }
 \description{
-Use a spread versus level method to estimate the optimal power of transformation for a tree ring series
+Use a spread versus level method to estimate the optimal power of transformation for a tree
+ring series
 }
 \details{
-This function estimates the optimal power of transformation via the local spread versus level relationship of each series,
-where local spread is defined as the absolute value of the first
-differences, S, (|rwt - rwt-1|) and the local level is the arithmetic mean of each pair of adjacent values, M, (rwt + rwt-1)/2.
-The spread versus level relationship is then modeled in a simple linear regression as log10(S) ~ log10(M). The optimal power of transformation
-is then estimated as p = |1-slope| of this regression model.
+This function estimates the optimal power of transformation via the local spread versus level
+relationship of each series, where local spread is defined as the absolute value of the first
+differences, S, (|rwt - rwt-1|) and the local level is the arithmetic mean of each pair of
+adjacent values, M, (rwt + rwt-1)/2.
+The spread versus level relationship is then modeled in a simple linear regression as
+log10(S) ~ log10(M). The optimal power of transformation is then estimated as p = |1-slope| of
+this regression model.
 See \code{\link{cp_detrend}} and Cook & Peters (1997) for more details.
 
 Note that this is a very simple function that only implements the spread vs. level estimation
-of an optimal power for making tree ring series ± homoscedastic. Operationally in the \code{modendro} package, the final determination
-of how to transform series is performed in the  \code{\link{pwr_t_rwl}} function, per Cook & Peters (1997).
+of an optimal power for making tree ring series ± homoscedastic. Operationally in the \code{modendro}
+package, the final determination of how to transform series is performed in the
+\code{\link{pwr_t_rwl}} function, per Cook & Peters (1997).
 
-The \code{universal} and \code{ID.group.substr} arguments control how many series are included in the spread vs. level estimation,
-allowing for the same transformation to be performed across all tree ring series within each group (you determine the group). \code{universal} is a logical switch while
-\code{ID.group.substr} is a 2-element numeric that passes to the \code{start} & \code{stop} args of \code{\link[base]{substr}} which will act on the series IDs (i.e., the colnames in \code{rwl}).
-For example, if the first 3 characters of your series IDs refers to the site where the series were collected, you would specify \code{ID.group.substr = c(1, 3)}.
-Or, say the 4th element of the series IDs refers to the species collected, you could specify \code{ID.group.substr = c(4, 4)} to estimate optimal power by species.
-This assumes your series IDs contain this information in a systematic way. If not, you could also just create separate rwls for each of the groups you are interested in, set \code{universal = TRUE} and leave \code{ID.group.substr} unspecified.
+The \code{universal} and \code{ID.group.substr} arguments control how many series are included in the
+spread vs. level estimation, allowing for the same transformation to be performed across all
+tree ring series within each group (you determine the group). \code{universal} is a logical switch
+while \code{ID.group.substr} is a 2-element numeric that passes to the \code{start} & \code{stop} args of
+\code{\link[base]{substr}} which will act on the series IDs (i.e., the colnames in \code{rwl}). For
+example, if the first 3 characters of your series IDs refers to the site where the series were
+collected, you would specify \code{ID.group.substr = c(1, 3)}. Or, say the 4th element of the series
+IDs refers to the species collected, you could specify \code{ID.group.substr = c(4, 4)} to estimate
+optimal power by species. This assumes your series IDs contain this information in a systematic
+way. If not, you could also just create separate rwls for each of the groups you are interested
+in, set \code{universal = TRUE} and leave \code{ID.group.substr} unspecified.
 }
 \examples{
 library(dplR)
@@ -48,7 +64,8 @@ find_opt_pwr(rwl = ca533)
 find_opt_pwr(rwl = ca533, universal = TRUE)
 }
 \references{
-Cook, E. R., and Peters, K. (1997) Calculating unbiased tree-ring indices for the study of climatic and environmental change.
+Cook, E. R., and Peters, K. (1997) Calculating unbiased tree-ring indices for the study of
+climatic and environmental change.
 \emph{The Holocene}, \strong{7}(3), 361-370.
 }
 \seealso{
