@@ -11,16 +11,17 @@ License: MIT + file LICENSE
 Encoding: UTF-8
 Roxygen: list(markdown = TRUE)
 RoxygenNote: 7.3.1
+Depends: R (>= 4.0.0)
 Imports: 
-    dplR,
-    ggplot2,
-    tidyr,
+    dplR (>= 1.7.4),
+    ggplot2 (>= 3.5.0),
+    tidyr (>= 1.0.0),
     cowplot,
     stats,
     zoo,
     DescTools,
     corTESTsrd,
-    forecast,
+    forecast (>= 8.0.0),
     labeling
 Suggests:
     testthat
