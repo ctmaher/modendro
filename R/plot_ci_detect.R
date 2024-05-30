@@ -38,9 +38,9 @@
 #' \code{\link{plot_cp_detrend}}
 #'
 #' @import ggplot2
-#' @import cowplot
+#' @importFrom cowplot plot_grid
 #' @import labeling
-#' @import tidyr
+#' @importFrom tidyr pivot_longer
 #' @export
 #'
 #' @examples
@@ -69,25 +69,28 @@
 #' \dontrun{
 #' dir.create("ca533_ci_iter_plots") # create a folder first
 #' # Then make plot sheets for each series
+#' # choose wise values for width & height to make sure your plots aren't squished
 #' mapply(FUN = \(p, n) {
 #' ggsave(
 #' filename = paste0("ca533_ci_iter_plots/", n, "_ci_iter_plots.pdf"),
 #' plot = marrangeGrob(p, nrow = length(p), ncol = 1),
-#' width = 10, height = length(p)*4 # choose wise values here to make sure your plots
-#' aren't squished
+#' width = 10, height = length(p)*4
 #' )
 #' }, p = ca533_ci_plots[[1]][sapply(ca533_ci_plots[[1]], FUN = \(x) !is.character(x))],
 #' n = names(ca533_ci_plots[[1]][sapply(ca533_ci_plots[[1]], FUN = \(x) !is.character(x))])
 #' )
 #'
 #' # For the final plots:
+#' # choose wise values for width & height to make sure your plots aren't squished
 #' ggsave(
 #' filename = "ca533_final_ci_plots.pdf",
 #' plot = marrangeGrob(ca533_ci_plots[[2]][sapply(ca533_ci_plots[[2]],
 #' FUN = \(x) !is.character(x))], nrow=1, ncol=1),
-#' width = 10, height = 4 # choose wise values here to make sure your plots aren't squished
+#' width = 10,
+#' height = 4
 #' )
-#'}
+#' }
+#'
 #' # You can also use the `modendro` function `plot_cp_detrend()` to make plots of just initial
 #' # detrending & transformaton steps.
 #' # The required input is the 4th element in the `ci_detect()` output.

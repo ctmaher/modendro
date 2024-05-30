@@ -79,7 +79,6 @@
 #' @seealso \code{\link{pwr_t_rwl}}, \code{\link{find_opt_pwr}}
 #'
 #' @import dplR
-#' @import tidyr
 #' @export
 #'
 #' @examples

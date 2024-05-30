@@ -117,7 +117,7 @@
 #'
 #' @import ggplot2
 #' @import corTESTsrd
-#' @import forecast
+#' @importFrom forecast auto.arima
 #'
 #' @export
 #'

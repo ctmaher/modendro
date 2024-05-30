@@ -41,6 +41,60 @@ respectively. Only the estimated disturbance start years are shown on the x-axis
 are shown in the original units (ring width), with the long term age/size trend reintroduced &
 the power transformation reversed.
 }
+\examples{
+library(dplR)
+data("ca533")
+# Note that this will be somewhat slow, depending on your machine
+
+ca533_ci <- ci_detect(rwl = ca533)
+ca533_ci_plots <- plot_ci_detect(ca533_ci)
+names(ca533_ci_plots) # See what each list element contains
+# The first element contains the disturbance detection & removal processes & their iterations
+# this will display all iterations - scroll backward through your plotting window to see
+# them all.
+ca533_ci_plots[[1]][['CAM011']]
+
+# The second element contains a plot of the final series compared to the original,
+# with the disturbances indicated
+ca533_ci_plots[[2]][['CAM011']]
+
+# If you wanted to write these plots to pdf to browse them more freely,
+# you could do the following steps (will write to your working directory):
+
+library(ggplot2)
+
+# For the iteration plots:
+\dontrun{
+dir.create("ca533_ci_iter_plots") # create a folder first
+# Then make plot sheets for each series
+# choose wise values for width & height to make sure your plots aren't squished
+mapply(FUN = \(p, n) {
+ggsave(
+filename = paste0("ca533_ci_iter_plots/", n, "_ci_iter_plots.pdf"),
+plot = marrangeGrob(p, nrow = length(p), ncol = 1),
+width = 10, height = length(p)*4
+)
+}, p = ca533_ci_plots[[1]][sapply(ca533_ci_plots[[1]], FUN = \(x) !is.character(x))],
+n = names(ca533_ci_plots[[1]][sapply(ca533_ci_plots[[1]], FUN = \(x) !is.character(x))])
+)
+
+# For the final plots:
+# choose wise values for width & height to make sure your plots aren't squished
+ggsave(
+filename = "ca533_final_ci_plots.pdf",
+plot = marrangeGrob(ca533_ci_plots[[2]][sapply(ca533_ci_plots[[2]],
+FUN = \(x) !is.character(x))], nrow=1, ncol=1),
+width = 10,
+height = 4
+)
+}
+
+# You can also use the `modendro` function `plot_cp_detrend()` to make plots of just initial
+# detrending & transformaton steps.
+# The required input is the 4th element in the `ci_detect()` output.
+ca533_cp_plots <- plot_cp_detrend(ca533_ci[[5]])
+ca533_cp_plots[[1]]
+}
 \seealso{
 \code{\link{ci_detect}}, \code{\link{dist_det_rem}}, \code{\link{cp_detrend}},
 \code{\link{plot_cp_detrend}}

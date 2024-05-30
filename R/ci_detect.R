@@ -94,7 +94,6 @@
 #' @import dplR
 #' @importFrom zoo rollmean
 #' @import stats
-#' @import DescTools
 #' @export
 #'
 #' @examples

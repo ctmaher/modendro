@@ -17,7 +17,7 @@
 #' Hoaglin, D. C., F. Mosteller, and J. W. Tukey. 1983. Understanding robust and exploratory data
 #' analysis. New York: Wiley.
 #'
-#' @import DescTools
+#' @importFrom DescTools TukeyBiweight
 #' @export
 #'
 #' @examples

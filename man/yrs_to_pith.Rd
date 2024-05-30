@@ -63,7 +63,7 @@ values of y2pith), you may need to increase \code{n.rings} or switch to method "
 values can arise from large d2pith values and/or if the innermost n.rings happen to be very
 narrow. The take home message is that the value of \code{n.rings} is not allowing a robust enough
 estimate of average ring width to apply over d2pith. Method "dist" attempts to circumvent the
-estimation of a "Goldilocks" \code{n.rings} value by using instead the number of rings that add up to
+guessing of a "Goldilocks" \code{n.rings} value by using instead the number of rings that add up to
 d2pith instead (\code{n.rings} is variable). I.e., we use the mean ring width over the innermost
 \emph{distance} equal to d2pith. Defaults to the mean of innermost \code{n.rings} if d2pith yields
 less than \code{n.rings}.

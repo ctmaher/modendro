@@ -96,7 +96,7 @@
 #' @import dplR
 #' @importFrom zoo rollmean
 #' @import stats
-#' @import DescTools
+#' @importFrom DescTools TukeyBiweight
 #' @export
 #'
 #'
@@ -187,7 +187,7 @@ dist_det_rem <- function(rwi,
       values <- x[, "value"]
 
       # Compute the moving average using rollmean from the zoo package
-      ma <- rollmean(values,
+      ma <- zoo::rollmean(values,
                      k = w,
                      align = "left",
                      fill = NA)
