@@ -38,11 +38,7 @@ plot_cp_detrend <- function(cp_out) {
     orig.IDs <- colnames(rw)
     rw[, "year"] <-
       rownames(cp_out[["Raw ring widths"]]) |> as.numeric()
-    # long.rw <- tidyr::pivot_longer(rw,
-    #                                cols = -year,
-    #                                names_to = "series" ,
-    #                                values_to = "value") |>
-    #   as.data.frame()
+
     long.rw <- rwl_longer(rwl = rw[,!(colnames(rw) %in% "year")],
                           series.name = "series",
                           dat.name = "value",
@@ -61,12 +57,7 @@ plot_cp_detrend <- function(cp_out) {
                           dat.name = "value",
                           trim = TRUE,
                           na.warn = FALSE)
-    # long.trans <- tidyr::pivot_longer(
-    #   trans,
-    #   cols = -year,
-    #   names_to = "series" ,
-    #   values_to = "value"
-    # )
+
     long.trans$type <- "pwr.t_cu"
 
     curv <- as.data.frame(cp_out[["Detrend curves"]][,orig.IDs])
@@ -77,13 +68,7 @@ plot_cp_detrend <- function(cp_out) {
                              dat.name = "value",
                              trim = TRUE,
                              na.warn = FALSE)
-    # long.curv <- tidyr::pivot_longer(
-    #   curv,
-    #   cols = -year,
-    #   names_to = "series" ,
-    #   values_to = "value"
-    # ) |>
-    #   as.data.frame()
+
     long.curv$type <- "pwr.t_cu"
 
     detr <- as.data.frame(cp_out[["Resid. detrended series"]][,orig.IDs])
@@ -182,20 +167,20 @@ plot_cp_detrend <- function(cp_out) {
         y_val <- "value"
         col_val <- "type"
         # Plot
-        ggplot(x, aes(.data[[x_val]], .data[[y_val]], color = .data[[col_val]])) +
-          scale_color_manual(values = c("black", "black", "blue"),
+        ggplot2::ggplot(x, aes(.data[[x_val]], .data[[y_val]], color = .data[[col_val]])) +
+          ggplot2::scale_color_manual(values = c("black", "black", "blue"),
                              guide = "none") +
-          geom_line(linewidth = 0.4, na.rm = TRUE) +
-          facet_wrap( ~ type,
+          ggplot2::geom_line(linewidth = 0.4, na.rm = TRUE) +
+          ggplot2::facet_wrap( ~ type,
                       ncol = 1,
                       scales = "free_y",
                       strip.position = "left") +
-          geom_line(data = y,
+          ggplot2::geom_line(data = y,
                     color = "blue",
                     na.rm = TRUE) +
-          scale_x_continuous(breaks = x_axis_params,
+          ggplot2::scale_x_continuous(breaks = x_axis_params,
                              limits = range(x_axis_params)) +
-          theme(
+          ggplot2::theme(
             strip.placement = "outside",
             strip.background = element_blank(),
             strip.text = element_text(size = 10),
@@ -205,7 +190,7 @@ plot_cp_detrend <- function(cp_out) {
             panel.grid = element_blank(),
             panel.background = element_blank()
           ) +
-          ggtitle(paste0("C&P transform & detrend for series ID: ", x[1,"series"]),
+          ggplot2::ggtitle(paste0("C&P transform & detrend for series ID: ", x[1,"series"]),
                   subtitle = z$trans.message)
       },
       x = all.list,

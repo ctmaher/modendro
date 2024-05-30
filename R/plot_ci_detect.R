@@ -309,16 +309,16 @@ plot_ci_detect <- function(ci_output) {
         y_val <- "value"
         col_lt_val <- "type"
         dist_det_plot <-
-          ggplot(na.omit(det_no_transRW),
+          ggplot2::ggplot(na.omit(det_no_transRW),
                  aes(.data[[x_val]], .data[[y_val]],
                      color = .data[[col_lt_val]], linetype = .data[[col_lt_val]])) +
-          scale_color_manual(
+          ggplot2::scale_color_manual(
             name = NULL,
             values = c("grey80", "black", "black", "black", "orange")
           ) +
-          scale_linetype_manual(name = NULL,
+          ggplot2::scale_linetype_manual(name = NULL,
                                 values = c(1, 1, 3, 3, 1)) +
-          annotate(
+          ggplot2::annotate(
             geom = "rect",
             xmin = min(rem_iter$year, na.rm = TRUE),
             xmax = (rem_iter$dur - 1) + min(rem_iter$year, na.rm = TRUE),
@@ -326,10 +326,10 @@ plot_ci_detect <- function(ci_output) {
             ymax = max(det_iter$value, na.rm = TRUE),
             color = "grey30"
           ) +
-          geom_line() +
-          ylab("AR resids.") +
-          scale_x_continuous(breaks = clean_breaks) +
-          theme(
+          ggplot2::geom_line() +
+          ggplot2::ylab("AR resids.") +
+          ggplot2::scale_x_continuous(breaks = clean_breaks) +
+          ggplot2:: theme(
             panel.background = element_blank(),
             panel.grid = element_blank(),
             axis.title.x = element_blank(),
@@ -338,8 +338,8 @@ plot_ci_detect <- function(ci_output) {
             legend.position = "top"
           ) +
           # Use the single factor level to label the plot
-          facet_wrap( ~ process, strip.position = "right") +
-          ggtitle(paste0(
+          ggplot2::facet_wrap( ~ process, strip.position = "right") +
+          ggplot2::ggtitle(paste0(
             "Series ID: ",
             det_iter$series,
             ", Iteration: ",
@@ -349,12 +349,13 @@ plot_ci_detect <- function(ci_output) {
 
         ## The removal plots
         dist_long <-
-          pivot_longer(
+          tidyr::pivot_longer(
             rem_iter[,!c(colnames(rem_iter) %in% "rwi.cor")],
             cols = c("curve", "rwi"),
             names_to = "type",
             values_to = "value"
-          )
+          ) |> as.data.frame()
+
         # add 1 year each before and after to the rwi - this is for plotting aesthetics
         # without this, the disturbance section appears to float above/below the disturbance-free
         # series. However, don't do this if the disturbance period reaches the beginning or end of
@@ -425,35 +426,35 @@ plot_ci_detect <- function(ci_output) {
         col_lt_val <- "type"
         # Plot
         dist_rem_plot <-
-          ggplot(na.omit(rem_series),
+          ggplot2::ggplot(na.omit(rem_series),
                  aes(.data[[x_val]], .data[[y_val]],
                      color = .data[[col_lt_val]], linewidth = .data[[col_lt_val]])) +
-          scale_color_manual(name = element_blank(),
+          ggplot2::scale_color_manual(name = element_blank(),
                              values = c("black", "grey20", curve_col)) +
-          scale_linewidth_manual(name = element_blank(), values = c(0.75, 0.25, 0.5)) +
-          scale_linetype_manual(name = element_blank(), values = c(1, 1, 1)) +
-          geom_hline(yintercept = 0, linetype = 3) +
-          geom_line() +
-          ylab("Detrended resids.") +
-          scale_x_continuous(breaks = clean_breaks) +
-          theme(
+          ggplot2::scale_linewidth_manual(name = element_blank(), values = c(0.75, 0.25, 0.5)) +
+          ggplot2::scale_linetype_manual(name = element_blank(), values = c(1, 1, 1)) +
+          ggplot2::geom_hline(yintercept = 0, linetype = 3) +
+          ggplot2::geom_line() +
+          ggplot2::ylab("Detrended resids.") +
+          ggplot2::scale_x_continuous(breaks = clean_breaks) +
+          ggplot2::theme(
             panel.background = element_blank(),
             panel.grid = element_blank(),
             axis.title.x = element_blank(),
             legend.key = element_blank(),
             legend.position = "top"
           ) +
-          labs(subtitle = ifelse(
+          ggplot2::labs(subtitle = ifelse(
             substr(dist_long$eq[[1]], start = 1, stop = 1) %in% "l",
             dist_long$eq[[1]],
             parse(text = dist_long$eq[[1]])
           )) +
           #coord_fixed(ratio = 45) +
           # Use a single factor level to label the plot
-          facet_wrap( ~ process, strip.position = "right")
+          ggplot2::facet_wrap( ~ process, strip.position = "right")
 
         # Plot the two panels together
-        plot_grid(
+        cowplot::plot_grid(
           dist_det_plot,
           dist_rem_plot,
           align = "v",
@@ -523,10 +524,10 @@ plot_ci_detect <- function(ci_output) {
         col_lt_val <- "type"
         col_var2 <- "dir"
         # Plot
-        ggplot(dat, aes(.data[[x_val]],
+        ggplot2::ggplot(dat, aes(.data[[x_val]],
                         .data[[y_val]],
                         linewidth = .data[[col_lt_val]],)) +
-          geom_segment(
+          ggplot2::geom_segment(
             data = dist,
             aes(
               x = .data[[x_val]],
@@ -538,13 +539,13 @@ plot_ci_detect <- function(ci_output) {
             linewidth = 0.75,
             inherit.aes = FALSE
           ) +
-          scale_color_manual(name = "Disturb. type",
+          ggplot2::scale_color_manual(name = "Disturb. type",
                              values = col_val) +
-          geom_line() +
-          scale_linewidth_manual(name = "Series", values = c(0.75, 0.25)) +
-          ylab("Ring width (mm)") +
-          scale_x_continuous(breaks = dist$year) +
-          theme(
+          ggplot2::geom_line() +
+          ggplot2::scale_linewidth_manual(name = "Series", values = c(0.75, 0.25)) +
+          ggplot2::ylab("Ring width (mm)") +
+          ggplot2::scale_x_continuous(breaks = dist$year) +
+          ggplot2::theme(
             panel.background = element_blank(),
             panel.grid = element_blank(),
             axis.title.x = element_blank(),
@@ -553,11 +554,11 @@ plot_ci_detect <- function(ci_output) {
             legend.key = element_blank(),
             axis.text.x = element_text(angle = 45)
           ) +
-          guides(
+          ggplot2::guides(
             linewidth = guide_legend(title.position = "top", order = 1),
             color = guide_legend(title.position = "top", order = 2)
           ) +
-          ggtitle(paste("Intervention detection results for series ID:", ID))
+          ggplot2::ggtitle(paste("Intervention detection results for series ID:", ID))
       }
     },
 

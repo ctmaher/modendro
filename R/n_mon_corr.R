@@ -715,16 +715,16 @@ n_mon_corr <- function(rw = NULL,
     x_var1 <- "start.mo"
     x_var2 <- "end.mo"
     col_var <- "sig"
-    out.plot <- ggplot(plot.df) +
-      geom_point(aes(factor(.data[[x_var1]], levels = mon.seq), # start points
+    out.plot <- ggplot2::ggplot(plot.df) +
+      ggplot2::geom_point(aes(factor(.data[[x_var1]], levels = mon.seq), # start points
                      coef, color = .data[[col_var]]),
                  shape = 18,
                  size = 2) +
-      geom_point(aes(factor(.data[[x_var2]], levels = mon.seq), # end points
+      ggplot2::geom_point(aes(factor(.data[[x_var2]], levels = mon.seq), # end points
                      coef, color = .data[[col_var]]),
                  shape = 124,
                  size = 2) +
-      geom_segment(aes(
+      ggplot2::geom_segment(aes(
         x = factor(.data[[x_var1]], levels = mon.seq),
         # lines connecting
         xend = factor( .data[[col_var]], levels = mon.seq),
@@ -732,14 +732,14 @@ n_mon_corr <- function(rw = NULL,
         yend = coef,
         color = .data[[col_var]]
       )) +
-      scale_x_discrete(breaks = mon.seq, labels = mon.seq) +
-      scale_y_continuous(breaks = seq(-1, 1, by = 0.1)) +
-      xlab("Month") +
-      ylab(paste0("Correlation coefficient\n(", corr.method, ")")) +
-      scale_color_manual(name = "", values = c("grey80", "black")) +
-      theme_bw() +
-      facet_wrap( ~ lag, ncol = 1, strip.position	= "right") +
-      ggtitle(
+      ggplot2::scale_x_discrete(breaks = mon.seq, labels = mon.seq) +
+      ggplot2::scale_y_continuous(breaks = seq(-1, 1, by = 0.1)) +
+      ggplot2::xlab("Month") +
+      ggplot2::ylab(paste0("Correlation coefficient\n(", corr.method, ")")) +
+      ggplot2::scale_color_manual(name = "", values = c("grey80", "black")) +
+      ggplot2::theme_bw() +
+      ggplot2::facet_wrap( ~ lag, ncol = 1, strip.position	= "right") +
+      ggplot2::ggtitle(
         label = title,
         subtitle = paste0(
           "Monthly climate ",

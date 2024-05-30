@@ -116,7 +116,7 @@ cp_plot_dir <- paste0(getwd(),"/CP_plots")
 dir.create(cp_plot_dir)
 # Apply ggsave() to each plot:
 mapply(FUN = \(x, y) {
-        ggsave(filename = paste0(cp_plot_dir, "/", y, ".pdf"),
+        ggplot2::ggsave(filename = paste0(cp_plot_dir, "/", y, ".pdf"),
         plot = x,
         device = "pdf",
         width = 20,
