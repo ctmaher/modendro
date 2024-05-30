@@ -79,9 +79,9 @@ longer_rwl <- function(df = NULL, series.name = NULL, dat.name = NULL) {
 
 
   wide.rwl <- stats::reshape(
-    df[, c("year", series.name, dat.name)],
+    data = df[, c("year", series.name, dat.name)],
     idvar = "year",
-    ids = rwl[,"year"], # This was causing a "no visible binding for global variable" note
+    ids = .data[["year"]], # This was causing a "no visible binding for global variable" note
     times = series,
     timevar = series.name,
     varying = list(series),

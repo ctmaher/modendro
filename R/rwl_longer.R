@@ -75,9 +75,9 @@ rwl_longer <- function(rwl = NULL,
 
 
   long.rwl <- stats::reshape(
-    rwl,
+    data = rwl,
     idvar = "year",
-    ids = rwl[,"year"],
+    ids = .data[["year"]],
     times = series.cols,
     timevar = series.name,
     v.names = dat.name,
