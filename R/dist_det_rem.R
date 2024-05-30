@@ -208,8 +208,8 @@ dist_det_rem <- function(rwi,
   # average series
   tbrms <- lapply(mov_avgs[orig.IDs], FUN = \(x) {
     lapply(x, FUN = \(x) {
-      TukeyBiweight(x$value, const = 9, na.rm = TRUE)
-      #tbrm(x$value, C = 9) # The dplR version
+      DescTools::TukeyBiweight(x$value, const = 9, na.rm = TRUE)
+      #dplr::tbrm(x$value, C = 9) # The dplR version
     })
   })
 

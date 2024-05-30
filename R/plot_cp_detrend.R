@@ -18,7 +18,6 @@
 #' @seealso \code{\link{cp_detrend}}, \code{\link{pwr_t_rwl}}, \code{\link{find_opt_pwr}}
 #'
 #' @import ggplot2
-#' @import tidyr
 #' @export
 #'
 #' @examples

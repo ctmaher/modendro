@@ -21,7 +21,8 @@ Imports:
     DescTools,
     corTESTsrd,
     mgcv,
-    forecast
+    forecast,
+    labeling
 Suggests:
     testthat
 URL: https://github.com/ctmaher/modendro

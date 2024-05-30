@@ -39,6 +39,7 @@
 #'
 #' @import ggplot2
 #' @import cowplot
+#' @import labeling
 #' @import tidyr
 #' @export
 #'
