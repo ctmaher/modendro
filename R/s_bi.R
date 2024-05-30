@@ -18,6 +18,7 @@
 #' analysis. New York: Wiley.
 #'
 #' @importFrom DescTools TukeyBiweight
+#' @importFrom DescTools MAD
 #' @export
 #'
 #' @examples
@@ -30,7 +31,7 @@ s_bi <- function(x) {
               is.numeric(x) | is.double(x))
 
   x_tbrm <- DescTools::TukeyBiweight(x)
-  u <- (x - x_tbrm)/(9*MAD(x - x_tbrm))
+  u <- (x - x_tbrm)/(9*DescTools::MAD(x - x_tbrm))
   only_these <- which(abs(u) < 1)
   u <- u[only_these]
   x <- x[only_these]
