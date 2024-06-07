@@ -84,13 +84,14 @@ longer_rwl <- function(df = NULL, series.name = NULL, dat.name = NULL) {
     ids = .data[["year"]], # This was causing a "no visible binding for global variable" note
     times = series,
     timevar = series.name,
-    varying = list(series),
+    #varying = as.list(series),
     direction = "wide"#,
     #new.row.names = min(df[, "year"]):max(df[, "year"])
-)
+  )
 
   rownames(wide.rwl) <- wide.rwl[, "year"]
   wide.rwl <- wide.rwl[order(wide.rwl[, "year"]),]
-  wide.rwl[,!(colnames(wide.rwl) %in% "year")]
-
+  wide.rwl <- wide.rwl[,!(colnames(wide.rwl) %in% "year")]
+  colnames(wide.rwl) <- series
+  wide.rwl
   }
