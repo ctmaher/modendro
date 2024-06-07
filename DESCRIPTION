@@ -22,7 +22,8 @@ Imports:
     DescTools,
     corTESTsrd,
     forecast (>= 8.0.0),
-    labeling
+    labeling,
+    jsonlite
 Suggests:
     testthat
 URL: https://github.com/ctmaher/modendro
