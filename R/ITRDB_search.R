@@ -63,17 +63,6 @@ ITRDB_search <- function(species = NULL,
                          lat.range = NULL,
                          limit = 20,
                          simplify = TRUE) {
-  spp.codes <- jsonlite::fromJSON(
-    "https://www.ncei.noaa.gov/access/paleo-search/study/params.json")
-
-  spp.codes <- c(spp.codes$species$NOAA[[1]], spp.codes$species$NOAA[[2]])
-  spp.codes <- spp.codes[order(spp.codes)]
-
-  # extract the abbreviated codes only for comparison
-  spp.codes.abv <- strsplit(spp.codes, split = ":") |>
-    lapply(FUN = \(x) x[2]) |>
-    unlist()
-
 
   stopifnot(
     "species arg must be a character vector of length 1 or more" =
@@ -94,22 +83,54 @@ ITRDB_search <- function(species = NULL,
   )
 
   stopifnot(
-    "limit arg must be a numeric vector of length 1" =
-      is.numeric(limit) == TRUE |
-      is.null(limit)
-  )
-
-  stopifnot(
     "lon.range values must be between -180:180" =
       lon.range[1] >= -180 &
+      lon.range[1] <= 180 &
+      lon.range[2] >= -180 &
       lon.range[2] <= 180
   )
 
   stopifnot(
     "lat.range values must be between -80:80" =
       lat.range[1] >= -80 &
+      lat.range[1] <= 80 &
+      lat.range[2] >= -80 &
       lat.range[2] <= 80
   )
+
+  stopifnot(
+    "First element of lon.range arg must be the minimum value, second the maximum" =
+      lon.range[1] < lon.range[2]
+  )
+
+  stopifnot(
+    "First element of lat.range arg must be the minimum value, second the maximum" =
+      lat.range[1] < lat.range[2]
+  )
+
+
+  stopifnot(
+    "limit arg must be a numeric vector of length 1" =
+      is.numeric(limit) == TRUE |
+      is.null(limit)
+  )
+
+  stopifnot(
+    "simplify must be a logical vector (TRUE or FALSE) of length 1" =
+      is.logical(simplify) == TRUE &
+      length(simplify) == 1
+  )
+
+  spp.codes <- jsonlite::fromJSON(
+    "https://www.ncei.noaa.gov/access/paleo-search/study/params.json")
+
+  spp.codes <- c(spp.codes$species$NOAA[[1]], spp.codes$species$NOAA[[2]])
+  spp.codes <- spp.codes[order(spp.codes)]
+
+  # extract the abbreviated codes only for comparison
+  spp.codes.abv <- strsplit(spp.codes, split = ":") |>
+    lapply(FUN = \(x) x[2]) |>
+    unlist()
 
   stopifnot(
     "species code(s) don't match NCEI codes" =
