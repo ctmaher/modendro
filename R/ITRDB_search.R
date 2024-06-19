@@ -129,7 +129,7 @@ ITRDB_search <- function(species = NULL,
                              paste0("species=",
                                     paste(strwrap(species, width = 4),
                                           collapse = "%7C"),
-                                    "speciesAndOr=or")
+                                    "&speciesAndOr=or")
                       ),
                       ifelse(is.null(limit), "limit=1000",
                              paste0("limit=", limit)),
