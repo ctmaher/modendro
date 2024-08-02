@@ -1,5 +1,5 @@
 Package: modendro
-Title: modendro: More Dendro (Tree-Ring) Functions
+Title: modendro: more dendro (tree-ring) functions
 Version: 0.7.0
 Authors@R: 
     person("Colin", "Maher", , "cmbristlecone@gmail.com", role = c("aut", "cre"),
