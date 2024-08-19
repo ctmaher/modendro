@@ -735,7 +735,8 @@ n_mon_corr <- function(rw = NULL,
       ggplot2::scale_x_discrete(breaks = mon.seq, labels = mon.seq) +
       ggplot2::scale_y_continuous(breaks = seq(-1, 1, by = 0.1)) +
       ggplot2::xlab("Month") +
-      ggplot2::ylab(paste0("Correlation coefficient\n(", corr.method, ")")) +
+      ggplot2::ylab(paste0("Correlation coefficient\n(", toupper(substr(corr.method, 1, 1)),
+                           substr(corr.method, 2, nchar(corr.method)), ")")) +
       ggplot2::scale_color_manual(name = "", values = c("grey80", "black")) +
       ggplot2::theme_bw() +
       ggplot2::facet_wrap( ~ lag, ncol = 1, strip.position	= "right") +
