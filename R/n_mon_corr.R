@@ -727,7 +727,7 @@ n_mon_corr <- function(rw = NULL,
       ggplot2::geom_segment(aes(
         x = factor(.data[[x_var1]], levels = mon.seq),
         # lines connecting
-        xend = factor( .data[[col_var]], levels = mon.seq),
+        xend = factor( .data[[x_var2]], levels = mon.seq),
         y = coef,
         yend = coef,
         color = .data[[col_var]]
