@@ -50,18 +50,13 @@
 #' @param prewhiten logical vector specifying whether or not to convert tree ring & climate time
 #' series to ARIMA residuals (aka "prewhitening"). A "best fit" ARIMA model is automatically
 #' selected using \code{\link[forecast]{auto.arima}}.
-#' This removes autocorrelation in a time series, leaving only the high-frequency variation.
-#' This is common practice before using standard methods for cross-correlations. Default is FALSE.
-#' @param auto.corr logical vector specifying whether there is temporal autocorrelation in
-#' either your tree ring or climate time series (there typically is autocorrelation,
-#' unless both are "prewhitened").
-#' If TRUE (the default), & corr.method is "spearman" or "kendall", then the
-#' \code{\link[corTESTsrd]{corTESTsrd}} function is used to compute modified significance
-#' testing to account for autocorrelation (From Lun et al. 2022).
-#' Caution! Currently auto.corr = TRUE & corr.method = "Pearson" doesn't make any adjustments.
-#' @param corr.method character vector specifying which correlation method to use. Default is
-#' `"spearman"`. Options are `c("pearson", "kendall", "spearman")`.
-#'  Passes to \code{\link[stats]{cor.test}} or to \code{\link[corTESTsrd]{corTESTsrd}}.
+#' This removes most autocorrelation in a time series, leaving only the high-frequency variation.
+#' This is common practice before using standard methods for cross-correlations. Default is TRUE.
+#' @param corr.method character vector specifying which correlation method to use. Options are
+#' `c("spearman", "kendall", "pearson")`. Default is `"spearman"` using the
+#' \code{\link[corTESTsrd]{corTESTsrd}} function (also used for `corr.method = "kendall"`). This
+#' method reduces the type I error rate associated with autocorrelated series. CAUTION: Currently
+#' `corr.method = "pearson"` doesn't make any adjustments for autocorrelation. See Details below.
 #' @param rw.name character vector - the name of your tree ring series (optional).
 #' This is used in the title of your plot. If you produce many plots, this helps keep them
 #' identifiable.
@@ -71,11 +66,22 @@
 #'
 #' @details
 #' Exploring a wide range of plausible growth-climate relationships can be a useful first step once
-#' you have a collection of cross-dated tree ring series and have properly detrended them,
-#' standardized them, etc.
+#' you have a collection of cross-dated tree ring series.
 #'
 #' The default correlation test method is Spearman rank correlation. This will be ±equivalent
-#' to Pearson for linear relationships, but will also capture any non-linear relationships.
+#' to Pearson for linear relationships, but will also capture any non-linear relationships. As an
+#' additional precaution, \code{\link{n_mon_corr}} uses the \code{\link[corTESTsrd]{corTESTsrd}}
+#' method from Lun et al. (2022) to reduce the type I error rate  (i.e., you think there is a
+#' significant cross-correlation when there isn't one), which is inflated if there is
+#' autocorrelation in your tree-ring or climate series. When autocorrelation is absent, the method
+#' gives similar results as the classical significance test. For these reasons,
+#' \code{\link{n_mon_corr}} always uses the Lun et al. method for Spearman and Kendall rank
+#' correlations. This is done here as a precaution but also as an allowance so that you can examine
+#' relationships between lower-frequency (which are autocorrelated) elements of tree-ring and
+#' climate series as well as between the more common high-frequency signals (e.g., "prewhitened"
+#' series). You may use Pearson correlations in \code{\link{n_mon_corr}}, but be forewarned that
+#' there is no adjustment for autocorrelation in the Pearson correlation tests! Therefore, it
+#' is general best to use `corr.method = "pearson"` for comparison only, rather than actual results.
 #'
 #' A note on tree ring analyses based in the Southern hemisphere:
 #' \code{\link{n_mon_corr}} is designed to work in both the Northern and Southern hemispheres.
