@@ -8,15 +8,15 @@ n_mon_corr(
   rwl = NULL,
   clim = NULL,
   clim.var = NULL,
-  group.IDs.df = NULL,
-  group.var = NULL,
-  gro.period.end = NULL,
   agg.fun = "mean",
   max.lag = 1,
+  hemisphere = NULL,
   prewhiten = TRUE,
   corr.method = "spearman",
-  hemisphere = NULL,
-  make.plot = TRUE
+  gro.period.end = NULL,
+  make.plot = TRUE,
+  group.IDs.df = NULL,
+  group.var = NULL
 )
 }
 \arguments{
@@ -29,22 +29,15 @@ climate variable.}
 \item{clim.var}{character vector - the colname of the climate variable of interest in the \code{clim}
 data.frame.}
 
-\item{group.IDs.df}{an optional data.frame with 2 columns: "series", representing the names of
-the tree-ring series (and matching the colnames of rwl) and a group.var (name is your
-specification), representing a grouping (e.g., site, plot) variable.}
-
-\item{group.var}{a character vector specifying a grouping variable (e.g., site, plot).
-Must exist and be identical in clim and group.ID.df.}
-
-\item{gro.period.end}{the last month in which you expect growth to occur for your study species
-in your study region. Not crucial in this version - only draws a line in the output plot.}
-
 \item{agg.fun}{character vector specifying the function to use for aggregating monthly
 climate combinations. Options are "mean" or "sum", e.g., for temperature or precipitation data,
 respectively. Default is "mean".}
 
-\item{max.lag}{numeric vector specifying how many years of lag to calculate calculations for.
+\item{max.lag}{integer vector specifying how many years of lag to calculate calculations for.
 Default (and minimum) is 1 year.}
+
+\item{hemisphere}{a character vector specifying which hemisphere your tree ring data - &
+climate data - comes from ("N" or "S"). Conventions for assigning growth years - and thus}
 
 \item{prewhiten}{logical vector specifying whether or not to convert tree ring & climate time
 series to ARIMA residuals (aka "prewhitening"). A "best fit" ARIMA model is automatically
@@ -58,11 +51,18 @@ This is common practice before using standard methods for cross-correlations. De
 method reduces the type I error rate associated with autocorrelated series. CAUTION: Currently
 \code{corr.method = "pearson"} doesn't make any adjustments for autocorrelation. See Details below.}
 
-\item{hemisphere}{a character vector specifying which hemisphere your tree ring data - &
-climate data - comes from ("N" or "S"). Conventions for assigning growth years - and thus}
+\item{gro.period.end}{the last month in which you expect growth to occur for your study species
+in your study region. Not crucial in this version - only draws a line in the output plot.}
 
 \item{make.plot}{logical vector indicating whether or not to produce a plot. Default is TRUE.
 You will get a warning if you have < 10 tree-ring series. Ideally you have > 50.}
+
+\item{group.IDs.df}{an optional data.frame with 2 columns: "series", representing the names of
+the tree-ring series (and matching the colnames of rwl) and a group.var (name is your
+specification), representing a grouping (e.g., site, plot) variable.}
+
+\item{group.var}{a character vector specifying a grouping variable (e.g., site, plot).
+Must exist and be identical in clim and group.ID.df.}
 }
 \value{
 A 2-4 element list containing data.frames of the correlation results, the moving-window

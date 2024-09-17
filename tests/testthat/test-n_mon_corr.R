@@ -1,67 +1,578 @@
+#### Some set up vectors
+# Make some fake tree ring data
+rwl <- matrix(nrow = 50, ncol = 10)
+rwl <- apply(rwl, MARGIN = 2, FUN = \(x) runif(length(x), 0.1, 2)) |>
+  as.data.frame()
+colnames(rwl) <- paste0("t", 1:10)
+rownames(rwl) <- 1951:2000
+# Make some fake climate data
+mo <- 1:12
+x <- seq(-4, 4, length.out = 12)
+gauss.curv <- \(x) {(10/sqrt(2*pi*1.6))*exp(-((x^2)/(2*1.6^2)))}
+clim.mo <- data.frame(month = mo, clim.var = gauss.curv(x))
+
+clim.list <- vector("list", length = 12)
+for (y in seq_along(clim.list)) {
+  clim.y <- data.frame(year = 1951:2000, month = y)
+  clim.y[,"clim.var"] <- runif(50, min = 0.1, max = 2) + clim.mo[clim.mo$month %in% y, "clim.var"]
+  clim.list[[y]] <- clim.y
+}
+clim <- do.call("rbind", clim.list)
+
+clim <- clim[order(clim$year, clim$month),]
+# These will allow testing of individual elements
+
+
 ####
-test_that("Throws error if not fed a chrono, data.frame, or matrix", {
-  expect_error(n_mon_corr(rw = c(1:10), clim = c(1:10), rel.per.begin = 10, hemisphere = "N"))
-  expect_error(n_mon_corr(rw = 1, clim = 1, rel.per.begin = 10, hemisphere = "N"))
+test_that("Throws error if rwl is not an rwl or data.frame", {
+  expect_error(
+    n_mon_corr(
+      rwl = 1:10, #
+      clim = clim,
+      clim.var = "clim.var",
+      agg.fun = "mean",
+      max.lag = 1,
+      hemisphere = "N",
+      prewhiten = TRUE,
+      corr.method = "spearman",
+      gro.period.end = 9,
+      make.plot = TRUE,
+      group.IDs.df = NULL,
+      group.var = NULL
+    )
+  )
+  expect_error(
+    n_mon_corr(
+      rwl = "what what", #
+      clim = clim,
+      clim.var = "clim.var",
+      agg.fun = "mean",
+      max.lag = 1,
+      hemisphere = "N",
+      prewhiten = TRUE,
+      corr.method = "spearman",
+      gro.period.end = 9,
+      make.plot = TRUE,
+      group.IDs.df = NULL,
+      group.var = NULL
+    )
+  )
+})
+
+####
+test_that("Throws error if clim is not a data.frame or matrix", {
+  expect_error(
+    n_mon_corr(
+      rwl = rwl,
+      clim = 1:10, #
+      clim.var = "clim.var",
+      agg.fun = "mean",
+      max.lag = 1,
+      hemisphere = "N",
+      prewhiten = TRUE,
+      corr.method = "spearman",
+      gro.period.end = 9,
+      make.plot = TRUE,
+      group.IDs.df = NULL,
+      group.var = NULL
+    )
+  )
+  expect_error(
+    n_mon_corr(
+      rwl = rwl,
+      clim = "what what", #
+      clim.var = "clim.var",
+      agg.fun = "mean",
+      max.lag = 1,
+      hemisphere = "N",
+      prewhiten = TRUE,
+      corr.method = "spearman",
+      gro.period.end = 9,
+      make.plot = TRUE,
+      group.IDs.df = NULL,
+      group.var = NULL
+    )
+  )
 })
 ####
-test_that("Throws error if not fed a valid clim var name", {
-  clim <- matrix(nrow = 10, ncol = 3)
-  colnames(clim) <- c("year", "month", "clim.var")
-  expect_error(n_mon_corr(rw = matrix(nrow = 10, ncol = 2), clim = clim,
-                          rel.per.begin = 10, hemisphere = "N",
-                          clim.var = "wack-a-doodle"))
+test_that("Throws errors if clim.var isn't a character or doesn't match a column in clim", {
+  expect_error(
+    n_mon_corr(
+      rwl = rwl,
+      clim = clim,
+      clim.var = runif(50), #
+      agg.fun = "mean",
+      max.lag = 1,
+      hemisphere = "N",
+      prewhiten = TRUE,
+      corr.method = "spearman",
+      gro.period.end = 9,
+      make.plot = TRUE,
+      group.IDs.df = NULL,
+      group.var = NULL
+    )
+  )
+  expect_error(
+    n_mon_corr(
+      rwl = rwl,
+      clim = clim,
+      clim.var = "bad.name", #
+      agg.fun = "mean",
+      max.lag = 1,
+      hemisphere = "N",
+      prewhiten = TRUE,
+      corr.method = "spearman",
+      gro.period.end = 9,
+      make.plot = TRUE,
+      group.IDs.df = NULL,
+      group.var = NULL
+    )
+  )
 })
+
 ####
-test_that("Throws error if not fed a valid chrono.col name", {
-  clim <- matrix(nrow = 10, ncol = 3)
-  colnames(clim) <- c("year", "month", "clim.var")
-  chrono <- matrix(nrow = 10, ncol = 2)
-  colnames(chrono) <- c("samp.depth", "std")
-  expect_error(n_mon_corr(rw = chrono, clim = clim, rel.per.begin = 10, hemisphere = "N",
-                          clim.var = "clim.var", rw.col = "wack-a-doodle"))
+test_that("Throws error if not fed a valid agg.fun", {
+  expect_error(
+    n_mon_corr(
+      rwl = rwl,
+      clim = clim,
+      clim.var = "clim.var",
+      agg.fun = 1, #
+      max.lag = 1,
+      hemisphere = "N",
+      prewhiten = TRUE,
+      corr.method = "spearman",
+      gro.period.end = 9,
+      make.plot = TRUE,
+      group.IDs.df = NULL,
+      group.var = NULL
+    )
+  )
+  expect_error(
+    n_mon_corr(
+      rwl = rwl,
+      clim = clim,
+      clim.var = "clim.var",
+      agg.fun = "average", #
+      max.lag = 1,
+      hemisphere = "N",
+      prewhiten = TRUE,
+      corr.method = "spearman",
+      gro.period.end = 9,
+      make.plot = TRUE,
+      group.IDs.df = NULL,
+      group.var = NULL
+    )
+  )
 })
+
 ####
-test_that("Throws error if not fed a valid aggregation function", {
-  expect_error(n_mon_corr(rw = matrix(nrow = 10, ncol = 2), clim = matrix(nrow = 10, ncol = 3),
-                          rel.per.begin = 10, hemisphere = "N",
-                          agg.fun = "wack-a-doodle"))
+test_that("Throws error if not fed a valid max.lag", {
+  expect_error(
+    n_mon_corr(
+      rwl = rwl,
+      clim = clim,
+      clim.var = "clim.var",
+      agg.fun = "sum",
+      max.lag = "wayback machine", #
+      hemisphere = "N",
+      prewhiten = TRUE,
+      corr.method = "spearman",
+      gro.period.end = 9,
+      make.plot = TRUE,
+      group.IDs.df = NULL,
+      group.var = NULL
+    )
+  )
+  expect_error(
+    n_mon_corr(
+      rwl = rwl,
+      clim = clim,
+      clim.var = "clim.var",
+      agg.fun = "sum",
+      max.lag = 0, #
+      hemisphere = "N",
+      prewhiten = TRUE,
+      corr.method = "spearman",
+      gro.period.end = 9,
+      make.plot = TRUE,
+      group.IDs.df = NULL,
+      group.var = NULL
+    )
+  )
 })
+
+####
+test_that("Throws error if not fed a valid hemisphere", {
+  expect_error(
+    n_mon_corr(
+      rwl = rwl,
+      clim = clim,
+      clim.var = "clim.var",
+      agg.fun = "sum",
+      max.lag = 1,
+      hemisphere = 19, #
+      prewhiten = TRUE,
+      corr.method = "spearman",
+      gro.period.end = 9,
+      make.plot = TRUE,
+      group.IDs.df = NULL,
+      group.var = NULL
+    )
+  )
+  expect_error(
+    n_mon_corr(
+      rwl = rwl,
+      clim = clim,
+      clim.var = "clim.var",
+      agg.fun = "sum",
+      max.lag = 1,
+      hemisphere = "the earth is flat", #
+      prewhiten = TRUE,
+      corr.method = "spearman",
+      gro.period.end = 9,
+      make.plot = TRUE,
+      group.IDs.df = NULL,
+      group.var = NULL
+    )
+  )
+})
+
+####
+test_that("Throws error if not fed a valid prewhiten arg", {
+  expect_error(
+    n_mon_corr(
+      rwl = rwl,
+      clim = clim,
+      clim.var = "clim.var",
+      agg.fun = "sum",
+      max.lag = 1,
+      hemisphere = "S",
+      prewhiten = 27, #
+      corr.method = "spearman",
+      gro.period.end = 9,
+      make.plot = TRUE,
+      group.IDs.df = NULL,
+      group.var = NULL
+    )
+  )
+  expect_error(
+    n_mon_corr(
+      rwl = rwl,
+      clim = clim,
+      clim.var = "clim.var",
+      agg.fun = "sum",
+      max.lag = 1,
+      hemisphere = "S",
+      prewhiten = "Nope", #
+      corr.method = "spearman",
+      gro.period.end = 9,
+      make.plot = TRUE,
+      group.IDs.df = NULL,
+      group.var = NULL
+    )
+  )
+})
+
 ####
 test_that("Throws error if not fed a valid correlation method", {
-  clim <- matrix(nrow = 10, ncol = 3)
-  colnames(clim) <- c("year", "month", "clim.var")
-  chrono <- matrix(nrow = 10, ncol = 2)
-  colnames(chrono) <- c("samp.depth", "std")
-  expect_error(n_mon_corr(rw = chrono, clim = clim,
-                          rel.per.begin = 10, hemisphere = "N",
-                          clim.var = "clim.var", rw.col = "std",
-                          corr.method = "catty-wompus"))
+  expect_error(
+    n_mon_corr(
+      rwl = rwl,
+      clim = clim,
+      clim.var = "clim.var",
+      agg.fun = "sum",
+      max.lag = 1,
+      hemisphere = "N",
+      prewhiten = TRUE,
+      corr.method = 5, #
+      gro.period.end = 9,
+      make.plot = TRUE,
+      group.IDs.df = NULL,
+      group.var = NULL
+    )
+  )
+  expect_error(
+    n_mon_corr(
+      rwl = rwl,
+      clim = clim,
+      clim.var = "clim.var",
+      agg.fun = "sum",
+      max.lag = 1,
+      hemisphere = "N",
+      prewhiten = TRUE,
+      corr.method = "Daryl's", #
+      gro.period.end = 9,
+      make.plot = TRUE,
+      group.IDs.df = NULL,
+      group.var = NULL
+    )
+  )
 })
+
 ####
-test_that("Essential function works - and returns a vector", {
-  # Make some fake tree ring data
-  mat.test <- matrix(nrow = 50, ncol = 10)
-  rownames(mat.test) <- 1:50
-  colnames(mat.test) <- 1:10
-  mat.test <- apply(mat.test, MARGIN = 2, FUN = \(x) runif(length(x), 0.1, 2))
-  chrono <- dplR::chron(mat.test)
-  # Make some fake climate data
-  mo <- 1:12
-  x <- seq(-4, 4, length.out = 12)
-  gauss.curv <- \(x) {(10/sqrt(2*pi*1.6))*exp(-((x^2)/(2*1.6^2)))}
-  clim.mo <- data.frame(month = mo, clim.var = gauss.curv(x))
-  clim.list <- vector("list", length = 50)
-  for (y in seq_along(clim.list)) {
-    clim.y <- clim.mo
-    clim.y[,"clim.var"] <- clim.y[,"clim.var"] + runif(1, min = 0, max = 4)
-    clim.y$year <- y
-    clim.list[[y]] <- clim.y
-  }
-  clim <- do.call("rbind", clim.list)
-  expect_vector(n_mon_corr(rw = chrono, clim = clim,
-                           rel.per.begin = 3, hemisphere = "S", clim.var = "clim.var",
-                           rw.col = "std", rw.name = "Synthetic", silent = TRUE))
+test_that("Throws error if not fed a valid gro.period.end", {
+  expect_error(
+    n_mon_corr(
+      rwl = rwl,
+      clim = clim,
+      clim.var = "clim.var",
+      agg.fun = "sum",
+      max.lag = 1,
+      hemisphere = "N",
+      prewhiten = TRUE,
+      corr.method = "spearman",
+      gro.period.end = 13, #
+      make.plot = TRUE,
+      group.IDs.df = NULL,
+      group.var = NULL
+    )
+  )
+  expect_error(
+    n_mon_corr(
+      rwl = rwl,
+      clim = clim,
+      clim.var = "clim.var",
+      agg.fun = "sum",
+      max.lag = 1,
+      hemisphere = "N",
+      prewhiten = TRUE,
+      corr.method = "spearman",
+      gro.period.end = c(1:2), #
+      make.plot = TRUE,
+      group.IDs.df = NULL,
+      group.var = NULL
+    )
+  )
+  expect_error(
+    n_mon_corr(
+      rwl = rwl,
+      clim = clim,
+      clim.var = "clim.var",
+      agg.fun = "sum",
+      max.lag = 1,
+      hemisphere = "N",
+      prewhiten = TRUE,
+      corr.method = "spearman",
+      gro.period.end = "March", #
+      make.plot = TRUE,
+      group.IDs.df = NULL,
+      group.var = NULL
+    )
+  )
+  expect_error(
+    n_mon_corr(
+      rwl = rwl,
+      clim = clim,
+      clim.var = "clim.var",
+      agg.fun = "sum",
+      max.lag = 1,
+      hemisphere = "N",
+      prewhiten = TRUE,
+      corr.method = "spearman",
+      gro.period.end = 4.5, #
+      make.plot = TRUE,
+      group.IDs.df = NULL,
+      group.var = NULL
+    )
+  )
 })
+
+####
+test_that("Throws error if not fed a valid make.plot arg", {
+  expect_error(
+    n_mon_corr(
+      rwl = rwl,
+      clim = clim,
+      clim.var = "clim.var",
+      agg.fun = "sum",
+      max.lag = 1,
+      hemisphere = "N",
+      prewhiten = TRUE,
+      corr.method = "spearman",
+      gro.period.end = 9,
+      make.plot = 5,
+      group.IDs.df = NULL,
+      group.var = NULL
+    )
+  )
+  expect_error(
+    n_mon_corr(
+      rwl = rwl,
+      clim = clim,
+      clim.var = "clim.var",
+      agg.fun = "sum",
+      max.lag = 1,
+      hemisphere = "N",
+      prewhiten = TRUE,
+      corr.method = "spearman",
+      gro.period.end = 9,
+      make.plot = "yessiree",
+      group.IDs.df = NULL,
+      group.var = NULL
+    )
+  )
+})
+
+####
+test_that("Essential function works - and returns a vector under all basic variations of args", {
+  expect_vector(
+    n_mon_corr(
+      rwl = rwl,
+      clim = clim,
+      clim.var = "clim.var",
+      agg.fun = "sum",
+      max.lag = 1,
+      hemisphere = "N",
+      prewhiten = TRUE,
+      corr.method = "spearman",
+      gro.period.end = 9,
+      make.plot = TRUE,
+      group.IDs.df = NULL,
+      group.var = NULL
+    )
+  )
+
+  expect_vector(
+    n_mon_corr(
+      rwl = rwl,
+      clim = clim,
+      clim.var = "clim.var",
+      agg.fun = "mean", #
+      max.lag = 1,
+      hemisphere = "N",
+      prewhiten = TRUE,
+      corr.method = "spearman",
+      gro.period.end = 9,
+      make.plot = TRUE,
+      group.IDs.df = NULL,
+      group.var = NULL
+    )
+  )
+
+  expect_vector(
+    n_mon_corr(
+      rwl = rwl,
+      clim = clim,
+      clim.var = "clim.var",
+      agg.fun = "mean", #
+      max.lag = 3, #
+      hemisphere = "N",
+      prewhiten = TRUE,
+      corr.method = "spearman",
+      gro.period.end = 9,
+      make.plot = TRUE,
+      group.IDs.df = NULL,
+      group.var = NULL
+    )
+  )
+
+  expect_vector(
+    n_mon_corr(
+      rwl = rwl,
+      clim = clim,
+      clim.var = "clim.var",
+      agg.fun = "mean", #
+      max.lag = 3, #
+      hemisphere = "S", #
+      prewhiten = TRUE,
+      corr.method = "spearman",
+      gro.period.end = 9,
+      make.plot = TRUE,
+      group.IDs.df = NULL,
+      group.var = NULL
+    )
+  )
+
+  expect_vector(
+    n_mon_corr(
+      rwl = rwl,
+      clim = clim,
+      clim.var = "clim.var",
+      agg.fun = "mean", #
+      max.lag = 3, #
+      hemisphere = "S", #
+      prewhiten = FALSE, #
+      corr.method = "spearman",
+      gro.period.end = 9,
+      make.plot = TRUE,
+      group.IDs.df = NULL,
+      group.var = NULL
+    )
+  )
+
+  expect_vector(
+    n_mon_corr(
+      rwl = rwl,
+      clim = clim,
+      clim.var = "clim.var",
+      agg.fun = "mean", #
+      max.lag = 3, #
+      hemisphere = "S", #
+      prewhiten = FALSE, #
+      corr.method = "pearson", #
+      gro.period.end = 9,
+      make.plot = TRUE,
+      group.IDs.df = NULL,
+      group.var = NULL
+    )
+  )
+
+  expect_vector(
+    n_mon_corr(
+      rwl = rwl,
+      clim = clim,
+      clim.var = "clim.var",
+      agg.fun = "mean", #
+      max.lag = 3, #
+      hemisphere = "S", #
+      prewhiten = FALSE, #
+      corr.method = "kendall", #
+      gro.period.end = 9,
+      make.plot = TRUE,
+      group.IDs.df = NULL,
+      group.var = NULL
+    )
+  )
+
+  expect_vector(
+    n_mon_corr(
+      rwl = rwl,
+      clim = clim,
+      clim.var = "clim.var",
+      agg.fun = "mean", #
+      max.lag = 3, #
+      hemisphere = "S", #
+      prewhiten = FALSE, #
+      corr.method = "kendall", #
+      gro.period.end = 4, #
+      make.plot = TRUE,
+      group.IDs.df = NULL,
+      group.var = NULL
+    )
+  )
+
+  expect_vector(
+    n_mon_corr(
+      rwl = rwl,
+      clim = clim,
+      clim.var = "clim.var",
+      agg.fun = "mean", #
+      max.lag = 3, #
+      hemisphere = "S", #
+      prewhiten = FALSE, #
+      corr.method = "kendall", #
+      gro.period.end = 4, #
+      make.plot = FALSE, #
+      group.IDs.df = NULL,
+      group.var = NULL
+    )
+  )
+
+})
+
+####### Left off here 17 Sep
+
 ####
 test_that("The order of months in the input climate data has no effect on the accuracy of the
           output", {

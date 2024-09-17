@@ -18,18 +18,17 @@
 #' climate variable.
 #' @param clim.var character vector - the colname of the climate variable of interest in the `clim`
 #'  data.frame.
-#' @param group.IDs.df an optional data.frame with 2 columns: "series", representing the names of
-#' the tree-ring series (and matching the colnames of rwl) and a group.var (name is your
-#' specification), representing a grouping (e.g., site, plot) variable.
-#' @param group.var a character vector specifying a grouping variable (e.g., site, plot).
-#' Must exist and be identical in clim and group.ID.df.
 #' @param gro.period.end the last month in which you expect growth to occur for your study species
 #' in your study region. Not crucial in this version - only draws a line in the output plot.
 #' @param agg.fun character vector specifying the function to use for aggregating monthly
 #' climate combinations. Options are "mean" or "sum", e.g., for temperature or precipitation data,
 #' respectively. Default is "mean".
-#' @param max.lag numeric vector specifying how many years of lag to calculate calculations for.
+#' @param max.lag integer vector specifying how many years of lag to calculate calculations for.
 #' Default (and minimum) is 1 year.
+#' @param hemisphere a character vector specifying which hemisphere your tree ring data - &
+#' climate data - comes from ("N" or "S"). Conventions for assigning growth years - and thus
+# aligning tree ring and climate data - are different for N and S hemisphere (see Details below).
+# In the current version, this simply adds a "lag +1" year to the correlation calculations.
 #' @param prewhiten logical vector specifying whether or not to convert tree ring & climate time
 #' series to ARIMA residuals (aka "prewhitening"). A "best fit" ARIMA model is automatically
 #' selected using \code{\link[forecast]{auto.arima}}.
@@ -40,12 +39,13 @@
 #' \code{\link[corTESTsrd]{corTESTsrd}} function (also used for `corr.method = "kendall"`). This
 #' method reduces the type I error rate associated with autocorrelated series. CAUTION: Currently
 #' `corr.method = "pearson"` doesn't make any adjustments for autocorrelation. See Details below.
-#' @param hemisphere a character vector specifying which hemisphere your tree ring data - &
-#' climate data - comes from ("N" or "S"). Conventions for assigning growth years - and thus
-# aligning tree ring and climate data - are different for N and S hemisphere (see Details below).
-# In the current version, this simply adds a "lag +1" year to the correlation calculations.
 #' @param make.plot logical vector indicating whether or not to produce a plot. Default is TRUE.
 #' You will get a warning if you have < 10 tree-ring series. Ideally you have > 50.
+#' @param group.IDs.df an optional data.frame with 2 columns: "series", representing the names of
+#' the tree-ring series (and matching the colnames of rwl) and a group.var (name is your
+#' specification), representing a grouping (e.g., site, plot) variable.
+#' @param group.var a character vector specifying a grouping variable (e.g., site, plot).
+#' Must exist and be identical in clim and group.ID.df.
 #'
 #' @details
 #' Exploring a wide range of plausible grrowth-climate relationships can be a useful first step once
@@ -191,26 +191,40 @@
 n_mon_corr <- function(rwl = NULL,
                        clim = NULL,
                        clim.var = NULL,
-                       group.IDs.df = NULL,
-                       group.var = NULL,
-                       gro.period.end = NULL,
                        agg.fun = "mean",
                        max.lag = 1,
+                       hemisphere = NULL,
                        prewhiten = TRUE,
                        corr.method = "spearman",
-                       hemisphere = NULL,
-                       make.plot = TRUE
+                       gro.period.end = NULL,
+                       make.plot = TRUE,
+                       group.IDs.df = NULL,
+                       group.var = NULL
 ) {
-  ## Initial error catching and interactive prompts
 
+
+  ############ Initial basic input error catching
+
+  ###### rwl
   stopifnot(
-    "Arg rwl is not an object of class 'rwl', 'chron', 'data.frame', or 'matrix'" =
+    "Arg rwl is not an object of class 'rwl' or 'data.frame'" =
       data.class(rwl) %in% "rwl" |
-      data.class(rwl) %in% "chron" |
-      data.class(rwl) %in% "data.frame" |
-      data.class(rwl) %in% "matrix"
+      data.class(rwl) %in% "data.frame"
   )
 
+  # Add a year variable to rwl
+  # If there is no column named "Year" or "year" already
+  if (any(substr(colnames(rwl), 1, 1) %in% c("Y", "y")) == FALSE) {
+    rwl[, "year"] <- rownames(rwl) |> as.numeric() # Assume the rownames contain year
+  } else {
+    colnames(rwl)[which((substr(
+      colnames(rwl), start = 1, stop = 1
+    )
+    %in% c("Y", "y")) == T)] <- "year"
+    rwl[, "year"] <- as.numeric(rwl[, "year"])
+  }
+
+  ###### clim
   stopifnot(
     "Arg clim is not an object of class 'data.frame', or 'matrix'" =
       data.class(clim) %in% "data.frame" |
@@ -221,60 +235,6 @@ n_mon_corr <- function(rwl = NULL,
     "clim does not have a year column? (colname sould start with 'y' or 'Y')" =
       any(substr(colnames(clim), 1, 1) %in% c("Y", "y")) == TRUE
   )
-
-  match.test <- clim.var %in% colnames(clim)
-  stopifnot("Arg clim.var must match one unique column name in clim" =
-              length(match.test[match.test == TRUE]) == 1)
-
-  if (is.null(gro.period.end)) {
-    cat(
-      "You haven't specified the gro.period.end - the last month you expect growth is possible -\n",
-      "You should have an approximate idea of what month works for your study system.\n"
-    )
-    gro.period.end <-
-      readline(prompt = "Last month of radial growth = ") |> as.integer()
-  }
-
-  if (is.null(hemisphere)) {
-    cat(
-      "You haven't specified the hemisphere from which your tree ring series comes from.\n",
-      "This is important because there are different conventions for linking growth years\n",
-      "to climate years for N vs. S hemispheres"
-    )
-    hemisphere <-
-      readline(prompt = "Enter hemisphere ('N' or 'S') = ")
-  }
-
-  stopifnot(
-    "Invalid gro.period.end provided (must be a single integer month)" =
-      is.numeric(gro.period.end) &
-      length(gro.period.end) == 1
-  )
-
-  stopifnot(
-    "Invalid hemisphere argument provided (must be a character vector & either 'S' or 'N')" =
-      is.character(hemisphere) &
-      substr(hemisphere, 1, 1) %in% c("s", "S", "N", "n")
-  ) # actually more permissive than the error message suggests
-
-  stopifnot("Arg agg.fun must be either 'mean' or 'sum'" =
-              agg.fun %in% "mean" |
-              agg.fun %in% "sum")
-
-  stopifnot("Arg max.lag must be a numeric vector of length = 1" =
-              length(max.lag) == 1 |
-              is.numeric(max.lag))
-
-  # accept max.lag inputs that have a negative in front
-  if (max.lag < 0) {
-    max.lag <- as.numeric(max.lag) |> abs()
-  }
-
-  stopifnot(
-    "Arg corr.method must be an exact match of one of these: c('pearson','kendall','spearman')" =
-      corr.method %in% c("pearson", "kendall", "spearman")
-  )
-
 
   # make sure that "year" columns are labelled as such
   colnames(clim)[which((substr(
@@ -299,20 +259,90 @@ n_mon_corr <- function(rwl = NULL,
   clim[, "year"] <- as.integer(clim[, "year"])
   clim[, "month"] <- as.integer(clim[, "month"])
 
-  # # Determine if rwl arg is an rwl or a chron
-  # is.chron <- ifelse(all(colnames(rwl) %in% c("std","samp.depth")), TRUE, FALSE)
 
-  # Add a year variable to rwl
-  # If there is no column named "Year" or "year"
-  if (any(substr(colnames(rwl), 1, 1) %in% c("Y", "y")) == FALSE) {
-    rwl[, "year"] <- rownames(rwl) |> as.numeric() # Assume the rownames contain year
-  } else {
-    colnames(rwl)[which((substr(
-      colnames(rwl), start = 1, stop = 1
-    )
-    %in% c("Y", "y")) == T)] <- "year"
-    rwl[, "year"] <- as.numeric(rwl[, "year"])
+
+  ###### clim.var
+  match.test <- clim.var %in% colnames(clim)
+  stopifnot("Arg clim.var must match one unique column name in clim" =
+              length(match.test[match.test == TRUE]) == 1)
+
+  ###### agg.fun
+  stopifnot("Arg agg.fun must be either 'mean' or 'sum'" =
+              agg.fun %in% "mean" |
+              agg.fun %in% "sum")
+
+  ###### max.lag
+  stopifnot("Arg max.lag must be an integer vector of length = 1" =
+              length(max.lag) == 1 |
+              is.integer(max.lag))
+
+  # Accept max.lag inputs that have a negative in front
+  # but change them to positive
+  if (max.lag < 0) {
+    max.lag <- as.integer(max.lag) |> abs()
   }
+
+  stopifnot("Arg max.lag must have an absolute value >= 1" =
+              max.lag >= 1)
+
+  ###### hemisphere
+  if (is.null(hemisphere)) {
+    cat(
+      "You haven't specified the hemisphere from which your tree ring series comes from.\n",
+      "This is important because there are different conventions for linking growth years\n",
+      "to climate years for N vs. S hemispheres"
+    )
+    hemisphere <-
+      readline(prompt = "Enter hemisphere ('N' or 'S') = ")
+  }
+
+  stopifnot(
+    "Invalid hemisphere argument provided (must be a character vector & either 'S' or 'N')" =
+      is.character(hemisphere) &
+      substr(hemisphere, 1, 1) %in% c("s", "S", "N", "n")
+  ) # actually more permissive than the error message suggests
+
+  # Clean up the hemisphere argument if needed
+  hemisphere <-
+    ifelse(substr(hemisphere, 1, 1) %in% c("n", "N") , "N", "S")
+
+  ###### prewhiten
+  stopifnot(
+    "Arg prewhiten must be a logical vector" =
+      is.logical(prewhiten)
+  )
+
+  ###### corr.method
+  stopifnot(
+    "Arg corr.method must be an exact match of one of these: c('pearson','kendall','spearman')" =
+      corr.method %in% c("pearson", "kendall", "spearman")
+  )
+
+  ###### gro.period.end
+  stopifnot(
+    "Invalid gro.period.end provided (must be a single integer month)" =
+      is.numeric(gro.period.end) |
+      is.integer(gro.period.end) |
+      length(gro.period.end) == 1 |
+      any(gro.period.end == 1:12) == TRUE
+  )
+
+  if (is.null(gro.period.end)) {
+    cat(
+      "You haven't specified the gro.period.end - the last month you expect growth is possible -\n",
+      "You should have an approximate idea of what month works for your study system.\n"
+    )
+    gro.period.end <-
+      readline(prompt = "Last month of radial growth = ") |> as.integer()
+  }
+
+  ###### make.plot
+  stopifnot(
+    "Arg make.plot must be a logical vector" =
+      is.logical(make.plot)
+  )
+
+  ###### group.IDs.df
 
   # Checks for multiple climate datasets when group.IDs.df is not specified
   multi.clim.check <- aggregate(clim.var ~ month + year, data = clim, length)
@@ -333,6 +363,11 @@ n_mon_corr <- function(rwl = NULL,
         data.class(group.IDs.df) %in% "matrix"
     )
 
+    ##### group.var
+    stopifnot("group.IDs.df supplied but there is no column matching group.var in clim data" =
+                any(colnames(clim) %in% group.var)
+    )
+
     match.test2 <- group.var %in% colnames(group.IDs.df)
     stopifnot("Arg group.var must match one unique column name in group.IDs.df" =
                 length(match.test2[match.test2 == TRUE]) == 1
@@ -346,9 +381,22 @@ n_mon_corr <- function(rwl = NULL,
                 any(colnames(group.IDs.df) %in% "series")
     )
 
-    stopifnot("group.IDs.df supplied but there is no column matching group.var in clim data" =
-                any(colnames(clim) %in% group.var)
-    )
+  }
+
+  ############ Now check more complex and interactive things
+
+  ###### rwl & clim
+  # Generally must overlap in their years - this does not check each series
+  year.overlap <- rwl[, "year"] %in% unique(clim[, "year"])
+  stopifnot(
+    "rwl & clim have no overlap in their years" =
+      any(year.overlap)
+  )
+
+  # Give a warning if the overlap is less than 25 - general, does not check each series
+  if (length(year.overlap[year.overlap == TRUE]) < 25) {
+    warning("Less than 25 years of overlap between rwl & clim - be cautious when interpreting
+            correlations")
   }
 
   # n_mon_corr & moving_win_multi assume continuity and regularity of all years and months.
@@ -412,9 +460,6 @@ n_mon_corr <- function(rwl = NULL,
   # At some point I need to check that there is sufficient overlap between rwl & climate.
 
 
-  # Clean up the hemisphere argument if needed
-  hemisphere <-
-    ifelse(substr(hemisphere, 1, 1) %in% c("n", "N") , "N", "S")
 
   # The operations below assume that the climate data is arranged by month, then year.
   # Let's ensure this is the case.
@@ -482,7 +527,7 @@ n_mon_corr <- function(rwl = NULL,
     res.agg$lag <- factor(res.agg$lag, levels = lag.levels[order(as.numeric(lag.levels))])
     res.agg$dir <- factor(res.agg$dir, levels = c("Pos.", "Neg."))
     # Calculate the percentage of significant correlations
-    res.agg$prop.sig <- (res.agg$coef / length(unique(cor.res.df$series))) * 100
+    res.agg$prop.sig <- (res.agg$coef / length(unique(cor.res.list[["cor.res.dat"]][,"series"]))) * 100
 
     # Make a plot.
     out.plot <- ggplot2::ggplot(res.agg,
@@ -500,7 +545,7 @@ n_mon_corr <- function(rwl = NULL,
                           color = "white") +
       ggplot2::scale_x_continuous(breaks = c(1:12)) +
       ggplot2::ylab(paste("Percentage of",
-                          length(unique(cor.res.df$series)),
+                          length(unique(cor.res.list[["cor.res.dat"]][,"series"])),
                           "total series\nrecording significant correlations")) +
       ggplot2::xlab("Start month") +
       ggplot2::coord_cartesian(ylim = c(0, 100)) +
@@ -520,10 +565,6 @@ n_mon_corr <- function(rwl = NULL,
 
 
   if (prewhiten == TRUE) {
-    # Put the arima.resids and original data back together
-    clim1.arima <- clim1.mo.split |>
-      do.call(what = "rbind")
-    clim1.arima <- clim1.arima[order(clim1.arima$year, clim1.arima$month, decreasing = FALSE),]
 
     if (make.plot == TRUE) {
       out.list <- list(cor.res.list[["cor.res.dat"]], cor.res.list[["clim.dat.pw"]],
