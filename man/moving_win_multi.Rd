@@ -27,7 +27,7 @@ numeric month variable indicates the start month of the window. The length of th
 indicated in the column name (e.g., "mean2", "mean6", "mean12", etc.).
 }
 \description{
-This function is the workhorse function behind \code{\link{n_mon_corr}}. It very efficiently
+This function is a workhorse function behind \code{\link{n_mon_corr}}. It very efficiently
 calculates the moving window sums or means by taking lagged differences from the cumsum() of
 the properly ordered climate data.
 }
@@ -47,6 +47,7 @@ for (y in seq_along(clim.list)) {
   clim.mo[clim.mo$month \%in\% y, "clim.var"]
   clim.list[[y]] <- clim.y
 }
+
 fake.clim <- do.call("rbind", clim.list)
 
 test.output <- moving_win_multi(df = fake.clim,
@@ -68,9 +69,6 @@ sep = "-"), format = "\%Y-\%m-\%d")
 # of each moving window.
 # Trim down to a 10-year period so that the results are easier to see.
 
-ggplot(test.output[test.output$year \%in\% 1991:2000,]) +
-  geom_line(aes(yr.mo, clim.var)) +
-  geom_line(aes(yr.mo, mean2), color = "red") +
-  geom_line(aes(yr.mo, mean6), color = "purple") +
-  geom_line(aes(yr.mo, mean12), color = "blue")
+ggplot(clim1[clim1$year \%in\% 1991:2000,]) +
+geom_path(aes(yr.mo, clim.var, color = win.len), na.rm = TRUE)
 }

@@ -1,7 +1,7 @@
 #' Calculate multiple-length moving windows of monthly climate data
 #'
 #' @description
-#' This function is the workhorse function behind \code{\link{n_mon_corr}}. It very efficiently
+#' This function is a workhorse function behind \code{\link{n_mon_corr}}. It very efficiently
 #' calculates the moving window sums or means by taking lagged differences from the cumsum() of
 #' the properly ordered climate data.
 #'
@@ -38,6 +38,7 @@
 #'   clim.mo[clim.mo$month %in% y, "clim.var"]
 #'   clim.list[[y]] <- clim.y
 #' }
+#'
 #' fake.clim <- do.call("rbind", clim.list)
 #'
 #' test.output <- moving_win_multi(df = fake.clim,
@@ -59,11 +60,8 @@
 #' # of each moving window.
 #' # Trim down to a 10-year period so that the results are easier to see.
 #'
-#' ggplot(test.output[test.output$year %in% 1991:2000,]) +
-#'   geom_line(aes(yr.mo, clim.var)) +
-#'   geom_line(aes(yr.mo, mean2), color = "red") +
-#'   geom_line(aes(yr.mo, mean6), color = "purple") +
-#'   geom_line(aes(yr.mo, mean12), color = "blue")
+#' ggplot(clim1[clim1$year %in% 1991:2000,]) +
+#' geom_path(aes(yr.mo, clim.var, color = win.len), na.rm = TRUE)
 
 
 moving_win_multi <- function(df,
@@ -149,29 +147,45 @@ moving_win_multi <- function(df,
       all(mo.count[,"month"] == 12)
   )
 
-
   ## Run through the meat of the function
   # Run cumsum() on the clim.var
   cs <- cumsum(c(0, df[,clim.var])) # all windows start with cumsum(), so just do this once
 
   # the summed moving windows are just lagged differences of the cumsum
-  all.windows <- sapply(win.lens, FUN = \(n) {
+  all.windows <- lapply(win.lens, FUN = \(n) {
     result <- cs[(n + 1):length(cs)] - cs[1:(length(cs) - n)]
-    this.n <- data.frame(c(result, rep(NA, n - 1)))
-    colnames(this.n) <- paste0("sum", n)
+    this.n <- data.frame(year = df[,"year"],
+                         month = df[,"month"],
+                         agg.fun = agg.fun,
+                         win.len = n,
+                         result = c(result, rep(NA, n - 1)))
+    colnames(this.n)[which(colnames(this.n) %in% "result")] <- clim.var
     this.n
-  }) |> do.call(what = "cbind")
+  }) |> do.call(what = "rbind")
 
   # the averaged moving windows are just lagged differences of the cumsum divided by the
   # window length
   if (agg.fun == "mean") {
-    all.windows <- sapply(win.lens, FUN = \(n) {
+    all.windows <- lapply(win.lens, FUN = \(n) {
       result <- cs[(n + 1):length(cs)] - cs[1:(length(cs) - n)]
-      this.n <- data.frame(c(result, rep(NA, n - 1)) / n)
-      colnames(this.n) <- paste0("mean", n)
+      this.n <- data.frame(year = df[,"year"],
+                           month = df[,"month"],
+                           agg.fun = agg.fun,
+                           win.len = n,
+                           result = c(result, rep(NA, n - 1)) / n)
+      colnames(this.n)[which(colnames(this.n) %in% "result")] <- clim.var
       this.n
-    }) |> do.call(what = "cbind")
+    }) |> do.call(what = "rbind")
   }
-  # attach the moving windows to the original data.frame containing the climate variable
-  cbind(df, all.windows)
+  # # attach the moving windows to the original data.frame containing the climate variable
+  orig.data <- data.frame(year = df[,"year"],
+                          month = df[,"month"],
+                          agg.fun = agg.fun,
+                          win.len = 1,
+                          result = df[,clim.var])
+  colnames(orig.data)[which(colnames(orig.data) %in% "result")] <- clim.var
+
+  output.data <- rbind(orig.data, all.windows)
+  output.data[,"win.len"] <- factor(output.data[,"win.len"], levels = 1:max(win.lens))
+  output.data
 }
