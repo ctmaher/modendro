@@ -64,11 +64,7 @@
 #' geom_path(aes(yr.mo, clim.var, color = win.len), na.rm = TRUE)
 
 
-moving_win_multi <- function(df,
-                             clim.var,
-                             win.lens,
-                             agg.fun = NULL) {
-
+moving_win_multi <- function(df, clim.var, win.lens, agg.fun = NULL) {
   ## Initial error catching and interactive prompts
   stopifnot(
     "Arg df is not an object of class 'data.frame', or 'matrix'" =
@@ -94,10 +90,6 @@ moving_win_multi <- function(df,
   stopifnot("Arg agg.fun must be either 'mean' or 'sum'" =
               agg.fun %in% "mean" |
               agg.fun %in% "sum")
-
-  stopifnot("Arg max.lag must be a numeric vector of length = 1" =
-              length(max.lag) == 1 |
-              is.numeric(max.lag))
 
   # make sure that "year" columns are labelled as such - ie standardize the names
   colnames(df)[which((substr(
@@ -130,35 +122,33 @@ moving_win_multi <- function(df,
   clim[, "month"] <- as.integer(clim[, "month"])
 
   # must ensure that the years and months are ordered correctly
-  df <- df[order(df$year, df$month, decreasing = FALSE),]
+  df <- df[order(df$year, df$month, decreasing = FALSE), ]
 
   # moving_win_multi assumes continuity and regularity of all years and months.
   # If even one month or year is missing somewhere, this will mess up everything that follows.
 
-  all.yrs <- df[,"year"] |> unique()
-  stopifnot(
-    "One or more years are missing in the climate data df" =
-      length(all.yrs) == length(min(all.yrs):max(all.yrs))
-  )
+  all.yrs <- df[, "year"] |> unique()
+  stopifnot("One or more years are missing in the climate data df" =
+              length(all.yrs) == length(min(all.yrs):max(all.yrs)))
 
   mo.count <- aggregate(month ~ year, data = df, length)
-  stopifnot(
-    "One or more years are missing months in the climate data df" =
-      all(mo.count[,"month"] == 12)
-  )
+  stopifnot("One or more years are missing months in the climate data df" =
+              all(mo.count[, "month"] == 12))
 
   ## Run through the meat of the function
   # Run cumsum() on the clim.var
-  cs <- cumsum(c(0, df[,clim.var])) # all windows start with cumsum(), so just do this once
+  cs <- cumsum(c(0, df[, clim.var])) # all windows start with cumsum(), so just do this once
 
   # the summed moving windows are just lagged differences of the cumsum
   all.windows <- lapply(win.lens, FUN = \(n) {
     result <- cs[(n + 1):length(cs)] - cs[1:(length(cs) - n)]
-    this.n <- data.frame(year = df[,"year"],
-                         month = df[,"month"],
-                         agg.fun = agg.fun,
-                         win.len = n,
-                         result = c(result, rep(NA, n - 1)))
+    this.n <- data.frame(
+      year = df[, "year"],
+      start.month = df[, "month"],
+      agg.fun = agg.fun,
+      win.len = n,
+      result = c(result, rep(NA, n - 1))
+    )
     colnames(this.n)[which(colnames(this.n) %in% "result")] <- clim.var
     this.n
   }) |> do.call(what = "rbind")
@@ -168,24 +158,28 @@ moving_win_multi <- function(df,
   if (agg.fun == "mean") {
     all.windows <- lapply(win.lens, FUN = \(n) {
       result <- cs[(n + 1):length(cs)] - cs[1:(length(cs) - n)]
-      this.n <- data.frame(year = df[,"year"],
-                           month = df[,"month"],
-                           agg.fun = agg.fun,
-                           win.len = n,
-                           result = c(result, rep(NA, n - 1)) / n)
+      this.n <- data.frame(
+        year = df[, "year"],
+        start.month = df[, "month"],
+        agg.fun = agg.fun,
+        win.len = n,
+        result = c(result, rep(NA, n - 1)) / n
+      )
       colnames(this.n)[which(colnames(this.n) %in% "result")] <- clim.var
       this.n
     }) |> do.call(what = "rbind")
   }
   # # attach the moving windows to the original data.frame containing the climate variable
-  orig.data <- data.frame(year = df[,"year"],
-                          month = df[,"month"],
-                          agg.fun = agg.fun,
-                          win.len = 1,
-                          result = df[,clim.var])
+  orig.data <- data.frame(
+    year = df[, "year"],
+    start.month = df[, "month"],
+    agg.fun = agg.fun,
+    win.len = 1,
+    result = df[, clim.var]
+  )
   colnames(orig.data)[which(colnames(orig.data) %in% "result")] <- clim.var
 
   output.data <- rbind(orig.data, all.windows)
-  output.data[,"win.len"] <- factor(output.data[,"win.len"], levels = 1:max(win.lens))
+  output.data[, "win.len"] <- factor(output.data[, "win.len"], levels = 1:max(win.lens))
   output.data
 }

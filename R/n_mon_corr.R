@@ -199,10 +199,7 @@ n_mon_corr <- function(rwl = NULL,
                        gro.period.end = NULL,
                        make.plot = TRUE,
                        group.IDs.df = NULL,
-                       group.var = NULL
-) {
-
-
+                       group.var = NULL) {
   ############ Initial basic input error catching
 
   ###### rwl
@@ -307,10 +304,8 @@ n_mon_corr <- function(rwl = NULL,
     ifelse(substr(hemisphere, 1, 1) %in% c("n", "N") , "N", "S")
 
   ###### prewhiten
-  stopifnot(
-    "Arg prewhiten must be a logical vector" =
-      is.logical(prewhiten)
-  )
+  stopifnot("Arg prewhiten must be a logical vector" =
+              is.logical(prewhiten))
 
   ###### corr.method
   stopifnot(
@@ -337,10 +332,8 @@ n_mon_corr <- function(rwl = NULL,
   }
 
   ###### make.plot
-  stopifnot(
-    "Arg make.plot must be a logical vector" =
-      is.logical(make.plot)
-  )
+  stopifnot("Arg make.plot must be a logical vector" =
+              is.logical(make.plot))
 
   ###### group.IDs.df
 
@@ -348,15 +341,16 @@ n_mon_corr <- function(rwl = NULL,
   multi.clim.check <- aggregate(clim.var ~ month + year, data = clim, length)
   stopifnot(
     "clim data has multiple observations per month+year yet no group.IDs.df supplied" =
-      any(multi.clim.check$clim.var == 1) & # at least one month+year doesn't have 1 obs
-      is.null(group.IDs.df) # group.IDs.df does not exist
+      !any(multi.clim.check$clim.var == 1) &
+      # at least one month+year doesn't have 1 obs
+      !is.null(group.IDs.df)
+      # group.IDs.df does not exist
   )
 
   # If there is a group.IDs.df data.frame check that all series names are included,
   # and other things that must be true.
 
   if (!is.null(group.IDs.df)) {
-
     stopifnot(
       "Arg group.IDs.df is not an object of class 'data.frame', or 'matrix'" =
         data.class(group.IDs.df) %in% "data.frame" |
@@ -364,21 +358,21 @@ n_mon_corr <- function(rwl = NULL,
     )
 
     ##### group.var
-    stopifnot("group.IDs.df supplied but there is no column matching group.var in clim data" =
-                any(colnames(clim) %in% group.var)
+    stopifnot(
+      "group.IDs.df supplied but there is no column matching group.var in clim data" =
+        any(colnames(clim) %in% group.var)
     )
 
     match.test2 <- group.var %in% colnames(group.IDs.df)
     stopifnot("Arg group.var must match one unique column name in group.IDs.df" =
-                length(match.test2[match.test2 == TRUE]) == 1
-    )
+                length(match.test2[match.test2 == TRUE]) == 1)
 
     stopifnot("group.IDs.df must contain a 'series' column" =
-                any(colnames(group.IDs.df) %in% "series")
-    )
+                any(colnames(group.IDs.df) %in% "series"))
 
-    stopifnot("group.IDs.df 'series' does not completely match the column names in rwl" =
-                any(colnames(group.IDs.df) %in% "series")
+    stopifnot(
+      "group.IDs.df 'series' does not completely match the column names in rwl" =
+        any(colnames(group.IDs.df) %in% "series")
     )
 
   }
@@ -388,15 +382,15 @@ n_mon_corr <- function(rwl = NULL,
   ###### rwl & clim
   # Generally must overlap in their years - this does not check each series
   year.overlap <- rwl[, "year"] %in% unique(clim[, "year"])
-  stopifnot(
-    "rwl & clim have no overlap in their years" =
-      any(year.overlap)
-  )
+  stopifnot("rwl & clim have no overlap in their years" =
+              any(year.overlap))
 
   # Give a warning if the overlap is less than 25 - general, does not check each series
   if (length(year.overlap[year.overlap == TRUE]) < 25) {
-    warning("Less than 25 years of overlap between rwl & clim - be cautious when interpreting
-            correlations")
+    warning(
+      "Less than 25 years of overlap between rwl & clim - be cautious when interpreting
+            correlations"
+    )
   }
 
   # n_mon_corr & moving_win_multi assume continuity and regularity of all years and months.
@@ -407,7 +401,7 @@ n_mon_corr <- function(rwl = NULL,
     # Because of tests above, we can assume that having no group.IDs.df means we have no group
     # structure at all
 
-    all.yrs <- clim[,"year"] |> unique()
+    all.yrs <- clim[, "year"] |> unique()
     stopifnot(
       "One or more years are missing in the clim data (observations not regular & continuous)" =
         length(all.yrs) == length(min(all.yrs):max(all.yrs))
@@ -417,32 +411,34 @@ n_mon_corr <- function(rwl = NULL,
     stopifnot(
       "One or more years are missing months in the clim data (observations not regular
       & continuous)" =
-        all(mo.count[,"month"] == 12)
+        all(mo.count[, "month"] == 12)
     )
-  } else { # If we do have group structure, we must check for missing years/months in each group.
+  } else {
+    # If we do have group structure, we must check for missing years/months in each group.
     all.yrs <- aggregate(formula(paste("year ~ ", group.var)),
                          data = clim,
                          FUN = \(x) length(unique(x)))
     all.yrs$min.yr <- aggregate(formula(paste("year ~ ", group.var)),
                                 data = clim,
-                                FUN = \(x) min(unique(x)))[,2]
+                                FUN = \(x) min(unique(x)))[, 2]
     all.yrs$max.yr <- aggregate(formula(paste("year ~ ", group.var)),
                                 data = clim,
-                                FUN = \(x) max(unique(x)))[,2]
+                                FUN = \(x) max(unique(x)))[, 2]
     all.yrs$act.len <- apply(all.yrs, MARGIN = 1, FUN = \(x) {
       x["min.yr"]:x["max.yr"] |> length()
     })
 
-    stopifnot("One of more groups is missing one or more years in the clim data (observations
+    stopifnot(
+      "One of more groups is missing one or more years in the clim data (observations
               not regular & continuous)" =
-                all(all.yrs$year == all.yrs$act.len)
+        all(all.yrs$year == all.yrs$act.len)
     )
 
     mo.count <- aggregate(formula(paste("month ~ year +", group.var)), data = clim, length)
     stopifnot(
       "One or more groups has one or more years that are missing months in the clim data
       (observations not regular & continuous)" =
-        all(mo.count[,"month"] == 12)
+        all(mo.count[, "month"] == 12)
     )
   }
 
@@ -452,8 +448,9 @@ n_mon_corr <- function(rwl = NULL,
   rwl.year.seq <- rwl[, "year"]
   rwl.year.seq.diff <- rwl.year.seq[order(rwl.year.seq)] |> diff()
 
-  stopifnot("Ring width data does not have complete continuous years in annual steps." =
-              all(rwl.year.seq.diff == 1) == TRUE
+  stopifnot(
+    "Ring width data does not have complete continuous years in annual steps." =
+      all(rwl.year.seq.diff == 1) == TRUE
   )
 
 
@@ -476,48 +473,68 @@ n_mon_corr <- function(rwl = NULL,
   # is a group.IDs.df
 
   if (is.null(group.IDs.df)) {
+    cor.res.list <- multi_clim_gro_corr(
+      rwl.group = rwl,
+      clim.group = clim,
+      clim.var = clim.var,
+      group.IDs.df = group.IDs.df,
+      group.var = group.var,
+      gro.period.end = gro.period.end,
+      agg.fun = agg.fun,
+      max.lag = max.lag,
+      prewhiten = prewhiten,
+      corr.method = corr.method,
+      hemisphere = hemisphere
+    )
 
-
-    cor.res.list <- multi_clim_gro_corr(rwl.group = rwl,
-                                        clim.group = clim,
-                                        clim.var = clim.var,
-                                        group.IDs.df = group.IDs.df,
-                                        group.var = group.var,
-                                        gro.period.end = gro.period.end,
-                                        agg.fun = agg.fun,
-                                        max.lag = max.lag,
-                                        prewhiten = prewhiten,
-                                        corr.method = corr.method,
-                                        hemisphere = hemisphere)
-
-  } else { # if there are different climate groups
+  } else {
+    # if there are different climate groups
 
     clim.group.split <- split(clim, f = clim[, group.var])
 
-    cor.res.list <- lapply(clim.group.split, FUN = \(clim.group) {
+    cor.res.list.group <- lapply(clim.group.split, FUN = \(clim.group) {
       this.group <- clim.group[, group.var] |> unique()
       these.series <- group.IDs.df[group.IDs.df[, group.var] %in% this.group, "series"]
 
-      multi_clim_gro_corr(rwl.group = rwl[, c(these.series, "year")],
-                          clim.group = clim.group,
-                          clim.var = clim.var,
-                          group.IDs.df = group.IDs.df,
-                          group.var = group.var,
-                          gro.period.end = gro.period.end,
-                          agg.fun = agg.fun,
-                          max.lag = max.lag,
-                          prewhiten = prewhiten,
-                          corr.method = corr.method,
-                          hemisphere = hemisphere)
+      multi_clim_gro_corr(
+        rwl.group = rwl[, c(these.series, "year")],
+        clim.group = clim.group,
+        clim.var = clim.var,
+        group.IDs.df = group.IDs.df,
+        group.var = group.var,
+        gro.period.end = gro.period.end,
+        agg.fun = agg.fun,
+        max.lag = max.lag,
+        prewhiten = prewhiten,
+        corr.method = corr.method,
+        hemisphere = hemisphere
+      )
     })
-    cor.res.list[["cor.res.dat"]] <- do.call(what = "rbind", cor.res.list[["cor.res.dat"]])
-    cor.res.list[["cor.res.dat"]] <- merge(cor.res.list[["cor.res.dat"]],
-                                           group.IDs.df, by = "series")
+    # This has to be reassembled after splitting
+
+    # Get the names of the data.frames within the list within the list
+    out.list.names <- names(cor.res.list.group[[1]])
+    # Put the pieces back together across list elements
+    cor.res.list <- lapply(out.list.names, FUN = \(element.name) {
+      # The last element is an rwl, which must do cbind instead of rbind.
+      if (substr(element.name, 1, 3) %in% "rwl") {
+        lapply(cor.res.list.group, FUN = \(group) {
+          group[[element.name]]
+        }) |>
+          unname() |>
+          do.call(what = "cbind")
+      } else {
+        lapply(cor.res.list.group, FUN = \(group) {
+          group[[element.name]]
+        }) |> do.call(what = "rbind")
+      }
+    })
+
+    names(cor.res.list) <- out.list.names
   }
 
   if (make.plot == TRUE) {
-
-    sig.only <- cor.res.list[["cor.res.dat"]][cor.res.list[["cor.res.dat"]]$p <= 0.05,]
+    sig.only <- cor.res.list[["cor.res.dat"]][cor.res.list[["cor.res.dat"]]$p <= 0.05, ]
     res.agg <- aggregate(coef ~ start.month + win.len + lag + dir,
                          data = sig.only,
                          FUN = \(x) length(x))
@@ -527,7 +544,8 @@ n_mon_corr <- function(rwl = NULL,
     res.agg$lag <- factor(res.agg$lag, levels = lag.levels[order(as.numeric(lag.levels))])
     res.agg$dir <- factor(res.agg$dir, levels = c("Pos.", "Neg."))
     # Calculate the percentage of significant correlations
-    res.agg$prop.sig <- (res.agg$coef / length(unique(cor.res.list[["cor.res.dat"]][,"series"]))) * 100
+    res.agg$prop.sig <- (res.agg$coef / length(unique(cor.res.list[["cor.res.dat"]][, "series"]))) *
+      100
 
     # Make a plot.
     out.plot <- ggplot2::ggplot(res.agg,
@@ -536,39 +554,49 @@ n_mon_corr <- function(rwl = NULL,
                                   values = hcl.colors(12, palette = "Spectral")) +
       ggplot2::geom_line() +
       ggplot2::facet_grid(dir ~ lag) +
-      ggplot2::geom_vline(data = data.frame(xint = gro.period.end,
-                                            lag = factor(ifelse(hemisphere == "S",
-                                                                "+1",
-                                                                "0")),
-                                            levels = lag.levels[order(as.numeric(lag.levels))]),
-                          ggplot2::aes(xintercept = xint),
-                          color = "white") +
+      ggplot2::geom_vline(
+        data = data.frame(
+          xint = gro.period.end,
+          lag = factor(ifelse(hemisphere == "S", "+1", "0")),
+          levels = lag.levels[order(as.numeric(lag.levels))]
+        ),
+        ggplot2::aes(xintercept = xint),
+        color = "white"
+      ) +
       ggplot2::scale_x_continuous(breaks = c(1:12)) +
-      ggplot2::ylab(paste("Percentage of",
-                          length(unique(cor.res.list[["cor.res.dat"]][,"series"])),
-                          "total series\nrecording significant correlations")) +
+      ggplot2::ylab(
+        paste(
+          "Percentage of",
+          length(unique(cor.res.list[["cor.res.dat"]][, "series"])),
+          "total series\nrecording significant correlations"
+        )
+      ) +
       ggplot2::xlab("Start month") +
       ggplot2::coord_cartesian(ylim = c(0, 100)) +
       ggplot2::theme_dark() +
-      ggplot2::theme(panel.spacing.x = ggplot2::unit(-0.1, "lines"),
-                     panel.background = ggplot2::element_rect(fill = "black"),
-                     plot.background = ggplot2::element_rect(fill = "black"),
-                     legend.background = ggplot2::element_rect(fill = "black"),
-                     panel.grid = ggplot2::element_line(color = "grey40"),
-                     legend.text = ggplot2::element_text(color = "white"),
-                     legend.title = ggplot2::element_text(color = "white"),
-                     axis.title = ggplot2::element_text(color = "white"),
-                     axis.text = ggplot2::element_text(color = "white"),
-                     legend.position = "top")
+      ggplot2::theme(
+        panel.spacing.x = ggplot2::unit(-0.1, "lines"),
+        panel.background = ggplot2::element_rect(fill = "black"),
+        plot.background = ggplot2::element_rect(fill = "black"),
+        legend.background = ggplot2::element_rect(fill = "black"),
+        panel.grid = ggplot2::element_line(color = "grey40"),
+        legend.text = ggplot2::element_text(color = "white"),
+        legend.title = ggplot2::element_text(color = "white"),
+        axis.title = ggplot2::element_text(color = "white"),
+        axis.text = ggplot2::element_text(color = "white"),
+        legend.position = "top"
+      )
 
   }
 
 
   if (prewhiten == TRUE) {
-
     if (make.plot == TRUE) {
-      out.list <- list(cor.res.list[["cor.res.dat"]], cor.res.list[["clim.dat.pw"]],
-                       cor.res.list[["clim.dat"]], cor.res.list[["rwl.dat"]], out.plot)
+      out.list <- list(cor.res.list[["cor.res.dat"]],
+                       cor.res.list[["clim.dat.pw"]],
+                       cor.res.list[["clim.dat"]],
+                       cor.res.list[["rwl.dat"]],
+                       out.plot)
       names(out.list) <-
         c(
           "Correlation results",
@@ -578,8 +606,10 @@ n_mon_corr <- function(rwl = NULL,
           "Results plot"
         )
     } else {
-      out.list <- list(cor.res.list[["cor.res.dat"]], cor.res.list[["clim.dat.pw"]],
-                       cor.res.list[["clim.dat"]], cor.res.list[["rwl.dat"]])
+      out.list <- list(cor.res.list[["cor.res.dat"]],
+                       cor.res.list[["clim.dat.pw"]],
+                       cor.res.list[["clim.dat"]],
+                       cor.res.list[["rwl.dat"]])
       names(out.list) <-
         c(
           "Correlation results",
@@ -590,30 +620,29 @@ n_mon_corr <- function(rwl = NULL,
     }
 
   } else {
-
     if (make.plot == TRUE) {
-      out.list <- list(cor.res.list[["cor.res.dat"]],
-                       cor.res.list[["clim.dat"]],
-                       out.plot)
+      out.list <- list(cor.res.list[["cor.res.dat"]], cor.res.list[["clim.dat"]], out.plot)
       names(out.list) <-
         c("Correlation results",
           "Climate data (raw)",
-          "Results plot"
-        )
+          "Results plot")
 
     } else {
-      out.list <- list(cor.res.list[["cor.res.dat"]],
-                       cor.res.list[["clim.dat"]])
+      out.list <- list(cor.res.list[["cor.res.dat"]], cor.res.list[["clim.dat"]])
       names(out.list) <-
-        c("Correlation results",
-          "Correlation data")
+        c("Correlation results", "Correlation data")
     }
   }
 
-  if((ncol(rwl) - 1) < 10 & make.plot == TRUE) {
+  if ((ncol(rwl) - 1) < 10 & make.plot == TRUE) {
     warning("Number of tree-ring series is very low (< 10),
               results plots likely not interpretable")
   }
+
+  # Lastly, order the Correlation results based on the highest correlation
+  out.list[["Correlation results"]] <-
+    out.list[["Correlation results"]][
+      order(out.list[["Correlation results"]]$coef, decreasing = T), ]
 
   return(out.list)
 
