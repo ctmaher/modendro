@@ -8,15 +8,57 @@ multi_clim_gro_corr(
   rwl.group = NULL,
   clim.group = NULL,
   clim.var = NULL,
-  group.IDs.df = NULL,
-  group.var = NULL,
   gro.period.end = NULL,
   agg.fun = "mean",
   max.lag = 1,
   prewhiten = TRUE,
+  hemisphere = NULL,
   corr.method = "spearman",
-  hemisphere = NULL
+  group.IDs.df = NULL,
+  group.var = NULL
 )
+}
+\arguments{
+\item{rwl.group}{A rwl-type data.frame (e.g., read in by \code{\link[dplR]{read.rwl}}). Essentially a
+data.frame with columns names as series IDs and years as rownames.}
+
+\item{clim.group}{a \code{data.frame} with at least 3 columns: year, month (numeric), and a
+climate variable.}
+
+\item{clim.var}{character vector - the colname of the climate variable of interest in the \code{clim}
+data.frame.}
+
+\item{gro.period.end}{the last month in which you expect growth to occur for your study species
+in your study region. Not crucial in this version - only draws a line in the output plot.}
+
+\item{agg.fun}{character vector specifying the function to use for aggregating monthly
+climate combinations. Options are "mean" or "sum", e.g., for temperature or precipitation data,
+respectively. Default is "mean".}
+
+\item{max.lag}{integer vector specifying how many years of lag to calculate calculations for.
+Default (and minimum) is 1 year.}
+
+\item{prewhiten}{logical vector specifying whether or not to convert tree ring & climate time
+series to ARIMA residuals (aka "prewhitening"). A "best fit" ARIMA model is automatically
+selected using \code{\link[forecast]{auto.arima}}.
+This removes most autocorrelation in a time series, leaving only the high-frequency variation.
+This is common practice before using standard methods for cross-correlations. Default is TRUE.}
+
+\item{hemisphere}{a character vector specifying which hemisphere your tree ring data - &
+climate data - comes from ("N" or "S"). Conventions for assigning growth years - and thus}
+
+\item{corr.method}{character vector specifying which correlation method to use. Options are
+\code{c("spearman", "kendall", "pearson")}. Default is \code{"spearman"} using the
+\code{\link[corTESTsrd]{corTESTsrd}} function (also used for \code{corr.method = "kendall"}). This
+method reduces the type I error rate associated with autocorrelated series. CAUTION: Currently
+\code{corr.method = "pearson"} doesn't make any adjustments for autocorrelation. See Details below.}
+
+\item{group.IDs.df}{an optional data.frame with 2 columns: "series", representing the names of
+the tree-ring series (and matching the colnames of rwl) and a group.var (name is your
+specification), representing a grouping (e.g., site, plot) variable.}
+
+\item{group.var}{a character vector specifying a grouping variable (e.g., site, plot).
+Must exist and be identical in clim and group.ID.df.}
 }
 \description{
 This function is a workhorse function behind \code{\link{n_mon_corr}}. It splits and merges the

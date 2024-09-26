@@ -93,6 +93,7 @@
 #' @import ggplot2
 #' @import corTESTsrd
 #' @importFrom forecast auto.arima
+#' @importFrom grDevices hcl.colors
 #'
 #' @export
 #'
@@ -101,7 +102,7 @@
 #' # Tree-ring data from Perkins & Swetnam 1996 (https://doi.org/10.1139/x26-241)
 #' data(PerkinsSwetnam96)
 #' # PRISM (https://www.prism.oregonstate.edu/) time series extracted for each site then averaged
-#' over all sites.
+#' # over all sites.
 #' data(idPRISM)
 #'
 #' # Monthly average temperature
@@ -119,7 +120,9 @@
 #'                          group.var = NULL)
 #' names(PS_gro_Tavg)
 #' PS_gro_Tavg$`Results plot`
-#' # April has the strongest signal, and it is a negative relationship. This is a different result
+#' # April has the strongest signal (largest % of significant correlations), and it is a negative
+#' # relationship.
+#'
 #'
 #' # Monthly total precipitation
 #' # Note that agg.fun = "sum" for precipitation data.
@@ -555,10 +558,16 @@ n_mon_corr <- function(rwl = NULL,
       100
 
     # Make a plot.
+    # These 4 lines are to deal with "no visible binding" NOTEs from check()
+    x_var <- "start.month"
+    y_var <- "prop.sig"
+    col_var <- "win.len"
+    x.intercept <- "xint"
+
     out.plot <- ggplot2::ggplot(res.agg,
-                                ggplot2::aes(start.month, prop.sig, color = as.factor(win.len))) +
+                                ggplot2::aes(x_var, y_var, color = as.factor(col_var))) +
       ggplot2::scale_color_manual("Moving window\nlength\n(n months)",
-                                  values = hcl.colors(12, palette = "Spectral")) +
+                                  values = grDevices::hcl.colors(12, palette = "Spectral")) +
       ggplot2::geom_line() +
       #ggplot2::geom_point() +
       ggplot2::facet_grid(dir ~ lag, switch = "x") +
@@ -568,7 +577,7 @@ n_mon_corr <- function(rwl = NULL,
           lag = factor(ifelse(hemisphere == "S", "+1", "0")),
           levels = lag.levels[order(as.numeric(lag.levels))]
         ),
-        ggplot2::aes(xintercept = xint),
+        ggplot2::aes(xintercept = x.intercept),
         color = "white"
       ) +
       ggplot2::scale_x_continuous(breaks = c(1:12)) +
