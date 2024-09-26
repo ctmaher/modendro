@@ -54,10 +54,12 @@ multi_clim_gro_corr <- function(rwl.group = NULL,
       MARGIN = 2,
       FUN = \(this.series) {
         these.vals <- which(!is.na(this.series))
-        these.resids <- forecast::auto.arima(this.series, seasonal = FALSE) |>
+        trim.series <- this.series[min(these.vals):max(these.vals)]
+        these.resids <- forecast::auto.arima(trim.series,
+                                             seasonal = FALSE) |>
           residuals() |>
           as.numeric()
-        this.series[these.vals] <- these.resids
+        this.series[min(these.vals):max(these.vals)] <- these.resids
         this.series
       },
       simplify = FALSE

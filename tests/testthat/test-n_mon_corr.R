@@ -653,7 +653,8 @@ for (i in 1:length(test.list)) {
   mat.test <- matrix(nrow = 50, ncol = 10)
   rownames(mat.test) <- 1:50
   colnames(mat.test) <- paste0("tr",1:10)
-  mat.test <- apply(mat.test, MARGIN = 2, FUN = \(x) runif(length(x), 0.1, 2)) |> as.data.frame()
+  mat.test <- apply(mat.test, MARGIN = 2, FUN = \(x) runif(length(x), 0.1, 2)) |>
+    as.data.frame()
 
   # Make some fake climate data
   mo <- 1:12
@@ -673,8 +674,17 @@ for (i in 1:length(test.list)) {
   # Let's create a marker month, such that it is identical to some of the tree-ring data
   marker.month <- sample(1:12, 1)
 
-  clim[order(clim$year), "clim.var"][clim$month %in% marker.month] <-
-      mat.test[, sample(colnames(mat.test), 1)]
+  # Insert the tree-ring data from one of the series
+  this.tr.data <- mat.test[, sample(colnames(mat.test), 1)]
+  clim$clim.var[clim$month %in% marker.month] <-
+    this.tr.data
+
+  # Visual check
+  # ggplot(clim[clim$month %in% marker.month,], aes(year, clim.var)) +
+  #   geom_line() +
+  #   geom_line(data = data.frame(year = unique(clim$year),
+  #                               clim.var = this.tr.data),
+  #             color = "red")
 
   # Now scramble the order of the years & months
   clim <- clim[sample(1:nrow(clim), nrow(clim)),]

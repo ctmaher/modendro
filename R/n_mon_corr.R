@@ -97,95 +97,71 @@
 #' @export
 #'
 #' @examples
-#' # Make some synthetic stand-in tree ring data
-#' rw.ex <- data.frame(year = 1:50, rw.mm = runif(50, 0.1, 2))
+#'## Bring in some real tree-ring and climate data
+#' # Tree-ring data from Perkins & Swetnam 1996 (https://doi.org/10.1139/x26-241)
+#' data(PerkinsSwetnam96)
+#' # PRISM (https://www.prism.oregonstate.edu/) time series extracted for each site then averaged
+#' over all sites.
+#' data(idPRISM)
+#'
+#' # Monthly average temperature
+#' PS_gro_Tavg <- n_mon_corr(rwl = PerkinsSwetnam96,
+#'                          clim = idPRISM,
+#'                          clim.var = "Tavg.C",
+#'                          agg.fun = "mean",
+#'                          max.lag = 2,
+#'                          hemisphere = "N",
+#'                          prewhiten = TRUE,
+#'                          corr.method = "spearman",
+#'                          gro.period.end = 9,
+#'                          make.plot = TRUE,
+#'                          group.IDs.df = NULL,
+#'                          group.var = NULL)
+#' names(PS_gro_Tavg)
+#' PS_gro_Tavg$`Results plot`
+#' # April has the strongest signal, and it is a negative relationship. This is a different result
+#'
+#' # Monthly total precipitation
+#' # Note that agg.fun = "sum" for precipitation data.
+#' PS_gro_PPT <- n_mon_corr(rwl = PerkinsSwetnam96,
+#'                         clim = idPRISM,
+#'                         clim.var = "PPT.mm",
+#'                         agg.fun = "sum",
+#'                         max.lag = 2,
+#'                         hemisphere = "N",
+#'                         prewhiten = TRUE,
+#'                         corr.method = "spearman",
+#'                         gro.period.end = 9,
+#'                         make.plot = TRUE,
+#'                         group.IDs.df = NULL,
+#'                         group.var = NULL)
+#' names(PS_gro_PPT)
+#' PS_gro_PPT$`Results plot`
+#' # Strongest signal is Oct-Jan total precip.
 #'
 #'
-#' # Make some synthetic stand-in climate data
-#' mo <- 1:12
-#' x <- seq(-4, 4, length.out = 12)
-#' gauss.curv <- \(x) {(10/sqrt(2*pi*1.6))*exp(-((x^2)/(2*1.6^2)))}
-#' clim.mo <- data.frame(month = mo, clim.var = gauss.curv(x))
-#' clim.list <- vector("list", length = 50)
-#' for (y in seq_along(clim.list)) {
-#'   clim.y <- clim.mo
-#'   clim.y[,"clim.var"] <- clim.y[,"clim.var"] + runif(1, min = 0, max = 4)
-#'   clim.y$year <- y
-#'   clim.list[[y]] <- clim.y
-#' }
-#' clim <- do.call("rbind", clim.list)
-#' n_mon_corr.out <- n_mon_corr(rw = rw.ex,
-#' rw.col = "rw.mm",
-#' clim = clim,
-#' clim.var = "clim.var",
-#' rel.per.begin = 3,
-#' hemisphere = "S",
-#' rw.name = "Synthetic RW")
+#' ## Demonstrate grouped data
+#' data(idPRISMgroup)
+#' data(PSgroupIDs)
 #'
-#' # Take a look at the output data frames
-#' head(n_mon_corr.out[["Correlation results"]])
-#' head(n_mon_corr.out[["Correlation data"]])
-#'
-#' ## Method for applying n_mon_corr to each series (or tree) in a rwl file,
-#' # consistent with tree-level analyses.
-#'
-#' # Make some synthetic stand-in tree ring data (in rwl-type format)
-#' rwl.ex <- matrix(nrow = 50, ncol = 10)
-#' rownames(rwl.ex) <- 1:50
-#' colnames(rwl.ex) <- 1:10
-#' rwl.ex <- apply(rwl.ex, MARGIN = 2, FUN = \(x) runif(length(x), 0.1, 2)) |> as.data.frame()
-#'
-#' # Convert rwl to long format using modendro's rwl_longer() function
-#' rwl.ex.long <- modendro::rwl_longer(rwl.ex,
-#' series.name = "tree",
-#' dat.name = "rw.mm",
-#' trim = TRUE)
-#'
-#' # split the data.frame into a list based on ID
-#' rwl.ex.long.list <- split(rwl.ex.long, f = rwl.ex.long$tree)
-#'
-#' # Use mapply to run n_mon_corr for each "tree"
-#' # Note that in our example, the clim data is the same for all series.
-#' # You will need a different processes if you have climate and tree ring series grouped by site
-#' # or plot.
-#' # Also note that plots = FALSE and silent = TRUE so that these don't clog the plotting window
-#' # and console.
-#' n_mon_corr.out.list <- lapply(rwl.ex.long.list, FUN = \(x) {
-#' n_mon_corr(rw = x,
-#' rw.col = "rw.mm",
-#' clim = clim,
-#' clim.var = "clim.var",
-#' rel.per.begin = 3,
-#' hemisphere = "S",
-#' plots = FALSE,
-#' silent = TRUE)
-#' })
-#'
-#' # Outputs are the same as above, but nested in one more list dimension
-#' head(n_mon_corr.out.list[[1]][["Correlation results"]])
-#'
-#' # It might be helpful to rbind the individual tree outputs into data.frames
-#'
-#' data.df <- lapply(n_mon_corr.out.list, FUN = \(x, y) {
-#' x[["Correlation data"]]
-#' }) |>
-#'  do.call(what = "rbind")
-#'
-#' head(data.df)
-#'
-#' results.df <- mapply(FUN = \(x, y) {
-#'  x[["Correlation results"]]$tree <- y
-#'  x[["Correlation results"]]
-#' }, x = n_mon_corr.out.list, y = names(n_mon_corr.out.list), SIMPLIFY = FALSE) |>
-#'  do.call(what = "rbind") |> as.data.frame()
-#'
-#' head(results.df)
-#'
-#' # Now it is possible to do things like find out how many trees have significant correlations
-#' # for each month combination (these are random series so results are not meaningful):
-#' results.df$sig <- ifelse(results.df$p < 0.05, "Sig.","Not sig.")
-#' results.agg <- aggregate(tree ~ months + sig, data = results.df, length)
-#' results.agg[order(results.agg$tree, decreasing = TRUE),] |> head()
+#' PS_gro_Tavg_grouped <- n_mon_corr(rwl = PerkinsSwetnam96,
+#'                                  clim = idPRISMgroup,
+#'                                  clim.var = "Tavg.C",
+#'                                  agg.fun = "mean",
+#'                                  max.lag = 2,
+#'                                  hemisphere = "N",
+#'                                  prewhiten = TRUE,
+#'                                  corr.method = "spearman",
+#'                                  gro.period.end = 9,
+#'                                  make.plot = TRUE,
+#'                                  group.IDs.df = PSgroupIDs,
+#'                                  group.var = "site")
+#' names(PS_gro_Tavg_grouped)
+#' PS_gro_Tavg_grouped$`Results plot`
+#' # Similar result, but not identical - now start.month = Apr with a 2-month moving window
+#' # The climate data is slightly different for each site, so some differences in results are not
+#' # surprising.
+
 
 
 n_mon_corr <- function(rwl = NULL,
@@ -337,15 +313,22 @@ n_mon_corr <- function(rwl = NULL,
 
   ###### group.IDs.df
 
-  # Checks for multiple climate datasets when group.IDs.df is not specified
-  multi.clim.check <- aggregate(clim.var ~ month + year, data = clim, length)
+  # Checks for multiple climate datasets when group.IDs.df is not specified,
+  # or the opposite
+  multi.clim.check <- aggregate(formula(paste0(clim.var," ~ month + year")), data = clim, length)
   stopifnot(
-    "clim data has multiple observations per month+year yet no group.IDs.df supplied" =
-      !any(multi.clim.check$clim.var == 1) &
-      # at least one month+year doesn't have 1 obs
-      !is.null(group.IDs.df)
-      # group.IDs.df does not exist
+    "Clim data has groups (multiple observations per month+year) but no group.IDs.df supplied or
+    group.IDs.df was supplied and clim data has no groups" =
+      # All month+year combos have 1 obs
+      (all(multi.clim.check[, clim.var] == 1) &
+         # group.IDs.df does not exist
+         is.null(group.IDs.df)) |
+      # at least some month+year combos have > 1 obs
+      (!all(multi.clim.check[, clim.var] == 1) &
+         # group.IDs.df does exist
+         !is.null(group.IDs.df))
   )
+
 
   # If there is a group.IDs.df data.frame check that all series names are included,
   # and other things that must be true.
@@ -391,6 +374,31 @@ n_mon_corr <- function(rwl = NULL,
       "Less than 25 years of overlap between rwl & clim - be cautious when interpreting
             correlations"
     )
+  }
+
+  # Check for the overlap between each series
+  clim.span <- unique(clim[, "year"])
+  rwl.span <- rwl[, "year"]
+  check.series <- apply(rwl[, !(colnames(rwl) %in% "year")], MARGIN = 2, FUN = \(series) {
+    this.series <- data.frame(series = series, year = rwl.span)
+    na.omit(this.series[this.series$year %in% clim.span,])
+  })
+
+  # Identify and remove the series that have less than 4 overlap
+  zero.series <- sapply(check.series, FUN = \(x) nrow(x) < 4)
+  if (any(zero.series)) {
+    message(paste0("The following tree-ring series have < 4 years overlap with clim data
+    and will be removed from rwl:\n", paste0(names(zero.series[zero.series == TRUE]),
+                                             collapse = ", ")))
+    rwl <- rwl[, !(colnames(rwl) %in% names(zero.series[zero.series == TRUE]))]
+  }
+
+  # Warn the user about overlaps less than 25 years
+  short.series <- sapply(check.series, FUN = \(x) nrow(x) < 25 & nrow(x) >= 4)
+  if (any(short.series)) {
+    message(paste0("The following tree-ring series have < 25 years overlap with clim data.
+    Interpret correlations cautiously.\n", paste0(names(short.series[short.series == TRUE]),
+                                                  collapse = ", ")))
   }
 
   # n_mon_corr & moving_win_multi assume continuity and regularity of all years and months.
@@ -454,10 +462,6 @@ n_mon_corr <- function(rwl = NULL,
   )
 
 
-  # At some point I need to check that there is sufficient overlap between rwl & climate.
-
-
-
   # The operations below assume that the climate data is arranged by month, then year.
   # Let's ensure this is the case.
   # We have already specified these as integers above.
@@ -497,7 +501,7 @@ n_mon_corr <- function(rwl = NULL,
       these.series <- group.IDs.df[group.IDs.df[, group.var] %in% this.group, "series"]
 
       multi_clim_gro_corr(
-        rwl.group = rwl[, c(these.series, "year")],
+        rwl.group = rwl[, colnames(rwl)[colnames(rwl) %in% c(these.series, "year")]],
         clim.group = clim.group,
         clim.var = clim.var,
         group.IDs.df = group.IDs.df,
@@ -537,7 +541,10 @@ n_mon_corr <- function(rwl = NULL,
     sig.only <- cor.res.list[["cor.res.dat"]][cor.res.list[["cor.res.dat"]]$p <= 0.05, ]
     res.agg <- aggregate(coef ~ start.month + win.len + lag + dir,
                          data = sig.only,
-                         FUN = \(x) length(x))
+                         FUN = \(x) length(x),
+                         drop = FALSE) # make sure the black combinations still appear
+    # Replace NAs with 0s
+    res.agg$coef <- ifelse(is.na(res.agg$coef), 0, res.agg$coef)
 
     lag.levels <- res.agg$lag |> unique()
 
@@ -553,7 +560,8 @@ n_mon_corr <- function(rwl = NULL,
       ggplot2::scale_color_manual("Moving window\nlength\n(n months)",
                                   values = hcl.colors(12, palette = "Spectral")) +
       ggplot2::geom_line() +
-      ggplot2::facet_grid(dir ~ lag) +
+      #ggplot2::geom_point() +
+      ggplot2::facet_grid(dir ~ lag, switch = "x") +
       ggplot2::geom_vline(
         data = data.frame(
           xint = gro.period.end,
