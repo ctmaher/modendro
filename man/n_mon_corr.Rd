@@ -115,7 +115,7 @@ consecutive months can extend through the growing season (and into the next cale
 # Tree-ring data from Perkins & Swetnam 1996 (https://doi.org/10.1139/x26-241)
 data(PerkinsSwetnam96)
 # PRISM (https://www.prism.oregonstate.edu/) time series extracted for each site then averaged
-over all sites.
+# over all sites.
 data(idPRISM)
 
 # Monthly average temperature
@@ -133,7 +133,9 @@ PS_gro_Tavg <- n_mon_corr(rwl = PerkinsSwetnam96,
                          group.var = NULL)
 names(PS_gro_Tavg)
 PS_gro_Tavg$`Results plot`
-# April has the strongest signal, and it is a negative relationship. This is a different result
+# April has the strongest signal (largest \% of significant correlations), and it is a negative
+# relationship.
+
 
 # Monthly total precipitation
 # Note that agg.fun = "sum" for precipitation data.
