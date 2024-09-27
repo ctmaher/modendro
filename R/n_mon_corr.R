@@ -567,6 +567,14 @@ n_mon_corr <- function(rwl = NULL,
     out.plot <- ggplot2::ggplot(res.agg,
                                 ggplot2::aes(.data[[x_var]], .data[[y_var]],
                                              color = as.factor(.data[[col_var]]))) +
+      ggplot2::ggtitle(paste0(ifelse(corr.method %in% "pearson", "Pearson ",
+                                    ifelse(corr.method %in% "spearman", "Spearman ",
+                                           "Kendall ")),
+                             "correlations between ",
+                             ifelse(prewhiten == TRUE, "prewhitened ", ""),
+                             "tree-ring and ",
+                             clim.var,
+                             " series")) +
       ggplot2::scale_color_manual("Moving window\nlength\n(n months)",
                                   values = grDevices::hcl.colors(12, palette = "Spectral")) +
       ggplot2::geom_line() +
