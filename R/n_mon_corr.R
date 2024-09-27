@@ -565,7 +565,8 @@ n_mon_corr <- function(rwl = NULL,
     x.intercept <- "xint"
 
     out.plot <- ggplot2::ggplot(res.agg,
-                                ggplot2::aes(x_var, y_var, color = as.factor(col_var))) +
+                                ggplot2::aes(.data[[x_var]], .data[[y_var]],
+                                             color = as.factor(.data[[col_var]]))) +
       ggplot2::scale_color_manual("Moving window\nlength\n(n months)",
                                   values = grDevices::hcl.colors(12, palette = "Spectral")) +
       ggplot2::geom_line() +
@@ -577,7 +578,7 @@ n_mon_corr <- function(rwl = NULL,
           lag = factor(ifelse(hemisphere == "S", "+1", "0")),
           levels = lag.levels[order(as.numeric(lag.levels))]
         ),
-        ggplot2::aes(xintercept = x.intercept),
+        ggplot2::aes(xintercept = .data[[x.intercept]]),
         color = "white"
       ) +
       ggplot2::scale_x_continuous(breaks = c(1:12)) +
