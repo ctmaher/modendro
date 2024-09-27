@@ -610,6 +610,7 @@ n_mon_corr <- function(rwl = NULL,
         legend.title = ggplot2::element_text(color = "white"),
         axis.title = ggplot2::element_text(color = "white"),
         axis.text = ggplot2::element_text(color = "white"),
+        plot.title = ggplot2::element_text(color = "white"),
         legend.position = "top"
       )
 
