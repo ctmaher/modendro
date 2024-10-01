@@ -586,7 +586,7 @@ n_mon_corr <- function(rwl = NULL,
     y_max <- "y.max"
     lag_lab <- "lag"
 
-    #out.plot <-
+    out.plot <-
     ggplot2::ggplot(res.agg, ggplot2::aes(.data[[x_var]], .data[[y_var]],
                                           color = as.factor(.data[[col_var]]))) +
       ggplot2::ggtitle(paste0(ifelse(corr.method %in% "pearson", "Pearson ",
