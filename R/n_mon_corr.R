@@ -166,7 +166,6 @@
 #' # surprising.
 
 
-
 n_mon_corr <- function(rwl = NULL,
                        clim = NULL,
                        clim.var = NULL,
@@ -393,7 +392,7 @@ n_mon_corr <- function(rwl = NULL,
     message(paste0("The following tree-ring series have < 4 years overlap with clim data
     and will be removed from rwl:\n", paste0(names(zero.series[zero.series == TRUE]),
                                              collapse = ", ")))
-    rwl <- rwl[, !(colnames(rwl) %in% names(zero.series[zero.series == TRUE]))]
+    rwl <- rwl[, !(colnames(rwl) %in% names(zero.series[zero.series == TRUE])), drop = FALSE]
   }
 
   # Warn the user about overlaps less than 25 years
@@ -557,39 +556,80 @@ n_mon_corr <- function(rwl = NULL,
     res.agg$prop.sig <- (res.agg$coef / length(unique(cor.res.list[["cor.res.dat"]][, "series"]))) *
       100
 
+    # Make a new composite x-axis that combines start.month and lag
+    res.agg <- res.agg[order(res.agg$lag, res.agg$start.month),]
+    res.agg$comb.x <- paste(res.agg$lag, res.agg$start.month, sep = "_")
+    res.agg$comb.x <- factor(res.agg$comb.x, levels = unique(res.agg$comb.x))
+    res.agg$comb.x.num <- as.numeric(res.agg$comb.x)
+
+
     # Make a plot.
     # These 4 lines are to deal with "no visible binding" NOTEs from check()
-    x_var <- "start.month"
+    x_var <- "comb.x.num"
+    x_lab <- "start.month"
     y_var <- "prop.sig"
     col_var <- "win.len"
     x.intercept <- "xint"
 
-    out.plot <- ggplot2::ggplot(res.agg,
-                                ggplot2::aes(.data[[x_var]], .data[[y_var]],
-                                             color = as.factor(.data[[col_var]]))) +
+    # For geom_tile & geom_text
+    lag.lab.df1 <- res.agg[, c("lag", "start.month", "comb.x", "comb.x.num")] |> unique()
+    lag.lab.df1$dir <- factor("Neg.", levels = c("Pos.","Neg."))
+
+    lag.lab.df <- aggregate(comb.x.num ~ lag + dir, data = lag.lab.df1, min)
+    colnames(lag.lab.df)[colnames(lag.lab.df) %in% "comb.x.num"] <- "x.min"
+    lag.lab.df$x.max <- aggregate(comb.x.num ~ lag + dir, data = lag.lab.df1, max)[,3] + 0.85
+    lag.lab.df$y.min <- -10; lag.lab.df$y.max <- -1
+
+    x_min <- "x.min"
+    x_max <- "x.max"
+    y_min <- "y.min"
+    y_max <- "y.max"
+    lag_lab <- "lag"
+
+    #out.plot <-
+    ggplot2::ggplot(res.agg, ggplot2::aes(.data[[x_var]], .data[[y_var]],
+                                          color = as.factor(.data[[col_var]]))) +
       ggplot2::ggtitle(paste0(ifelse(corr.method %in% "pearson", "Pearson ",
-                                    ifelse(corr.method %in% "spearman", "Spearman ",
-                                           "Kendall ")),
-                             "correlations between ",
-                             ifelse(prewhiten == TRUE, "prewhitened ", ""),
-                             "tree-ring and ",
-                             clim.var,
-                             " series")) +
+                                     ifelse(corr.method %in% "spearman", "Spearman ",
+                                            "Kendall ")),
+                              "correlations between ",
+                              ifelse(prewhiten == TRUE, "prewhitened ", ""),
+                              "tree-ring and ",
+                              clim.var,
+                              " series")) +
       ggplot2::scale_color_manual("Moving window\nlength\n(n months)",
                                   values = grDevices::hcl.colors(12, palette = "Spectral")) +
+      ggplot2::geom_rect(data = lag.lab.df,
+                         aes(xmin = .data[[x_min]],
+                             xmax = .data[[x_max]],
+                             ymin = .data[[y_min]],
+                             ymax = .data[[y_max]]),
+                         inherit.aes = FALSE,
+                         fill = "grey15") +
+      ggplot2::geom_text(data = lag.lab.df,
+                         aes(x = (.data[[x_min]] + .data[[x_max]]) / 2,
+                             y = (.data[[y_min]] + .data[[y_max]]) / 2,
+                             label = .data[[lag_lab]]),
+                         inherit.aes = FALSE,
+                         color = "white",
+                         size = 3) +
+      #ggplot2::scale_x_continuous(data = res.agg, labels = comb.x) +
       ggplot2::geom_line() +
       #ggplot2::geom_point() +
-      ggplot2::facet_grid(dir ~ lag, switch = "x") +
+      ggplot2::facet_wrap( ~ dir, ncol = 1, strip.position = "right") +
+      #ggplot2::facet_grid(dir ~ lag, switch = "x") +
       ggplot2::geom_vline(
         data = data.frame(
-          xint = gro.period.end,
-          lag = factor(ifelse(hemisphere == "S", "+1", "0")),
-          levels = lag.levels[order(as.numeric(lag.levels))]
+          xint = ifelse(hemisphere == "S",
+                        res.agg$comb.x.num[res.agg$comb.x %in% paste0("+1_", gro.period.end)],
+                        res.agg$comb.x.num[res.agg$comb.x %in% paste0("0_",gro.period.end)])
         ),
         ggplot2::aes(xintercept = .data[[x.intercept]]),
         color = "white"
       ) +
-      ggplot2::scale_x_continuous(breaks = c(1:12)) +
+      ggplot2::scale_x_continuous(breaks = unique(res.agg$comb.x.num),
+                                  labels = rep(1:12, (abs(max.lag) +
+                                                        ifelse(hemisphere == "S", 2, 1)))) +
       ggplot2::ylab(
         paste(
           "Percentage of",
@@ -598,7 +638,8 @@ n_mon_corr <- function(rwl = NULL,
         )
       ) +
       ggplot2::xlab("Start month") +
-      ggplot2::coord_cartesian(ylim = c(0, 100)) +
+      ggplot2::coord_cartesian(ylim = c(-5, 100),
+                               xlim = c(min(res.agg$comb.x.num), max(res.agg$comb.x.num))) +
       ggplot2::theme_dark() +
       ggplot2::theme(
         panel.spacing.x = ggplot2::unit(-0.1, "lines"),
@@ -674,3 +715,4 @@ n_mon_corr <- function(rwl = NULL,
   return(out.list)
 
 } # End of function
+

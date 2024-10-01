@@ -198,7 +198,6 @@ multi_clim_gro_corr <- function(rwl.group = NULL,
             subs.for.corr[which(!duplicated(subs.for.corr[, as.character(series.name)])), ]
 
 
-
           if (corr.method == "pearson") {
             cor.res <- cor.test(
               subs.for.corr[, clim.var],
@@ -250,8 +249,8 @@ multi_clim_gro_corr <- function(rwl.group = NULL,
         }) |> do.call(what = "rbind")
       }) |> do.call(what = "rbind")
 
-      this.lag.corr$lag <- ifelse(substr(unique(which.lag), 5, 5) == "0", "0",
-                                  substr(unique(which.lag), 4, 5))
+      this.lag.corr$lag <- ifelse(substr(unique(which.lag), 5, 6) == "0", "0",
+                                  substr(unique(which.lag), 4, 6))
       this.lag.corr
 
     },
@@ -274,7 +273,6 @@ multi_clim_gro_corr <- function(rwl.group = NULL,
     res.list <- list(cor.res.df, clim1, rwl.dat)
     names(res.list) <- c("cor.res.dat", "clim.dat", "rwl.dat")
   }
-
 
   return(res.list)
 } # End of function
