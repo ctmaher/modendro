@@ -14,7 +14,7 @@ n_mon_corr(
   prewhiten = TRUE,
   corr.method = "spearman",
   gro.period.end = NULL,
-  make.plot = TRUE,
+  make.plots = TRUE,
   group.IDs.df = NULL,
   group.var = NULL
 )
@@ -54,7 +54,7 @@ method reduces the type I error rate associated with autocorrelated series. CAUT
 \item{gro.period.end}{the last month in which you expect growth to occur for your study species
 in your study region. Not crucial in this version - only draws a line in the output plot.}
 
-\item{make.plot}{logical vector indicating whether or not to produce a plot. Default is TRUE.
+\item{make.plots}{logical vector indicating whether or not to produce a plot. Default is TRUE.
 You will get a warning if you have < 10 tree-ring series. Ideally you have > 50.}
 
 \item{group.IDs.df}{an optional data.frame with 2 columns: "series", representing the names of
@@ -128,11 +128,11 @@ PS_gro_Tavg <- n_mon_corr(rwl = PerkinsSwetnam96,
                          prewhiten = TRUE,
                          corr.method = "spearman",
                          gro.period.end = 9,
-                         make.plot = TRUE,
+                         make.plots = TRUE,
                          group.IDs.df = NULL,
                          group.var = NULL)
 names(PS_gro_Tavg)
-PS_gro_Tavg$`Results plot`
+PS_gro_Tavg$`Results plots`
 # April has the strongest signal (largest \% of significant correlations), and it is a negative
 # relationship.
 
@@ -148,11 +148,11 @@ PS_gro_PPT <- n_mon_corr(rwl = PerkinsSwetnam96,
                         prewhiten = TRUE,
                         corr.method = "spearman",
                         gro.period.end = 9,
-                        make.plot = TRUE,
+                        make.plots = TRUE,
                         group.IDs.df = NULL,
                         group.var = NULL)
 names(PS_gro_PPT)
-PS_gro_PPT$`Results plot`
+PS_gro_PPT$`Results plots`
 # Strongest signal is Oct-Jan total precip.
 
 
@@ -169,11 +169,11 @@ PS_gro_Tavg_grouped <- n_mon_corr(rwl = PerkinsSwetnam96,
                                  prewhiten = TRUE,
                                  corr.method = "spearman",
                                  gro.period.end = 9,
-                                 make.plot = TRUE,
+                                 make.plots = TRUE,
                                  group.IDs.df = PSgroupIDs,
                                  group.var = "site")
 names(PS_gro_Tavg_grouped)
-PS_gro_Tavg_grouped$`Results plot`
+PS_gro_Tavg_grouped$`Results plots`
 # Similar result, but not identical - now start.month = Apr with a 2-month moving window
 # The climate data is slightly different for each site, so some differences in results are not
 # surprising.

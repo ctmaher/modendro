@@ -39,7 +39,7 @@
 #' \code{\link[corTESTsrd]{corTESTsrd}} function (also used for `corr.method = "kendall"`). This
 #' method reduces the type I error rate associated with autocorrelated series. CAUTION: Currently
 #' `corr.method = "pearson"` doesn't make any adjustments for autocorrelation. See Details below.
-#' @param make.plot logical vector indicating whether or not to produce a plot. Default is TRUE.
+#' @param make.plots logical vector indicating whether or not to produce a plot. Default is TRUE.
 #' You will get a warning if you have < 10 tree-ring series. Ideally you have > 50.
 #' @param group.IDs.df an optional data.frame with 2 columns: "series", representing the names of
 #' the tree-ring series (and matching the colnames of rwl) and a group.var (name is your
@@ -115,11 +115,11 @@
 #'                          prewhiten = TRUE,
 #'                          corr.method = "spearman",
 #'                          gro.period.end = 9,
-#'                          make.plot = TRUE,
+#'                          make.plots = TRUE,
 #'                          group.IDs.df = NULL,
 #'                          group.var = NULL)
 #' names(PS_gro_Tavg)
-#' PS_gro_Tavg$`Results plot`
+#' PS_gro_Tavg$`Results plots`
 #' # April has the strongest signal (largest % of significant correlations), and it is a negative
 #' # relationship.
 #'
@@ -135,11 +135,11 @@
 #'                         prewhiten = TRUE,
 #'                         corr.method = "spearman",
 #'                         gro.period.end = 9,
-#'                         make.plot = TRUE,
+#'                         make.plots = TRUE,
 #'                         group.IDs.df = NULL,
 #'                         group.var = NULL)
 #' names(PS_gro_PPT)
-#' PS_gro_PPT$`Results plot`
+#' PS_gro_PPT$`Results plots`
 #' # Strongest signal is Oct-Jan total precip.
 #'
 #'
@@ -156,11 +156,11 @@
 #'                                  prewhiten = TRUE,
 #'                                  corr.method = "spearman",
 #'                                  gro.period.end = 9,
-#'                                  make.plot = TRUE,
+#'                                  make.plots = TRUE,
 #'                                  group.IDs.df = PSgroupIDs,
 #'                                  group.var = "site")
 #' names(PS_gro_Tavg_grouped)
-#' PS_gro_Tavg_grouped$`Results plot`
+#' PS_gro_Tavg_grouped$`Results plots`
 #' # Similar result, but not identical - now start.month = Apr with a 2-month moving window
 #' # The climate data is slightly different for each site, so some differences in results are not
 #' # surprising.
@@ -175,7 +175,7 @@ n_mon_corr <- function(rwl = NULL,
                        prewhiten = TRUE,
                        corr.method = "spearman",
                        gro.period.end = NULL,
-                       make.plot = TRUE,
+                       make.plots = TRUE,
                        group.IDs.df = NULL,
                        group.var = NULL) {
   ############ Initial basic input error catching
@@ -309,9 +309,9 @@ n_mon_corr <- function(rwl = NULL,
       readline(prompt = "Last month of radial growth = ") |> as.integer()
   }
 
-  ###### make.plot
+  ###### make.plots
   stopifnot("Arg make.plot must be a logical vector" =
-              is.logical(make.plot))
+              is.logical(make.plots))
 
   ###### group.IDs.df
 
@@ -539,12 +539,12 @@ n_mon_corr <- function(rwl = NULL,
     names(cor.res.list) <- out.list.names
   }
 
-  if (make.plot == TRUE) {
+  if (make.plots == TRUE) {
     sig.only <- cor.res.list[["cor.res.dat"]][cor.res.list[["cor.res.dat"]]$p <= 0.05, ]
     res.agg <- aggregate(coef ~ start.month + win.len + lag + dir,
                          data = sig.only,
                          FUN = \(x) length(x),
-                         drop = FALSE) # make sure the black combinations still appear
+                         drop = FALSE) # make sure the blank combinations still appear
     # Replace NAs with 0s
     res.agg$coef <- ifelse(is.na(res.agg$coef), 0, res.agg$coef)
 
@@ -562,12 +562,21 @@ n_mon_corr <- function(rwl = NULL,
     res.agg$comb.x <- factor(res.agg$comb.x, levels = unique(res.agg$comb.x))
     res.agg$comb.x.num <- as.numeric(res.agg$comb.x)
 
+    mean.coef.agg <- aggregate(coef ~ start.month + win.len + lag + dir,
+                               data = cor.res.list[["cor.res.dat"]],
+                               FUN = \(x) mean(x),
+                               drop = FALSE) # make sure the blank combinations still appear
+    colnames(mean.coef.agg)[colnames(mean.coef.agg) %in% "coef"] <- "mean.coef"
+
+    res.agg <- merge(res.agg, mean.coef.agg, by = c("start.month", "win.len", "lag", "dir"))
+    res.agg <- res.agg[order(res.agg$lag, res.agg$start.month),]
 
     # Make a plot.
     # These 4 lines are to deal with "no visible binding" NOTEs from check()
     x_var <- "comb.x.num"
     x_lab <- "start.month"
     y_var <- "prop.sig"
+    y_var2 <- "mean.coef"
     col_var <- "win.len"
     x.intercept <- "xint"
 
@@ -579,16 +588,19 @@ n_mon_corr <- function(rwl = NULL,
     colnames(lag.lab.df)[colnames(lag.lab.df) %in% "comb.x.num"] <- "x.min"
     lag.lab.df$x.max <- aggregate(comb.x.num ~ lag + dir, data = lag.lab.df1, max)[,3] + 0.85
     lag.lab.df$y.min <- -10; lag.lab.df$y.max <- -1
+    lag.lab.df$y.min2 <- -1.1; lag.lab.df$y.max2 <- -1
 
     x_min <- "x.min"
     x_max <- "x.max"
     y_min <- "y.min"
     y_max <- "y.max"
+    y_min2 <- "y.min2"
+    y_max2 <- "y.max2"
     lag_lab <- "lag"
 
     out.plot <-
-    ggplot2::ggplot(res.agg, ggplot2::aes(.data[[x_var]], .data[[y_var]],
-                                          color = as.factor(.data[[col_var]]))) +
+      ggplot2::ggplot(res.agg, ggplot2::aes(.data[[x_var]], .data[[y_var]],
+                                            color = as.factor(.data[[col_var]]))) +
       ggplot2::ggtitle(paste0(ifelse(corr.method %in% "pearson", "Pearson ",
                                      ifelse(corr.method %in% "spearman", "Spearman ",
                                             "Kendall ")),
@@ -655,23 +667,95 @@ n_mon_corr <- function(rwl = NULL,
         legend.position = "top"
       )
 
+    ### Mean coef plot
+
+    mean.plot <-
+      ggplot2::ggplot(res.agg, ggplot2::aes(.data[[x_var]], .data[[y_var2]],
+                                            color = as.factor(.data[[col_var]]))) +
+      ggplot2::ggtitle(paste0(ifelse(corr.method %in% "pearson", "Pearson ",
+                                     ifelse(corr.method %in% "spearman", "Spearman ",
+                                            "Kendall ")),
+                              "correlations between ",
+                              ifelse(prewhiten == TRUE, "prewhitened ", ""),
+                              "tree-ring and ",
+                              clim.var,
+                              " series")) +
+      ggplot2::scale_color_manual("Moving window\nlength\n(n months)",
+                                  values = grDevices::hcl.colors(12, palette = "Spectral")) +
+      ggplot2::geom_rect(data = lag.lab.df,
+                         aes(xmin = .data[[x_min]],
+                             xmax = .data[[x_max]],
+                             ymin = .data[[y_min2]],
+                             ymax = .data[[y_max2]]),
+                         inherit.aes = FALSE,
+                         fill = "grey15") +
+      ggplot2::geom_text(data = lag.lab.df,
+                         aes(x = (.data[[x_min]] + .data[[x_max]]) / 2,
+                             y = (.data[[y_min2]] + .data[[y_max2]]) / 2,
+                             label = .data[[lag_lab]]),
+                         inherit.aes = FALSE,
+                         color = "white",
+                         size = 3) +
+      #ggplot2::scale_x_continuous(data = res.agg, labels = comb.x) +
+      ggplot2::geom_line() +
+      #ggplot2::geom_point() +
+      ggplot2::facet_wrap( ~ dir, ncol = 1, strip.position = "right", scales = "free_y") +
+      #ggplot2::facet_grid(dir ~ lag, switch = "x") +
+      ggplot2::geom_vline(
+        data = data.frame(
+          xint = ifelse(hemisphere == "S",
+                        res.agg$comb.x.num[res.agg$comb.x %in% paste0("+1_", gro.period.end)],
+                        res.agg$comb.x.num[res.agg$comb.x %in% paste0("0_",gro.period.end)])
+        ),
+        ggplot2::aes(xintercept = .data[[x.intercept]]),
+        color = "white"
+      ) +
+      ggplot2::scale_x_continuous(breaks = unique(res.agg$comb.x.num),
+                                  labels = rep(1:12, (abs(max.lag) +
+                                                        ifelse(hemisphere == "S", 2, 1)))) +
+      ggplot2::ylab(
+        paste(
+          "Mean correlation coefficent of\n",
+          length(unique(cor.res.list[["cor.res.dat"]][, "series"])),
+          "total series"
+        )
+      ) +
+      ggplot2::xlab("Start month") +
+      ggplot2::coord_cartesian(#ylim = c(-1, 1),
+        xlim = c(min(res.agg$comb.x.num), max(res.agg$comb.x.num))) +
+      ggplot2::theme_dark() +
+      ggplot2::theme(
+        panel.spacing.x = ggplot2::unit(-0.1, "lines"),
+        panel.background = ggplot2::element_rect(fill = "black"),
+        plot.background = ggplot2::element_rect(fill = "black"),
+        legend.background = ggplot2::element_rect(fill = "black"),
+        panel.grid = ggplot2::element_line(color = "grey40"),
+        legend.text = ggplot2::element_text(color = "white"),
+        legend.title = ggplot2::element_text(color = "white"),
+        axis.title = ggplot2::element_text(color = "white"),
+        axis.text = ggplot2::element_text(color = "white"),
+        plot.title = ggplot2::element_text(color = "white"),
+        legend.position = "top"
+      )
+
+
   }
 
 
   if (prewhiten == TRUE) {
-    if (make.plot == TRUE) {
+    if (make.plots == TRUE) {
       out.list <- list(cor.res.list[["cor.res.dat"]],
                        cor.res.list[["clim.dat.pw"]],
                        cor.res.list[["clim.dat"]],
                        cor.res.list[["rwl.dat"]],
-                       out.plot)
+                       list(out.plot, mean.plot))
       names(out.list) <-
         c(
           "Correlation results",
           "Climate data (prewhitened)",
           "Climate data (raw)",
           "Ring-width series (prewhitened)",
-          "Results plot"
+          "Results plots"
         )
     } else {
       out.list <- list(cor.res.list[["cor.res.dat"]],
@@ -688,12 +772,14 @@ n_mon_corr <- function(rwl = NULL,
     }
 
   } else {
-    if (make.plot == TRUE) {
-      out.list <- list(cor.res.list[["cor.res.dat"]], cor.res.list[["clim.dat"]], out.plot)
+    if (make.plots == TRUE) {
+      out.list <- list(cor.res.list[["cor.res.dat"]],
+                       cor.res.list[["clim.dat"]],
+                       list(out.plot, mean.plot))
       names(out.list) <-
         c("Correlation results",
           "Climate data (raw)",
-          "Results plot")
+          "Results plots")
 
     } else {
       out.list <- list(cor.res.list[["cor.res.dat"]], cor.res.list[["clim.dat"]])
@@ -702,7 +788,7 @@ n_mon_corr <- function(rwl = NULL,
     }
   }
 
-  if ((ncol(rwl) - 1) < 10 & make.plot == TRUE) {
+  if ((ncol(rwl) - 1) < 10 & make.plots == TRUE) {
     warning("Number of tree-ring series is very low (< 10),
               results plots likely not interpretable")
   }
