@@ -597,7 +597,9 @@ n_mon_corr <- function(rwl = NULL,
     colnames(lag.lab.df)[colnames(lag.lab.df) %in% "comb.x.num"] <- "x.min"
     lag.lab.df$x.max <- aggregate(comb.x.num ~ lag + dir, data = lag.lab.df1, max)[,3] + 0.85
     lag.lab.df$y.min <- -10; lag.lab.df$y.max <- -1
-    lag.lab.df$y.min2 <- -1; lag.lab.df$y.max2 <- -0.9
+    # Define some ylim values here
+    ylim.val <- max(abs(na.omit(res.agg$mean.coef))) + 0.15
+    lag.lab.df$y.min2 <- -ylim.val; lag.lab.df$y.max2 <- -(ylim.val - 0.1)
 
     x_min <- "x.min"
     x_max <- "x.max"
@@ -615,11 +617,13 @@ n_mon_corr <- function(rwl = NULL,
       ggplot2::ggplot(res.agg, ggplot2::aes(.data[[x_var]], .data[[y_var]],
                                             color = as.factor(.data[[col_var]]))) +
       ggplot2::ggtitle(paste0(pretty.corr.method,
-                              "correlations between ",
-                              ifelse(prewhiten == TRUE, "prewhitened ", ""),
-                              "tree-ring and ",
+                              "correlations between tree-ring and ",
                               clim.var,
-                              " series")) +
+                              " series"),
+                       subtitle = paste0("Transformation: ",
+                                         ifelse(prewhiten == TRUE, "ARIMA resids.", "None"),
+                                         "; Aggregation of climate moving windows: ",
+                                         paste0(agg.fun,"s"))) +
       ggplot2::scale_color_manual("Moving\nwindow\nlength\n(n months)",
                                   values = grDevices::hcl.colors(12, palette = "Spectral")) +
       ggplot2::geom_rect(data = lag.lab.df,
@@ -637,7 +641,8 @@ n_mon_corr <- function(rwl = NULL,
                          color = "white",
                          size = 3) +
       #ggplot2::scale_x_continuous(data = res.agg, labels = comb.x) +
-      ggplot2::geom_line(linewidth = 0.8) +
+      ggplot2::geom_line(linewidth = 0.75,
+                         ggplot2::aes(group = factor(.data[[col_var]], levels = rev(1:12)))) +
       ggplot2::facet_wrap( ~ dir, ncol = 1, strip.position = "right") +
       #ggplot2::facet_grid(dir ~ lag, switch = "x") +
       ggplot2::geom_vline(
@@ -674,6 +679,7 @@ n_mon_corr <- function(rwl = NULL,
         axis.title = ggplot2::element_text(color = "white"),
         axis.text = ggplot2::element_text(color = "white"),
         plot.title = ggplot2::element_text(color = "white"),
+        plot.subtitle = ggplot2::element_text(color = "white"),
         legend.position = "right"
       )
 
@@ -683,17 +689,19 @@ n_mon_corr <- function(rwl = NULL,
       ggplot2::ggplot(res.agg, ggplot2::aes(.data[[x_var]], .data[[y_var2]],
                                             color = as.factor(.data[[col_var]]))) +
       ggplot2::ggtitle(paste0(pretty.corr.method,
-                              "correlations between ",
-                              ifelse(prewhiten == TRUE, "prewhitened ", ""),
-                              "tree-ring and ",
+                              "correlations between tree-ring and ",
                               clim.var,
-                              " series")) +
+                              " series"),
+                       subtitle = paste0("Transformation: ",
+                                         ifelse(prewhiten == TRUE, "ARIMA resids.", "None"),
+                                         "; Aggregation of climate moving windows: ",
+                                         paste0(agg.fun,"s"))) +
       ggplot2::scale_color_manual("Moving\nwindow\nlength\n(n months)",
                                   values = grDevices::hcl.colors(12, palette = "Spectral")) +
       # Invisible hline to set the ylim
       ggplot2::geom_hline(
         data = data.frame(
-          yint = c(1,0,0,-1),
+          yint = c(ylim.val,0,0,-ylim.val), # This defines the ylim
           dir = factor(c("Pos.","Pos.","Neg.","Neg."), levels = c("Neg.","Pos."))
         ),
         ggplot2::aes(yintercept = .data[[y.intercept]]),
@@ -714,7 +722,8 @@ n_mon_corr <- function(rwl = NULL,
                          color = "white",
                          size = 3) +
       #ggplot2::scale_x_continuous(data = res.agg, labels = comb.x) +
-      ggplot2::geom_line(linewidth = 0.8) +
+      ggplot2::geom_line(linewidth = 0.75,
+                         ggplot2::aes(group = factor(.data[[col_var]], levels = rev(1:12)))) +
       #ggplot2::geom_point() +
       ggplot2::facet_wrap( ~ dir, ncol = 1, strip.position = "right", scales = "free_y") +
       #ggplot2::facet_grid(dir ~ lag, switch = "x") +
@@ -752,6 +761,7 @@ n_mon_corr <- function(rwl = NULL,
         axis.title = ggplot2::element_text(color = "white"),
         axis.text = ggplot2::element_text(color = "white"),
         plot.title = ggplot2::element_text(color = "white"),
+        plot.subtitle = ggplot2::element_text(color = "white"),
         legend.position = "right"
       )
 
