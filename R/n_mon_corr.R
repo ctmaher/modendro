@@ -39,7 +39,7 @@
 #' \code{\link[corTESTsrd]{corTESTsrd}} function (also used for `corr.method = "kendall"`). This
 #' method reduces the type I error rate associated with autocorrelated series. CAUTION: Currently
 #' `corr.method = "pearson"` doesn't make any adjustments for autocorrelation. See Details below.
-#' @param make.plots logical vector indicating whether or not to produce a plot. Default is TRUE.
+#' @param make.plots logical vector indicating whether or not to produce plots. Default is TRUE.
 #' You will get a warning if you have < 10 tree-ring series. Ideally you have > 50.
 #' @param group.IDs.df an optional data.frame with 2 columns: "series", representing the names of
 #' the tree-ring series (and matching the colnames of rwl) and a group.var (name is your
@@ -48,7 +48,7 @@
 #' Must exist and be identical in clim and group.ID.df.
 #'
 #' @details
-#' Exploring a wide range of plausible grrowth-climate relationships can be a useful first step once
+#' Exploring a wide range of plausible growth-climate relationships can be a useful first step once
 #' you have a collection of cross-dated tree ring series.
 #'
 #' The default correlation test method is Spearman rank correlation. This will be ±equivalent
@@ -77,6 +77,14 @@
 #' handled is that a "lag +1" year is added to suite of correlations so that the moving windows of
 #' consecutive months can extend through the growing season (and into the next calendar year).
 #'
+#' The results plots (returned as part of the output if `make.plots == TRUE`), show 1) the
+#' percentage of tree-ring series that had statistically significant correlations and 2) the mean
+#' correlation coefficient (ALL correlations, not just significant ones) with all possible moving
+#' window combinations. Moving windows are represented by their start month (the x-axis) and window
+#' length (represented by the lines of different colors). Each plot is split by the direction of the
+#' relationships: positive (coef > 0) and negative (coef < 0). The x-axis is extended to the left
+#' according to the number of lag years the user specifies (with `max.lag`). Lag years are indicated
+#' by labeled rectangles just above the x-axis ticks. "0" represents the current year.
 #'
 #' @return A 2-4 element list containing data.frames of the correlation results, the moving-window
 # climate data used in the correlations (both prewhitened and raw if prewhiten = TRUE), the
@@ -579,6 +587,7 @@ n_mon_corr <- function(rwl = NULL,
     y_var2 <- "mean.coef"
     col_var <- "win.len"
     x.intercept <- "xint"
+    y.intercept <- "yint"
 
     # For geom_tile & geom_text
     lag.lab.df1 <- res.agg[, c("lag", "start.month", "comb.x", "comb.x.num")] |> unique()
@@ -588,7 +597,7 @@ n_mon_corr <- function(rwl = NULL,
     colnames(lag.lab.df)[colnames(lag.lab.df) %in% "comb.x.num"] <- "x.min"
     lag.lab.df$x.max <- aggregate(comb.x.num ~ lag + dir, data = lag.lab.df1, max)[,3] + 0.85
     lag.lab.df$y.min <- -10; lag.lab.df$y.max <- -1
-    lag.lab.df$y.min2 <- -1.1; lag.lab.df$y.max2 <- -1
+    lag.lab.df$y.min2 <- -1; lag.lab.df$y.max2 <- -0.9
 
     x_min <- "x.min"
     x_max <- "x.max"
@@ -598,18 +607,20 @@ n_mon_corr <- function(rwl = NULL,
     y_max2 <- "y.max2"
     lag_lab <- "lag"
 
-    out.plot <-
+    pretty.corr.method <- ifelse(corr.method %in% "pearson", "Pearson ",
+                                 ifelse(corr.method %in% "spearman", "Spearman ",
+                                        "Kendall "))
+
+    per.plot <-
       ggplot2::ggplot(res.agg, ggplot2::aes(.data[[x_var]], .data[[y_var]],
                                             color = as.factor(.data[[col_var]]))) +
-      ggplot2::ggtitle(paste0(ifelse(corr.method %in% "pearson", "Pearson ",
-                                     ifelse(corr.method %in% "spearman", "Spearman ",
-                                            "Kendall ")),
+      ggplot2::ggtitle(paste0(pretty.corr.method,
                               "correlations between ",
                               ifelse(prewhiten == TRUE, "prewhitened ", ""),
                               "tree-ring and ",
                               clim.var,
                               " series")) +
-      ggplot2::scale_color_manual("Moving window\nlength\n(n months)",
+      ggplot2::scale_color_manual("Moving\nwindow\nlength\n(n months)",
                                   values = grDevices::hcl.colors(12, palette = "Spectral")) +
       ggplot2::geom_rect(data = lag.lab.df,
                          aes(xmin = .data[[x_min]],
@@ -626,8 +637,7 @@ n_mon_corr <- function(rwl = NULL,
                          color = "white",
                          size = 3) +
       #ggplot2::scale_x_continuous(data = res.agg, labels = comb.x) +
-      ggplot2::geom_line() +
-      #ggplot2::geom_point() +
+      ggplot2::geom_line(linewidth = 1) +
       ggplot2::facet_wrap( ~ dir, ncol = 1, strip.position = "right") +
       #ggplot2::facet_grid(dir ~ lag, switch = "x") +
       ggplot2::geom_vline(
@@ -664,7 +674,7 @@ n_mon_corr <- function(rwl = NULL,
         axis.title = ggplot2::element_text(color = "white"),
         axis.text = ggplot2::element_text(color = "white"),
         plot.title = ggplot2::element_text(color = "white"),
-        legend.position = "top"
+        legend.position = "right"
       )
 
     ### Mean coef plot
@@ -672,16 +682,23 @@ n_mon_corr <- function(rwl = NULL,
     mean.plot <-
       ggplot2::ggplot(res.agg, ggplot2::aes(.data[[x_var]], .data[[y_var2]],
                                             color = as.factor(.data[[col_var]]))) +
-      ggplot2::ggtitle(paste0(ifelse(corr.method %in% "pearson", "Pearson ",
-                                     ifelse(corr.method %in% "spearman", "Spearman ",
-                                            "Kendall ")),
+      ggplot2::ggtitle(paste0(pretty.corr.method,
                               "correlations between ",
                               ifelse(prewhiten == TRUE, "prewhitened ", ""),
                               "tree-ring and ",
                               clim.var,
                               " series")) +
-      ggplot2::scale_color_manual("Moving window\nlength\n(n months)",
+      ggplot2::scale_color_manual("Moving\nwindow\nlength\n(n months)",
                                   values = grDevices::hcl.colors(12, palette = "Spectral")) +
+      # Invisible hline to set the ylim
+      ggplot2::geom_hline(
+        data = data.frame(
+          yint = c(1,0,0,-1),
+          dir = factor(c("Pos.","Pos.","Neg.","Neg."), levels = c("Neg.","Pos."))
+        ),
+        ggplot2::aes(yintercept = .data[[y.intercept]]),
+        color = NA
+      ) +
       ggplot2::geom_rect(data = lag.lab.df,
                          aes(xmin = .data[[x_min]],
                              xmax = .data[[x_max]],
@@ -697,7 +714,7 @@ n_mon_corr <- function(rwl = NULL,
                          color = "white",
                          size = 3) +
       #ggplot2::scale_x_continuous(data = res.agg, labels = comb.x) +
-      ggplot2::geom_line() +
+      ggplot2::geom_line(linewidth = 1) +
       #ggplot2::geom_point() +
       ggplot2::facet_wrap( ~ dir, ncol = 1, strip.position = "right", scales = "free_y") +
       #ggplot2::facet_grid(dir ~ lag, switch = "x") +
@@ -713,6 +730,7 @@ n_mon_corr <- function(rwl = NULL,
       ggplot2::scale_x_continuous(breaks = unique(res.agg$comb.x.num),
                                   labels = rep(1:12, (abs(max.lag) +
                                                         ifelse(hemisphere == "S", 2, 1)))) +
+      ggplot2::scale_y_continuous(breaks = seq(-1, 1, by = 0.2)) +
       ggplot2::ylab(
         paste(
           "Mean correlation coefficent of\n",
@@ -721,8 +739,7 @@ n_mon_corr <- function(rwl = NULL,
         )
       ) +
       ggplot2::xlab("Start month") +
-      ggplot2::coord_cartesian(#ylim = c(-1, 1),
-        xlim = c(min(res.agg$comb.x.num), max(res.agg$comb.x.num))) +
+      ggplot2::coord_cartesian(xlim = c(min(res.agg$comb.x.num), max(res.agg$comb.x.num))) +
       ggplot2::theme_dark() +
       ggplot2::theme(
         panel.spacing.x = ggplot2::unit(-0.1, "lines"),
@@ -735,7 +752,7 @@ n_mon_corr <- function(rwl = NULL,
         axis.title = ggplot2::element_text(color = "white"),
         axis.text = ggplot2::element_text(color = "white"),
         plot.title = ggplot2::element_text(color = "white"),
-        legend.position = "top"
+        legend.position = "right"
       )
 
 
@@ -748,7 +765,7 @@ n_mon_corr <- function(rwl = NULL,
                        cor.res.list[["clim.dat.pw"]],
                        cor.res.list[["clim.dat"]],
                        cor.res.list[["rwl.dat"]],
-                       list(out.plot, mean.plot))
+                       list(per.plot, mean.plot))
       names(out.list) <-
         c(
           "Correlation results",
@@ -775,7 +792,7 @@ n_mon_corr <- function(rwl = NULL,
     if (make.plots == TRUE) {
       out.list <- list(cor.res.list[["cor.res.dat"]],
                        cor.res.list[["clim.dat"]],
-                       list(out.plot, mean.plot))
+                       list(per.plot, mean.plot))
       names(out.list) <-
         c("Correlation results",
           "Climate data (raw)",
@@ -789,8 +806,8 @@ n_mon_corr <- function(rwl = NULL,
   }
 
   if ((ncol(rwl) - 1) < 10 & make.plots == TRUE) {
-    warning("Number of tree-ring series is very low (< 10),
-              results plots likely not interpretable")
+    warning("Number of tree-ring series is very low (< 10).
+              Be cautious interpreting results plots.")
   }
 
   # Lastly, order the Correlation results based on the highest correlation

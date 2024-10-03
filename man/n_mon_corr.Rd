@@ -54,7 +54,7 @@ method reduces the type I error rate associated with autocorrelated series. CAUT
 \item{gro.period.end}{the last month in which you expect growth to occur for your study species
 in your study region. Not crucial in this version - only draws a line in the output plot.}
 
-\item{make.plots}{logical vector indicating whether or not to produce a plot. Default is TRUE.
+\item{make.plots}{logical vector indicating whether or not to produce plots. Default is TRUE.
 You will get a warning if you have < 10 tree-ring series. Ideally you have > 50.}
 
 \item{group.IDs.df}{an optional data.frame with 2 columns: "series", representing the names of
@@ -81,7 +81,7 @@ the proper format. It is the user's responsibility to make sure that your data i
 to the analyses.
 }
 \details{
-Exploring a wide range of plausible grrowth-climate relationships can be a useful first step once
+Exploring a wide range of plausible growth-climate relationships can be a useful first step once
 you have a collection of cross-dated tree ring series.
 
 The default correlation test method is Spearman rank correlation. This will be ±equivalent
@@ -109,6 +109,15 @@ tree rings in the Southern hemisphere, i.e., the calendar year in which growth b
 for how the climate data is aligned with the treering data. In this version, the way this is
 handled is that a "lag +1" year is added to suite of correlations so that the moving windows of
 consecutive months can extend through the growing season (and into the next calendar year).
+
+The results plots (returned as part of the output if \code{make.plots == TRUE}), show 1) the
+percentage of tree-ring series that had statistically significant correlations and 2) the mean
+correlation coefficient (ALL correlations, not just significant ones) with all possible moving
+window combinations. Moving windows are represented by their start month (the x-axis) and window
+length (represented by the lines of different colors). Each plot is split by the direction of the
+relationships: positive (coef > 0) and negative (coef < 0). The x-axis is extended to the left
+according to the number of lag years the user specifies (with \code{max.lag}). Lag years are indicated
+by labeled rectangles just above the x-axis ticks. "0" represents the current year.
 }
 \examples{
 ## Bring in some real tree-ring and climate data
