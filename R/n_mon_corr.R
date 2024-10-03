@@ -637,7 +637,7 @@ n_mon_corr <- function(rwl = NULL,
                          color = "white",
                          size = 3) +
       #ggplot2::scale_x_continuous(data = res.agg, labels = comb.x) +
-      ggplot2::geom_line(linewidth = 1) +
+      ggplot2::geom_line(linewidth = 0.8) +
       ggplot2::facet_wrap( ~ dir, ncol = 1, strip.position = "right") +
       #ggplot2::facet_grid(dir ~ lag, switch = "x") +
       ggplot2::geom_vline(
@@ -714,7 +714,7 @@ n_mon_corr <- function(rwl = NULL,
                          color = "white",
                          size = 3) +
       #ggplot2::scale_x_continuous(data = res.agg, labels = comb.x) +
-      ggplot2::geom_line(linewidth = 1) +
+      ggplot2::geom_line(linewidth = 0.8) +
       #ggplot2::geom_point() +
       ggplot2::facet_wrap( ~ dir, ncol = 1, strip.position = "right", scales = "free_y") +
       #ggplot2::facet_grid(dir ~ lag, switch = "x") +
