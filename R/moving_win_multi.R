@@ -23,26 +23,11 @@
 #' @export
 #'
 #' @examples
-#' # Make some fake climate data for testing and building the function
-#' mo <- 1:12
-#' x <- seq(-4, 4, length.out = 12)
-#' # Give the clim.var a seasonal fluctuation, kind of like temperature outside of
-#' # tropical latitudes
-#' gauss.curv <- \(x) {(10/sqrt(2*pi*1.6))*exp(-((x^2)/(2*1.6^2)))}
-#' clim.mo <- data.frame(month = mo, clim.var = gauss.curv(x))
+#' # Load the Idaho climate data
+#' data(idPRISM)
 #'
-#' clim.list <- vector("list", length = 12)
-#' for (y in seq_along(clim.list)) {
-#'   clim.y <- data.frame(year = 1951:2000, month = y)
-#'   clim.y[,"clim.var"] <- runif(50, min = 0.1, max = 2) +
-#'   clim.mo[clim.mo$month %in% y, "clim.var"]
-#'   clim.list[[y]] <- clim.y
-#' }
-#'
-#' fake.clim <- do.call("rbind", clim.list)
-#'
-#' test.output <- moving_win_multi(df = fake.clim,
-#' clim.var = "clim.var",
+#' test.output <- moving_win_multi(df = idPRISM,
+#' clim.var = "Tavg.C",
 #' win.lens = 2:12,
 #' agg.fun = "mean")
 #'
@@ -61,7 +46,7 @@
 #' # Trim down to a 10-year period so that the results are easier to see.
 #'
 #' ggplot(clim1[clim1$year %in% 1991:2000,]) +
-#' geom_path(aes(yr.mo, clim.var, color = win.len), na.rm = TRUE)
+#' geom_path(aes(yr.mo, Tavg.C, color = win.len), na.rm = TRUE)
 
 
 moving_win_multi <- function(df, clim.var, win.lens, agg.fun = NULL) {

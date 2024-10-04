@@ -797,4 +797,3 @@ of the output (grouped data)", {
   expect_true(all(test.list))
 })
 
-

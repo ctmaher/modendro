@@ -598,8 +598,8 @@ n_mon_corr <- function(rwl = NULL,
     lag.lab.df$x.max <- aggregate(comb.x.num ~ lag + dir, data = lag.lab.df1, max)[,3] + 0.85
     lag.lab.df$y.min <- -10; lag.lab.df$y.max <- -1
     # Define some ylim values here
-    ylim.val <- max(abs(na.omit(res.agg$mean.coef))) + 0.15
-    lag.lab.df$y.min2 <- -ylim.val; lag.lab.df$y.max2 <- -(ylim.val - 0.1)
+    ylim.val <- max(abs(na.omit(res.agg$mean.coef))) + 0.1
+    lag.lab.df$y.min2 <- -ylim.val; lag.lab.df$y.max2 <- -(ylim.val + 0.15*ylim.val)
 
     x_min <- "x.min"
     x_max <- "x.max"
