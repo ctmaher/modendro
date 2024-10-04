@@ -17,8 +17,8 @@
 #' @param agg.fun character vector specifying the function to use for aggregating monthly
 #' climate combinations. Options are "mean" or "sum", e.g., for temperature or precipitation data,
 #' respectively. Default is "mean".
-#' @param max.win integer vector specifying how long the longest (or widest) moving window is.
-#' Values limited to between 2 and 12.
+#' @param max.win integer vector specifying how long, in months, the longest (or widest) moving
+#' window is. Values limited to between 2 and 12. Default is 6 months.
 #' @param max.lag integer vector specifying how many years of lag to calculate calculations for.
 #' Default (and minimum) is 1 year.
 #' @param hemisphere a character vector specifying which hemisphere your tree ring data - &
