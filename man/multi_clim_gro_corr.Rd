@@ -10,6 +10,7 @@ multi_clim_gro_corr(
   clim.var = NULL,
   gro.period.end = NULL,
   agg.fun = "mean",
+  max.win = 6,
   max.lag = 1,
   prewhiten = TRUE,
   hemisphere = NULL,
@@ -34,6 +35,9 @@ in your study region. Not crucial in this version - only draws a line in the out
 \item{agg.fun}{character vector specifying the function to use for aggregating monthly
 climate combinations. Options are "mean" or "sum", e.g., for temperature or precipitation data,
 respectively. Default is "mean".}
+
+\item{max.win}{integer vector specifying how long the longest (or widest) moving window is.
+Values limited to between 2 and 12.}
 
 \item{max.lag}{integer vector specifying how many years of lag to calculate calculations for.
 Default (and minimum) is 1 year.}

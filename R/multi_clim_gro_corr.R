@@ -17,6 +17,8 @@
 #' @param agg.fun character vector specifying the function to use for aggregating monthly
 #' climate combinations. Options are "mean" or "sum", e.g., for temperature or precipitation data,
 #' respectively. Default is "mean".
+#' @param max.win integer vector specifying how long the longest (or widest) moving window is.
+#' Values limited to between 2 and 12.
 #' @param max.lag integer vector specifying how many years of lag to calculate calculations for.
 #' Default (and minimum) is 1 year.
 #' @param hemisphere a character vector specifying which hemisphere your tree ring data - &
@@ -45,6 +47,7 @@ multi_clim_gro_corr <- function(rwl.group = NULL,
                                 clim.var = NULL,
                                 gro.period.end = NULL,
                                 agg.fun = "mean",
+                                max.win = 6,
                                 max.lag = 1,
                                 prewhiten = TRUE,
                                 hemisphere = NULL,
@@ -55,7 +58,7 @@ multi_clim_gro_corr <- function(rwl.group = NULL,
   clim1 <- moving_win_multi(
     clim.group,
     clim.var = clim.var,
-    win.lens = 2:12,
+    win.lens = 2:max.win,
     agg.fun = agg.fun
   )
 

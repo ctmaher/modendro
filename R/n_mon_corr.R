@@ -23,6 +23,8 @@
 #' @param agg.fun character vector specifying the function to use for aggregating monthly
 #' climate combinations. Options are "mean" or "sum", e.g., for temperature or precipitation data,
 #' respectively. Default is "mean".
+#' @param max.win integer vector specifying how long the longest (or widest) moving window is.
+#' Values limited to between 2 and 12.
 #' @param max.lag integer vector specifying how many years of lag to calculate calculations for.
 #' Default (and minimum) is 1 year.
 #' @param hemisphere a character vector specifying which hemisphere your tree ring data - &
@@ -178,6 +180,7 @@ n_mon_corr <- function(rwl = NULL,
                        clim = NULL,
                        clim.var = NULL,
                        agg.fun = "mean",
+                       max.win = 6,
                        max.lag = 1,
                        hemisphere = NULL,
                        prewhiten = TRUE,
@@ -253,6 +256,15 @@ n_mon_corr <- function(rwl = NULL,
   stopifnot("Arg agg.fun must be either 'mean' or 'sum'" =
               agg.fun %in% "mean" |
               agg.fun %in% "sum")
+
+  ###### max.win
+  stopifnot("Arg max.win must be an integer vector of length = 1" =
+              length(max.win) == 1 |
+              is.integer(max.win))
+
+  stopifnot("Arg max.win must be between 2 & 12" =
+              max.win >= 2 &
+              max.win <= 12)
 
   ###### max.lag
   stopifnot("Arg max.lag must be an integer vector of length = 1" =
@@ -495,6 +507,7 @@ n_mon_corr <- function(rwl = NULL,
       group.var = group.var,
       gro.period.end = gro.period.end,
       agg.fun = agg.fun,
+      max.win = max.win,
       max.lag = max.lag,
       prewhiten = prewhiten,
       corr.method = corr.method,
@@ -518,6 +531,7 @@ n_mon_corr <- function(rwl = NULL,
         group.var = group.var,
         gro.period.end = gro.period.end,
         agg.fun = agg.fun,
+        max.win = max.win,
         max.lag = max.lag,
         prewhiten = prewhiten,
         corr.method = corr.method,
@@ -625,7 +639,7 @@ n_mon_corr <- function(rwl = NULL,
                                          "; Aggregation of climate moving windows: ",
                                          paste0(agg.fun,"s"))) +
       ggplot2::scale_color_manual("Moving\nwindow\nlength\n(n months)",
-                                  values = grDevices::hcl.colors(12, palette = "Spectral")) +
+                                  values = grDevices::hcl.colors(max.win, palette = "Spectral")) +
       ggplot2::geom_rect(data = lag.lab.df,
                          aes(xmin = .data[[x_min]],
                              xmax = .data[[x_max]],
@@ -697,7 +711,7 @@ n_mon_corr <- function(rwl = NULL,
                                          "; Aggregation of climate moving windows: ",
                                          paste0(agg.fun,"s"))) +
       ggplot2::scale_color_manual("Moving\nwindow\nlength\n(n months)",
-                                  values = grDevices::hcl.colors(12, palette = "Spectral")) +
+                                  values = grDevices::hcl.colors(max.win, palette = "Spectral")) +
       # Invisible hline to set the ylim
       ggplot2::geom_hline(
         data = data.frame(
