@@ -117,8 +117,8 @@ moving_win_multi <- function(df,
   )
 
   # make sure year and month are integers from here on out
-  clim[, "year"] <- as.integer(clim[, "year"])
-  clim[, "month"] <- as.integer(clim[, "month"])
+  df[, "year"] <- as.integer(df[, "year"])
+  df[, "month"] <- as.integer(df[, "month"])
 
   # must ensure that the years and months are ordered correctly
   df <- df[order(df$year, df$month, decreasing = FALSE),]
