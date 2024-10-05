@@ -4,7 +4,7 @@
 \alias{moving_win_multi}
 \title{Calculate multiple-length moving windows of monthly climate data}
 \usage{
-moving_win_multi(df, clim.var, win.lens, agg.fun = NULL)
+moving_win_multi(df, clim.var, win.lens, win.align = "right", agg.fun = NULL)
 }
 \arguments{
 \item{df}{a data.frame or matrix of climate data, with at least 3 columns: year, month (numeric),
@@ -15,6 +15,10 @@ refers to the climate variable you wish to calculate moving windows for.}
 
 \item{win.lens}{a numeric sequence specifying which moving windows (in months) to calculate. In
 \code{\link{n_mon_corr}}, this will be 2:12.}
+
+\item{win.align}{the alignment of the moving windows. Options are "left" or "right". If "left",
+NAs will appear at the end of the series. If "right", NAs appear at the beginning. The default
+is "right".}
 
 \item{agg.fun}{character vector of length = 1 that specifies whether to take the mean (e.g., for
 temperature) or sum (e.g., for precipitation) of the moving windows. Options are
@@ -38,6 +42,7 @@ data(idPRISM)
 test.output <- moving_win_multi(df = idPRISM,
 clim.var = "Tavg.C",
 win.lens = 2:12,
+win.align = "left",
 agg.fun = "mean")
 
 # Make a plot of 2-, 6-, and 12-month moving window means.

@@ -11,6 +11,7 @@ multi_clim_gro_corr(
   gro.period.end = NULL,
   agg.fun = "mean",
   max.win = 6,
+  win.align = "right",
   max.lag = 1,
   prewhiten = TRUE,
   hemisphere = NULL,
@@ -36,8 +37,8 @@ in your study region. Not crucial in this version - only draws a line in the out
 climate combinations. Options are "mean" or "sum", e.g., for temperature or precipitation data,
 respectively. Default is "mean".}
 
-\item{max.win}{integer vector specifying how long the longest (or widest) moving window is.
-Values limited to between 2 and 12.}
+\item{max.win}{integer vector specifying how long, in months, the longest (or widest) moving
+window is. Values limited to between 2 and 12. Default is 6 months.}
 
 \item{max.lag}{integer vector specifying how many years of lag to calculate calculations for.
 Default (and minimum) is 1 year.}

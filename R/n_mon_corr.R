@@ -25,6 +25,9 @@
 #' respectively. Default is "mean".
 #' @param max.win integer vector specifying how long, in months, the longest (or widest) moving
 #' window is. Values limited to between 2 and 12. Default is 6 months.
+#' @param win.align the alignment of the moving windows. Options are "left" or "right". If "left",
+#' NAs will appear at the end of the series. If "right", NAs appear at the beginning. The default
+#' is "right".
 #' @param max.lag integer vector specifying how many years of lag to calculate calculations for.
 #' Default (and minimum) is 1 year.
 #' @param hemisphere a character vector specifying which hemisphere your tree ring data - &
@@ -120,6 +123,8 @@
 #'                          clim = idPRISM,
 #'                          clim.var = "Tavg.C",
 #'                          agg.fun = "mean",
+#'                          max.win = 6,
+#'                          win.align = "right",
 #'                          max.lag = 2,
 #'                          hemisphere = "N",
 #'                          prewhiten = TRUE,
@@ -139,6 +144,8 @@
 #' PS_gro_PPT <- n_mon_corr(rwl = PerkinsSwetnam96,
 #'                         clim = idPRISM,
 #'                         clim.var = "PPT.mm",
+#'                         max.win = 6,
+#'                         win.align = "right",
 #'                         agg.fun = "sum",
 #'                         max.lag = 2,
 #'                         hemisphere = "N",
@@ -160,6 +167,8 @@
 #' PS_gro_Tavg_grouped <- n_mon_corr(rwl = PerkinsSwetnam96,
 #'                                  clim = idPRISMgroup,
 #'                                  clim.var = "Tavg.C",
+#'                                  max.win = 6,
+#'                                  win.align = "right",
 #'                                  agg.fun = "mean",
 #'                                  max.lag = 2,
 #'                                  hemisphere = "N",
@@ -181,6 +190,7 @@ n_mon_corr <- function(rwl = NULL,
                        clim.var = NULL,
                        agg.fun = "mean",
                        max.win = 6,
+                       win.align = "right",
                        max.lag = 1,
                        hemisphere = NULL,
                        prewhiten = TRUE,
@@ -265,6 +275,12 @@ n_mon_corr <- function(rwl = NULL,
   stopifnot("Arg max.win must be between 2 & 12" =
               max.win >= 2 &
               max.win <= 12)
+
+  ####### win.align
+  stopifnot("Arg win.align must be either 'left' or 'right'" =
+              is.character(win.align) &
+              win.align == "left" |
+              win.align == "right")
 
   ###### max.lag
   stopifnot("Arg max.lag must be an integer vector of length = 1" =
@@ -563,10 +579,11 @@ n_mon_corr <- function(rwl = NULL,
 
   if (make.plots == TRUE) {
     sig.only <- cor.res.list[["cor.res.dat"]][cor.res.list[["cor.res.dat"]]$p <= 0.05, ]
-    res.agg <- aggregate(coef ~ start.month + win.len + lag + dir,
+    res.agg <- aggregate(coef ~ month + win.len + lag + dir,
                          data = sig.only,
                          FUN = \(x) length(x),
                          drop = FALSE) # make sure the blank combinations still appear
+
     # Replace NAs with 0s
     res.agg$coef <- ifelse(is.na(res.agg$coef), 0, res.agg$coef)
 
@@ -578,25 +595,25 @@ n_mon_corr <- function(rwl = NULL,
     res.agg$prop.sig <- (res.agg$coef / length(unique(cor.res.list[["cor.res.dat"]][, "series"]))) *
       100
 
-    # Make a new composite x-axis that combines start.month and lag
-    res.agg <- res.agg[order(res.agg$lag, res.agg$start.month),]
-    res.agg$comb.x <- paste(res.agg$lag, res.agg$start.month, sep = "_")
+    # Make a new composite x-axis that combines month and lag
+    res.agg <- res.agg[order(res.agg$lag, res.agg$month),]
+    res.agg$comb.x <- paste(res.agg$lag, res.agg$month, sep = "_")
     res.agg$comb.x <- factor(res.agg$comb.x, levels = unique(res.agg$comb.x))
     res.agg$comb.x.num <- as.numeric(res.agg$comb.x)
 
-    mean.coef.agg <- aggregate(coef ~ start.month + win.len + lag + dir,
+    mean.coef.agg <- aggregate(coef ~ month + win.len + lag + dir,
                                data = cor.res.list[["cor.res.dat"]],
                                FUN = \(x) mean(x),
                                drop = FALSE) # make sure the blank combinations still appear
     colnames(mean.coef.agg)[colnames(mean.coef.agg) %in% "coef"] <- "mean.coef"
 
-    res.agg <- merge(res.agg, mean.coef.agg, by = c("start.month", "win.len", "lag", "dir"))
-    res.agg <- res.agg[order(res.agg$lag, res.agg$start.month),]
+    res.agg <- merge(res.agg, mean.coef.agg, by = c("month", "win.len", "lag", "dir"))
+    res.agg <- res.agg[order(res.agg$lag, res.agg$month),]
 
     # Make a plot.
     # These 4 lines are to deal with "no visible binding" NOTEs from check()
     x_var <- "comb.x.num"
-    x_lab <- "start.month"
+    x_lab <- "month"
     y_var <- "prop.sig"
     y_var2 <- "mean.coef"
     col_var <- "win.len"
@@ -604,7 +621,7 @@ n_mon_corr <- function(rwl = NULL,
     y.intercept <- "yint"
 
     # For geom_tile & geom_text
-    lag.lab.df1 <- res.agg[, c("lag", "start.month", "comb.x", "comb.x.num")] |> unique()
+    lag.lab.df1 <- res.agg[, c("lag", "month", "comb.x", "comb.x.num")] |> unique()
     lag.lab.df1$dir <- factor("Neg.", levels = c("Pos.","Neg."))
 
     lag.lab.df <- aggregate(comb.x.num ~ lag + dir, data = lag.lab.df1, min)
@@ -637,7 +654,7 @@ n_mon_corr <- function(rwl = NULL,
                        subtitle = paste0("Transformation: ",
                                          ifelse(prewhiten == TRUE, "ARIMA resids.", "None"),
                                          "; Aggregation of climate moving windows: ",
-                                         paste0(agg.fun,"s"))) +
+                                         paste0(agg.fun, "s"))) +
       ggplot2::scale_color_manual("Moving\nwindow\nlength\n(n months)",
                                   values = grDevices::hcl.colors(max.win, palette = "Spectral")) +
       ggplot2::geom_rect(data = lag.lab.df,
@@ -656,7 +673,7 @@ n_mon_corr <- function(rwl = NULL,
                          size = 3) +
       #ggplot2::scale_x_continuous(data = res.agg, labels = comb.x) +
       ggplot2::geom_line(linewidth = 0.75,
-                         ggplot2::aes(group = factor(.data[[col_var]], levels = rev(1:12)))) +
+                         ggplot2::aes(group = factor(.data[[col_var]], levels = rev(1:max.win)))) +
       ggplot2::facet_wrap( ~ dir, ncol = 1, strip.position = "right") +
       #ggplot2::facet_grid(dir ~ lag, switch = "x") +
       ggplot2::geom_vline(
@@ -678,7 +695,7 @@ n_mon_corr <- function(rwl = NULL,
           "total series\nrecording significant correlations"
         )
       ) +
-      ggplot2::xlab("Start month") +
+      ggplot2::xlab(ifelse(win.align %in% "right", "End month", "Start month")) +
       ggplot2::coord_cartesian(ylim = c(-5, 100),
                                xlim = c(min(res.agg$comb.x.num), max(res.agg$comb.x.num))) +
       ggplot2::theme_dark() +
@@ -761,7 +778,7 @@ n_mon_corr <- function(rwl = NULL,
           "total series"
         )
       ) +
-      ggplot2::xlab("Start month") +
+      ggplot2::xlab(ifelse(win.align %in% "right", "End month", "Start month")) +
       ggplot2::coord_cartesian(xlim = c(min(res.agg$comb.x.num), max(res.agg$comb.x.num))) +
       ggplot2::theme_dark() +
       ggplot2::theme(
@@ -842,4 +859,3 @@ n_mon_corr <- function(rwl = NULL,
   return(out.list)
 
 } # End of function
-

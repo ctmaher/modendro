@@ -48,6 +48,7 @@ multi_clim_gro_corr <- function(rwl.group = NULL,
                                 gro.period.end = NULL,
                                 agg.fun = "mean",
                                 max.win = 6,
+                                win.align = "right",
                                 max.lag = 1,
                                 prewhiten = TRUE,
                                 hemisphere = NULL,
@@ -59,26 +60,32 @@ multi_clim_gro_corr <- function(rwl.group = NULL,
     clim.group,
     clim.var = clim.var,
     win.lens = 2:max.win,
+    win.align = win.align,
     agg.fun = agg.fun
   )
 
   # Split by month
-  clim1.mo.split <- split(clim1, f = clim1$start.month)
+  clim1.mo.split <- split(clim1, f = clim1$month)
 
 
   # Now is a good time to get the arima residuals - before we create copies of the data when we
   # set up the lagged datasets.
   if (prewhiten == TRUE) {
     # Climate data first
-    clim1.mo.split <- lapply(clim1.mo.split, FUN = \(start.mo) {
+    clim1.mo.split <- lapply(clim1.mo.split, FUN = \(mo) {
       # Split into the different win.lens
-      start.mo.split <- split(start.mo, f = start.mo$win.len)
-      lapply(start.mo.split, FUN = \(this.win) {
+      win.split <- split(mo, f = mo$win.len)
+      lapply(win.split, FUN = \(this.win) {
         # Make sure we have years in order!
         this.win <- this.win[order(this.win[, "year"], decreasing = FALSE), ]
-        this.win[, clim.var] <- forecast::auto.arima(this.win[, clim.var], seasonal = FALSE) |>
+        arima.resids <- forecast::auto.arima(this.win[, clim.var], seasonal = FALSE) |>
           residuals() |>
+          na.omit() |>
           as.numeric()
+        # Get the NAs
+        notNAs <- which(!is.na(this.win[, clim.var]))
+        # put the resids into the "body"
+        this.win[min(notNAs):max(notNAs), clim.var] <- arima.resids
         this.win
       }) |> do.call(what = "rbind")
 
@@ -117,13 +124,13 @@ multi_clim_gro_corr <- function(rwl.group = NULL,
     # The lags are a bit different for the S Hemisphere - we need a lag+1 to capture all
     # the relevant climate periods
 
-    clim.lag.bind <- lapply(clim1.mo.split, FUN = \(start.mo) {
+    clim.lag.bind <- lapply(clim1.mo.split, FUN = \(mo) {
       lag.years <- sapply(-1:max.lag, FUN = \(n.lag) {
-        this.lag <- data.frame(start.mo[, "year"] + n.lag)
+        this.lag <- data.frame(mo[, "year"] + n.lag)
         colnames(this.lag) <- paste0("lag", n.lag, ".year")
         this.lag
       }) |> do.call(what = "cbind")
-      cbind(start.mo, lag.years)
+      cbind(mo, lag.years)
     }) |> do.call(what = "rbind")
 
     # Merge all the series at once for each lag
@@ -141,13 +148,13 @@ multi_clim_gro_corr <- function(rwl.group = NULL,
   } else {
     # For northern hemisphere
 
-    clim.lag.bind <- lapply(clim1.mo.split, FUN = \(start.mo) {
+    clim.lag.bind <- lapply(clim1.mo.split, FUN = \(mo) {
       lag.years <- sapply(0:max.lag, FUN = \(n.lag) {
-        this.lag <- data.frame(start.mo[, "year"] + n.lag)
+        this.lag <- data.frame(mo[, "year"] + n.lag)
         colnames(this.lag) <- paste0("lag", n.lag, ".year")
         this.lag
       }) |> do.call(what = "cbind")
-      cbind(start.mo, lag.years)
+      cbind(mo, lag.years)
     }) |> do.call(what = "rbind")
 
     # Merge all the series at once for each lag
@@ -174,11 +181,11 @@ multi_clim_gro_corr <- function(rwl.group = NULL,
   cor.res.df <- mapply(
     FUN = \(lag.x, which.lag) {
       # Need to split by month again
-      lag.x.mo.split <- split(lag.x, f = lag.x[, "start.month"])
+      lag.x.mo.split <- split(lag.x, f = lag.x[, "month"])
 
       # Take each month split and do all the possible correlations
-      this.lag.corr <- lapply(lag.x.mo.split, FUN = \(mo.split) {
-        # Take each possible correlation out of mo.split and run the correlation
+      this.lag.corr <- lapply(lag.x.mo.split, FUN = \(mo) {
+        # Take each possible correlation out of mo and run the correlation
         apply(all.corr.combos, MARGIN = 1, FUN = \(combo) {
           series.name <- combo[["series.name"]]
           win.len <- combo[["win.len"]]
@@ -186,11 +193,11 @@ multi_clim_gro_corr <- function(rwl.group = NULL,
           # The correlations
           # This subset eliminates NA values in either series.
           # NAs in the middle of the series should be a rare occurrence
-          subs.for.corr <- mo.split[mo.split[, "win.len"] == win.len, c("year",
-                                                                        "start.month",
-                                                                        "win.len",
-                                                                        as.character(series.name),
-                                                                        clim.var)] |>
+          subs.for.corr <- mo[mo[, "win.len"] == win.len, c("year",
+                                                            "month",
+                                                            "win.len",
+                                                            as.character(series.name),
+                                                            clim.var)] |>
             na.omit()
 
           # Control for ties by simply removing them when they occur. This should be
@@ -210,15 +217,15 @@ multi_clim_gro_corr <- function(rwl.group = NULL,
             )
             data.frame(
               series = as.character(series.name),
-              start.month = unique(subs.for.corr[, "start.month"]),
+              month = unique(subs.for.corr[, "month"]),
               win.len = unique(subs.for.corr[, "win.len"]),
               coef = cor.res[["estimate"]][[1]],
               p = cor.res[["p.value"]][[1]],
               dir = ifelse(cor.res[["estimate"]][[1]] < 0, "Neg.", "Pos."),
               overlap = min(length(na.omit(
-                mo.split[, as.character(series.name)]
+                mo[, as.character(series.name)]
               )), length(na.omit(
-                mo.split[mo.split[, "win.len"] == win.len, clim.var]
+                mo[mo[, "win.len"] == win.len, clim.var]
               ))),
               corr.method = corr.method
             )
@@ -235,15 +242,15 @@ multi_clim_gro_corr <- function(rwl.group = NULL,
             )
             data.frame(
               series = as.character(series.name),
-              start.month = unique(mo.split[, "start.month"]),
+              month = unique(mo[, "month"]),
               win.len = unique(subs.for.corr[, "win.len"]),
               coef = cor.res[["rho"]],
               p = cor.res[["pval"]],
               dir = ifelse(cor.res[["rho"]] < 0, "Neg.", "Pos."),
               overlap = min(length(na.omit(
-                mo.split[, as.character(series.name)]
+                mo[, as.character(series.name)]
               )), length(na.omit(
-                mo.split[mo.split[, "win.len"] == win.len, clim.var]
+                mo[mo[, "win.len"] == win.len, clim.var]
               ))),
               corr.method = corr.method
             )

@@ -10,6 +10,7 @@ n_mon_corr(
   clim.var = NULL,
   agg.fun = "mean",
   max.win = 6,
+  win.align = "right",
   max.lag = 1,
   hemisphere = NULL,
   prewhiten = TRUE,
@@ -34,8 +35,12 @@ data.frame.}
 climate combinations. Options are "mean" or "sum", e.g., for temperature or precipitation data,
 respectively. Default is "mean".}
 
-\item{max.win}{integer vector specifying how long the longest (or widest) moving window is.
-Values limited to between 2 and 12.}
+\item{max.win}{integer vector specifying how long, in months, the longest (or widest) moving
+window is. Values limited to between 2 and 12. Default is 6 months.}
+
+\item{win.align}{the alignment of the moving windows. Options are "left" or "right". If "left",
+NAs will appear at the end of the series. If "right", NAs appear at the beginning. The default
+is "right".}
 
 \item{max.lag}{integer vector specifying how many years of lag to calculate calculations for.
 Default (and minimum) is 1 year.}
@@ -136,6 +141,8 @@ PS_gro_Tavg <- n_mon_corr(rwl = PerkinsSwetnam96,
                          clim = idPRISM,
                          clim.var = "Tavg.C",
                          agg.fun = "mean",
+                         max.win = 6,
+                         win.align = "right",
                          max.lag = 2,
                          hemisphere = "N",
                          prewhiten = TRUE,
@@ -155,6 +162,8 @@ PS_gro_Tavg$`Results plots`
 PS_gro_PPT <- n_mon_corr(rwl = PerkinsSwetnam96,
                         clim = idPRISM,
                         clim.var = "PPT.mm",
+                        max.win = 6,
+                        win.align = "right",
                         agg.fun = "sum",
                         max.lag = 2,
                         hemisphere = "N",
@@ -176,6 +185,8 @@ data(PSgroupIDs)
 PS_gro_Tavg_grouped <- n_mon_corr(rwl = PerkinsSwetnam96,
                                  clim = idPRISMgroup,
                                  clim.var = "Tavg.C",
+                                 max.win = 6,
+                                 win.align = "right",
                                  agg.fun = "mean",
                                  max.lag = 2,
                                  hemisphere = "N",
