@@ -19,6 +19,10 @@
 #' respectively. Default is "mean".
 #' @param max.win integer vector specifying how long, in months, the longest (or widest) moving
 #' window is. Values limited to between 2 and 12. Default is 6 months.
+#' @param win.align the alignment of the moving windows. Options are "left" or "right". If "left",
+#' month will indicate the starting month of each moving window and NAs will appear at the end of
+#' the series. If "right", month will indicate the ending month of each moving window and NAs appear
+#' at the beginning. The default is "right".
 #' @param max.lag integer vector specifying how many years of lag to calculate calculations for.
 #' Default (and minimum) is 1 year.
 #' @param hemisphere a character vector specifying which hemisphere your tree ring data - &
