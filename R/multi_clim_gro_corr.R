@@ -35,11 +35,8 @@
 #' \code{\link[corTESTsrd]{corTESTsrd}} function (also used for `corr.method = "kendall"`). This
 #' method reduces the type I error rate associated with autocorrelated series. CAUTION: Currently
 #' `corr.method = "pearson"` doesn't make any adjustments for autocorrelation. See Details below.
-#' @param group.IDs.df an optional data.frame with 2 columns: "series", representing the names of
-#' the tree-ring series (and matching the colnames of rwl) and a group.var (name is your
-#' specification), representing a grouping (e.g., site, plot) variable.
 #' @param group.var a character vector specifying a grouping variable (e.g., site, plot).
-#' Must exist and be identical in clim and group.ID.df.
+#' Must match a column in clim.
 
 
 multi_clim_gro_corr <- function(rwl.group = NULL,
@@ -53,7 +50,6 @@ multi_clim_gro_corr <- function(rwl.group = NULL,
                                 prewhiten = TRUE,
                                 hemisphere = NULL,
                                 corr.method = "spearman",
-                                group.IDs.df = NULL,
                                 group.var = NULL) {
   ## Compute the moving windows
   clim1 <- moving_win_multi(
@@ -63,6 +59,10 @@ multi_clim_gro_corr <- function(rwl.group = NULL,
     win.align = win.align,
     agg.fun = agg.fun
   )
+
+  if (!is.null(group.var)) {
+    clim1[, group.var] <- unique(clim.group[, group.var])
+  }
 
   # Split by month
   clim1.mo.split <- split(clim1, f = clim1$month)

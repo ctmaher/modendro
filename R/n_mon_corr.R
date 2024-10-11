@@ -257,7 +257,6 @@ n_mon_corr <- function(rwl = NULL,
   clim[, "month"] <- as.integer(clim[, "month"])
 
 
-
   ###### clim.var
   match.test <- clim.var %in% colnames(clim)
   stopifnot("Arg clim.var must match one unique column name in clim" =
@@ -520,7 +519,6 @@ n_mon_corr <- function(rwl = NULL,
       rwl.group = rwl,
       clim.group = clim,
       clim.var = clim.var,
-      group.IDs.df = group.IDs.df,
       group.var = group.var,
       gro.period.end = gro.period.end,
       agg.fun = agg.fun,
@@ -545,7 +543,6 @@ n_mon_corr <- function(rwl = NULL,
         rwl.group = rwl[, colnames(rwl)[colnames(rwl) %in% c(these.series, "year")]],
         clim.group = clim.group,
         clim.var = clim.var,
-        group.IDs.df = group.IDs.df,
         group.var = group.var,
         gro.period.end = gro.period.end,
         agg.fun = agg.fun,

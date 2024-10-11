@@ -16,7 +16,6 @@ multi_clim_gro_corr(
   prewhiten = TRUE,
   hemisphere = NULL,
   corr.method = "spearman",
-  group.IDs.df = NULL,
   group.var = NULL
 )
 }
@@ -58,12 +57,8 @@ climate data - comes from ("N" or "S"). Conventions for assigning growth years -
 method reduces the type I error rate associated with autocorrelated series. CAUTION: Currently
 \code{corr.method = "pearson"} doesn't make any adjustments for autocorrelation. See Details below.}
 
-\item{group.IDs.df}{an optional data.frame with 2 columns: "series", representing the names of
-the tree-ring series (and matching the colnames of rwl) and a group.var (name is your
-specification), representing a grouping (e.g., site, plot) variable.}
-
 \item{group.var}{a character vector specifying a grouping variable (e.g., site, plot).
-Must exist and be identical in clim and group.ID.df.}
+Must match a column in clim.}
 }
 \description{
 This function is a workhorse function behind \code{\link{n_mon_corr}}. It splits and merges the
