@@ -20,7 +20,7 @@
 #' data.frame.
 #' @param common.years numeric vector - a sequence of years to subset the clim and rwl data before
 #' running correlation analyses. Must be at least 25 years long and years must exist in clim and
-#' rwl.
+#' rwl. This has advantages over subsetting the climate or tree-ring data a priori. See Details.
 #' @param gro.period.end the last month in which you expect growth to occur for your study species
 #' in your study region. Not crucial in this version - only draws a line in the output plot.
 #' @param agg.fun character vector specifying the function to use for aggregating monthly
@@ -74,6 +74,16 @@
 #' series). You may use Pearson correlations in \code{\link{n_mon_corr}}, but be forewarned that
 #' there is no adjustment for autocorrelation in the Pearson correlation tests! Therefore, it
 #' is general best to use `corr.method = "pearson"` for comparison only, rather than actual results.
+#'
+#' The `common.years` argument is a way to subset the climate and tree-ring data after the moving
+#' windows and lags have been calculated. This results in lagged correlations that cover the same
+#' number of years as the current year correlations. This will not be the case if you subset the
+#' climate data before feeding it to `n_mon_corr`. E.g., if there is a 60 year overlap between a
+#' climate dataset and a tree-ring series, the lags will erode years from the total n of the
+#' correlations - a 1 year lag will be n-1, a 2 year lag will be n-2, etc. This is simply because of
+#' the offsets. Specifying common.years solves this problem by setting up the lags before the data
+#' is subset. The major caveat is that the climate data have to extend before `min(common.years)` in
+#' order for this to work. Otherwise you get the eroding years issue.
 #'
 #' A note on tree ring analyses based in the Southern hemisphere:
 #' \code{\link{n_mon_corr}} is designed to work in both the Northern and Southern hemispheres.
