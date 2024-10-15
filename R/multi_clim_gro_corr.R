@@ -11,7 +11,10 @@
 #' @param clim.group a `data.frame` with at least 3 columns: year, month (numeric), and a
 #' climate variable.
 #' @param clim.var character vector - the colname of the climate variable of interest in the `clim`
-#'  data.frame.
+#' data.frame.
+#' @param common.years numeric vector - a sequence of years to subset the clim and rwl data before
+#' running correlation analyses. Must be at least 25 years long and years must exist in clim and
+#' rwl.
 #' @param gro.period.end the last month in which you expect growth to occur for your study species
 #' in your study region. Not crucial in this version - only draws a line in the output plot.
 #' @param agg.fun character vector specifying the function to use for aggregating monthly
@@ -46,6 +49,7 @@
 multi_clim_gro_corr <- function(rwl.group = NULL,
                                 clim.group = NULL,
                                 clim.var = NULL,
+                                common.years = NULL,
                                 gro.period.end = NULL,
                                 agg.fun = "mean",
                                 max.win = 6,
@@ -204,6 +208,9 @@ multi_clim_gro_corr <- function(rwl.group = NULL,
                                                             clim.var)] |>
             na.omit()
 
+          # Subset based on the common years specified by the user
+          subs.for.corr <- subs.for.corr[subs.for.corr$year %in% common.years,]
+
           # Control for ties by simply removing them when they occur. This should be
           # relatively rare.
           subs.for.corr <-
@@ -219,20 +226,22 @@ multi_clim_gro_corr <- function(rwl.group = NULL,
               method = "pearson",
               alternative = "two.sided"
             )
-            data.frame(
+            out.df <- data.frame(
               series = as.character(series.name),
               month = unique(subs.for.corr[, "month"]),
               win.len = unique(subs.for.corr[, "win.len"]),
               coef = cor.res[["estimate"]][[1]],
               p = cor.res[["p.value"]][[1]],
               dir = ifelse(cor.res[["estimate"]][[1]] < 0, "Neg.", "Pos."),
-              overlap = min(length(na.omit(
-                mo[, as.character(series.name)]
-              )), length(na.omit(
-                mo[mo[, "win.len"] == win.len, clim.var]
-              ))),
+              min.year = min(na.omit(subs.for.corr[, "year"])),
+              max.year = max(na.omit(subs.for.corr[, "year"])),
+              overlap = length(min(na.omit(subs.for.corr[, "year"])):
+                                 max(na.omit(subs.for.corr[, "year"]))),
               corr.method = corr.method
             )
+            out.df[, group.var] <- unique(mo[, group.var])
+            out.df
+
           } else {
             # for "spearman" or "kendall" rank methods
             cor.res <- corTESTsrd::corTESTsrd(
@@ -244,20 +253,22 @@ multi_clim_gro_corr <- function(rwl.group = NULL,
               iid = FALSE,
               alternative = "two.sided"
             )
-            data.frame(
+            out.df <- data.frame(
               series = as.character(series.name),
               month = unique(mo[, "month"]),
               win.len = unique(subs.for.corr[, "win.len"]),
               coef = cor.res[["rho"]],
               p = cor.res[["pval"]],
               dir = ifelse(cor.res[["rho"]] < 0, "Neg.", "Pos."),
-              overlap = min(length(na.omit(
-                mo[, as.character(series.name)]
-              )), length(na.omit(
-                mo[mo[, "win.len"] == win.len, clim.var]
-              ))),
+              min.year = min(na.omit(subs.for.corr[, "year"])),
+              max.year = max(na.omit(subs.for.corr[, "year"])),
+              overlap = length(min(na.omit(subs.for.corr[, "year"])):
+                                 max(na.omit(subs.for.corr[, "year"]))),
               corr.method = corr.method
             )
+            out.df[, group.var] <- unique(mo[, group.var])
+            out.df
+
           }
 
         }) |> do.call(what = "rbind")

@@ -17,7 +17,10 @@
 #' @param clim a `data.frame` with at least 3 columns: year, month (numeric), and a
 #' climate variable.
 #' @param clim.var character vector - the colname of the climate variable of interest in the `clim`
-#'  data.frame.
+#' data.frame.
+#' @param common.years numeric vector - a sequence of years to subset the clim and rwl data before
+#' running correlation analyses. Must be at least 25 years long and years must exist in clim and
+#' rwl.
 #' @param gro.period.end the last month in which you expect growth to occur for your study species
 #' in your study region. Not crucial in this version - only draws a line in the output plot.
 #' @param agg.fun character vector specifying the function to use for aggregating monthly
@@ -189,6 +192,7 @@
 n_mon_corr <- function(rwl = NULL,
                        clim = NULL,
                        clim.var = NULL,
+                       common.years = NULL,
                        agg.fun = "mean",
                        max.win = 6,
                        win.align = "right",
@@ -261,6 +265,17 @@ n_mon_corr <- function(rwl = NULL,
   match.test <- clim.var %in% colnames(clim)
   stopifnot("Arg clim.var must match one unique column name in clim" =
               length(match.test[match.test == TRUE]) == 1)
+
+  ###### common.years
+  stopifnot("common.years must be numeric of length >= 25" =
+              is.numeric(common.years) &
+              length(common.years) >= 25
+            )
+
+  stopifnot("common.years must exist in both clim and rwl" =
+              all(common.years %in% unique(clim[, "year"])) &
+              all(common.years %in% unique(rwl[, "year"]))
+              )
 
   ###### agg.fun
   stopifnot("Arg agg.fun must be either 'mean' or 'sum'" =
@@ -486,6 +501,19 @@ n_mon_corr <- function(rwl = NULL,
       (observations not regular & continuous)" =
         all(mo.count[, "month"] == 12)
     )
+
+    # We also have to check that the same groups exist in the group.IDs.df and in clim
+    if (!all(unique(clim[, group.var]) %in% unique(group.IDs.df[, group.var]))) {
+      warning("Levels of group.var in clim and group.IDs.df are different -
+      subsetting both data.frames to contain just the common set")
+      all.group.levels <- c(unique(clim[, group.var]), unique(group.IDs.df[, group.var]))
+      common.levels <- all.group.levels[duplicated(all.group.levels)]
+      clim <- clim[clim[, group.var] %in% common.levels,]
+      group.IDs.df <- group.IDs.df[group.IDs.df[, group.var] %in% common.levels,]
+
+    }
+
+
   }
 
 
@@ -519,6 +547,7 @@ n_mon_corr <- function(rwl = NULL,
       rwl.group = rwl,
       clim.group = clim,
       clim.var = clim.var,
+      common.years = common.years,
       group.var = group.var,
       gro.period.end = gro.period.end,
       agg.fun = agg.fun,
@@ -543,6 +572,7 @@ n_mon_corr <- function(rwl = NULL,
         rwl.group = rwl[, colnames(rwl)[colnames(rwl) %in% c(these.series, "year")]],
         clim.group = clim.group,
         clim.var = clim.var,
+        common.years = common.years,
         group.var = group.var,
         gro.period.end = gro.period.end,
         agg.fun = agg.fun,
@@ -659,15 +689,15 @@ n_mon_corr <- function(rwl = NULL,
                                   values = grDevices::hcl.colors(max.win, palette = "Spectral")) +
       ggplot2::geom_rect(data = lag.lab.df,
                          ggplot2::aes(xmin = .data[[x_min]],
-                             xmax = .data[[x_max]],
-                             ymin = .data[[y_min]],
-                             ymax = .data[[y_max]]),
+                                      xmax = .data[[x_max]],
+                                      ymin = .data[[y_min]],
+                                      ymax = .data[[y_max]]),
                          inherit.aes = FALSE,
                          fill = "grey15") +
       ggplot2::geom_text(data = lag.lab.df,
                          ggplot2::aes(x = (.data[[x_min]] + .data[[x_max]]) / 2,
-                             y = (.data[[y_min]] + .data[[y_max]]) / 2,
-                             label = .data[[lag_lab]]),
+                                      y = (.data[[y_min]] + .data[[y_max]]) / 2,
+                                      label = .data[[lag_lab]]),
                          inherit.aes = FALSE,
                          color = "white",
                          size = 3) +
@@ -740,15 +770,15 @@ n_mon_corr <- function(rwl = NULL,
       ) +
       ggplot2::geom_rect(data = lag.lab.df,
                          ggplot2::aes(xmin = .data[[x_min]],
-                             xmax = .data[[x_max]],
-                             ymin = .data[[y_min2]],
-                             ymax = .data[[y_max2]]),
+                                      xmax = .data[[x_max]],
+                                      ymin = .data[[y_min2]],
+                                      ymax = .data[[y_max2]]),
                          inherit.aes = FALSE,
                          fill = "grey15") +
       ggplot2::geom_text(data = lag.lab.df,
                          ggplot2::aes(x = (.data[[x_min]] + .data[[x_max]]) / 2,
-                             y = (.data[[y_min2]] + .data[[y_max2]]) / 2,
-                             label = .data[[lag_lab]]),
+                                      y = (.data[[y_min2]] + .data[[y_max2]]) / 2,
+                                      label = .data[[lag_lab]]),
                          inherit.aes = FALSE,
                          color = "white",
                          size = 3) +
