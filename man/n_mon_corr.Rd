@@ -217,7 +217,7 @@ PS_gro_Tavg_grouped <- n_mon_corr(rwl = PerkinsSwetnam96,
                                  group.var = "site")
 names(PS_gro_Tavg_grouped)
 PS_gro_Tavg_grouped$`Results plots`
-# Similar result, but not identical - now start.month = Apr with a 2-month moving window
+# Similar result, but not identical - now month = Apr with a 2-month moving window
 # The climate data is slightly different for each site, so some differences in results are not
 # surprising.
 }

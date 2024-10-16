@@ -197,7 +197,7 @@
 #'                                  group.var = "site")
 #' names(PS_gro_Tavg_grouped)
 #' PS_gro_Tavg_grouped$`Results plots`
-#' # Similar result, but not identical - now start.month = Apr with a 2-month moving window
+#' # Similar result, but not identical - now month = Apr with a 2-month moving window
 #' # The climate data is slightly different for each site, so some differences in results are not
 #' # surprising.
 
@@ -325,10 +325,13 @@ n_mon_corr <- function(rwl = NULL,
               win.align == "right")
 
   ###### max.lag
-  stopifnot("Arg max.lag must be an integer vector of length = 1" =
+  is.wholenumber <-
+    function(x, tol = .Machine$double.eps^0.5)  abs(x - round(x)) < tol
+  stopifnot("Arg max.lag must be an numeric whole number vector of length = 1" =
               length(max.lag) == 1 &
-              is.integer(max.lag)
+              is.wholenumber(max.lag)
             )
+  rm(is.wholenumber)
 
   # Accept max.lag inputs that have a negative in front
   # but change them to positive

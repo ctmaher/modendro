@@ -59,6 +59,6 @@ sep = "-"), format = "\%Y-\%m-\%d")
 # of each moving window.
 # Trim down to a 10-year period so that the results are easier to see.
 
-ggplot(clim1[clim1$year \%in\% 1991:2000,]) +
+ggplot(test.output[test.output$year \%in\% 1991:2000,]) +
 geom_path(aes(yr.mo, Tavg.C, color = win.len), na.rm = TRUE)
 }
