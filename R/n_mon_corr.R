@@ -327,7 +327,8 @@ n_mon_corr <- function(rwl = NULL,
   ###### max.lag
   is.wholenumber <-
     function(x, tol = .Machine$double.eps^0.5)  abs(x - round(x)) < tol
-  stopifnot("Arg max.lag must be an numeric whole number vector of length = 1" =
+  stopifnot("Arg max.lag must be an numeric vector of length = 1 & be a whole number" =
+              is.numeric(max.lag) &
               length(max.lag) == 1 &
               is.wholenumber(max.lag)
             )

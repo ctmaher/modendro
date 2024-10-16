@@ -6,8 +6,8 @@
 #'
 #' Internal function for modendro.
 #'
-#' @param rwl.group A rwl-type data.frame (e.g., read in by \code{\link[dplR]{read.rwl}}). Essentially a
-#' data.frame with columns names as series IDs and years as rownames.
+#' @param rwl.group A rwl-type data.frame (e.g., read in by \code{\link[dplR]{read.rwl}}).
+#' Essentially a data.frame with columns names as series IDs and years as rownames.
 #' @param clim.group a `data.frame` with at least 3 columns: year, month (numeric), and a
 #' climate variable.
 #' @param clim.var character vector - the colname of the climate variable of interest in the `clim`

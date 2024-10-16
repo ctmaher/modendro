@@ -2,13 +2,12 @@
 #'
 #' @description
 #' This function calculates the biweight scale (s_bi) - a robust variance estimator based on the
-#'  biweight robust mean.
+#' biweight robust mean.
 #' From Hoaglin et al. 1983 p.417, eq. 3.
+#' This is to support the cp_detrend function, following the methods of Cook & Peters 1997.
 #'
 #' @param x a numeric vector
 #'
-#' @details
-#' Additional details...
 #'
 #' @return a 2-column, 1-row data.frame with 2 estimates of s_bi: the main one from the Hoaglin et
 #' al book & the Kafadar (1979) version that the authors also mention.
@@ -16,6 +15,10 @@
 #' @references
 #' Hoaglin, D. C., F. Mosteller, and J. W. Tukey. 1983. Understanding robust and exploratory data
 #' analysis. New York: Wiley.
+#'
+#' Cook, E. R., and Peters, K. (1997) Calculating unbiased tree-ring indices for the study of
+#' climatic and environmental change.
+#' \emph{The Holocene}, \strong{7}(3), 361-370.
 #'
 #' @importFrom DescTools TukeyBiweight
 #' @importFrom DescTools MAD

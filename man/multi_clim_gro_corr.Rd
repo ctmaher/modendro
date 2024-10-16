@@ -21,8 +21,8 @@ multi_clim_gro_corr(
 )
 }
 \arguments{
-\item{rwl.group}{A rwl-type data.frame (e.g., read in by \code{\link[dplR]{read.rwl}}). Essentially a
-data.frame with columns names as series IDs and years as rownames.}
+\item{rwl.group}{A rwl-type data.frame (e.g., read in by \code{\link[dplR]{read.rwl}}).
+Essentially a data.frame with columns names as series IDs and years as rownames.}
 
 \item{clim.group}{a \code{data.frame} with at least 3 columns: year, month (numeric), and a
 climate variable.}

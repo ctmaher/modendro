@@ -10,12 +10,11 @@
 #' correlations because of the alignment of relatively tiny rings in a reference and the series
 #' you are evaluating.
 #'
-#' P2YrsL is similar in concept to computing AR residuals (aka "prewhitening") - the default in
-#' dplR. P2YrsL is the default in CDendro and CooRecorder. The essential element of both approaches
-#' is that we remove the mid- to low-frequency variation and highlight the high-frequency for
-#' cross-dating purposes only. The high-frequency variation facilitates checking both
-#' statistical (correlations) and visual (comparing the squiggly line plots of two series)
-#' correspondence of two series.
+#' P2YrsL is similar in concept to computing AR residuals (a form of "prewhitening") - the default
+#' in dplR. P2YrsL is the default in CDendro and CooRecorder. The essential element of both
+#' approaches is that we remove the mid- to low-frequency variation and highlight the high-frequency
+#' for cross-dating purposes only. The high-frequency variation facilitates checking both
+#' statistical (correlations) and visual (squiggly line plots) correspondence of two series.
 #'
 #' @param rwl A rwl object (read in by dplR's \code{\link[dplR]{read.rwl}}). Essentially a
 #' data.frame with columns names as series IDs and years as rownames.

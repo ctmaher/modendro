@@ -17,9 +17,7 @@ al book & the Kafadar (1979) version that the authors also mention.
 This function calculates the biweight scale (s_bi) - a robust variance estimator based on the
 biweight robust mean.
 From Hoaglin et al. 1983 p.417, eq. 3.
-}
-\details{
-Additional details...
+This is to support the cp_detrend function, following the methods of Cook & Peters 1997.
 }
 \examples{
 s_bi(rnorm(100))
@@ -28,4 +26,8 @@ s_bi(rnorm(100))
 \references{
 Hoaglin, D. C., F. Mosteller, and J. W. Tukey. 1983. Understanding robust and exploratory data
 analysis. New York: Wiley.
+
+Cook, E. R., and Peters, K. (1997) Calculating unbiased tree-ring indices for the study of
+climatic and environmental change.
+\emph{The Holocene}, \strong{7}(3), 361-370.
 }
