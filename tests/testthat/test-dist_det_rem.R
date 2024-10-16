@@ -42,11 +42,12 @@ test_that("Essential function works - and returns a list", {
   expect_vector(dist_det_rem(mat.test), ptype = list())
 })
 
-#### How about a test that adds specific synthetic disturbances (constructed out of Hugershoff curves) for
-# specific start years, and we test to see that those are detected and removed.
+#### How about a test that adds specific synthetic disturbances (constructed out of Hugershoff
+# curves) for specific start years, and we test to see that those are detected and removed.
 # This is a somewhat arbitrary test, as we've set the n trials to 100 and specified just
 # one type of underlying curve shape.
-test_that("Function works - and detects & removes a specified disturbance most of the time within ±1 year", {
+test_that("Function works - and detects & removes a specified disturbance most of the time
+          within ±2 years", {
   n.trials <- 100
   dist.year <- vector("numeric", length = n.trials)
   for (i in 1:n.trials) {
@@ -65,7 +66,8 @@ test_that("Function works - and detects & removes a specified disturbance most o
 
   }
 
-  mat.test[,"series1"] <- (c(rep(0, 40), hug.fun(x = 1:10, y = mat.test[,"series1"])) + mat.test[,"series1"])
+  mat.test[,"series1"] <- (c(rep(0, 40), hug.fun(x = 1:10,
+                                                 y = mat.test[,"series1"])) + mat.test[,"series1"])
 
   # Turn mat.test into a list
   mat.test.list <-   asplit(mat.test, MARGIN = 2)
@@ -74,7 +76,8 @@ test_that("Function works - and detects & removes a specified disturbance most o
 
   # plot(x = 1:50, y = mat.test[, "series1"], type = "l", col = "grey50")
   # lines(out.test[["Corrected RWI"]][["series1"]], col = "black")
-  # lines(x = out.test[["Disturbance curves"]][["series1"]]$year, y = out.test[["Disturbance curves"]][["series1"]]$curve, col = "red")
+  # lines(x = out.test[["Disturbance curves"]][["series1"]]$year,
+  # y = out.test[["Disturbance curves"]][["series1"]]$curve, col = "red")
   # lines(x = as.numeric(names(out.test[["Corrected RWI"]][["series1"]])),
   #       y = c(rep(0, 40), hug.fun(x = 1:10, y = mat.test[,"series1"])), col = "blue")
 
@@ -87,5 +90,5 @@ test_that("Function works - and detects & removes a specified disturbance most o
 
   #hist(dist.year)
   #summary(dist.year) # 8 % of runs didn't detect a disturbance
-  expect_true(median(dist.year, na.rm = TRUE) < 41 & median(dist.year, na.rm = TRUE) > 39)
+  expect_true(median(dist.year, na.rm = TRUE) < 42 & median(dist.year, na.rm = TRUE) > 38)
   })

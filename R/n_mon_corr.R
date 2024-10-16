@@ -31,7 +31,7 @@
 #' @param win.align the alignment of the moving windows. Options are "left" or "right". If "left",
 #' month will indicate the starting month of each moving window and NAs will appear at the end of
 #' the series. If "right", month will indicate the ending month of each moving window and NAs appear
-#' at the beginning. The default is "right".
+#' at the beginning. The default is "left".
 #' @param max.lag integer vector specifying how many years of lag to calculate calculations for.
 #' Default (and minimum) is 1 year.
 #' @param hemisphere a character vector specifying which hemisphere your tree ring data - &
@@ -136,9 +136,10 @@
 #' PS_gro_Tavg <- n_mon_corr(rwl = PerkinsSwetnam96,
 #'                          clim = idPRISM,
 #'                          clim.var = "Tavg.C",
+#'                          common.years = 1901:1990,
 #'                          agg.fun = "mean",
 #'                          max.win = 6,
-#'                          win.align = "right",
+#'                          win.align = "left",
 #'                          max.lag = 2,
 #'                          hemisphere = "N",
 #'                          prewhiten = TRUE,
@@ -158,8 +159,9 @@
 #' PS_gro_PPT <- n_mon_corr(rwl = PerkinsSwetnam96,
 #'                         clim = idPRISM,
 #'                         clim.var = "PPT.mm",
+#'                         common.years = 1901:1990,
 #'                         max.win = 6,
-#'                         win.align = "right",
+#'                         win.align = "left",
 #'                         agg.fun = "sum",
 #'                         max.lag = 2,
 #'                         hemisphere = "N",
@@ -181,6 +183,7 @@
 #' PS_gro_Tavg_grouped <- n_mon_corr(rwl = PerkinsSwetnam96,
 #'                                  clim = idPRISMgroup,
 #'                                  clim.var = "Tavg.C",
+#'                                  common.years = 1901:1990,
 #'                                  max.win = 6,
 #'                                  win.align = "right",
 #'                                  agg.fun = "mean",
@@ -205,7 +208,7 @@ n_mon_corr <- function(rwl = NULL,
                        common.years = NULL,
                        agg.fun = "mean",
                        max.win = 6,
-                       win.align = "right",
+                       win.align = "left",
                        max.lag = 1,
                        hemisphere = NULL,
                        prewhiten = TRUE,
@@ -270,22 +273,36 @@ n_mon_corr <- function(rwl = NULL,
   clim[, "year"] <- as.integer(clim[, "year"])
   clim[, "month"] <- as.integer(clim[, "month"])
 
+  # order clim by month and year
+  clim <- clim[order(clim$year, clim$month), ]
+
 
   ###### clim.var
   match.test <- clim.var %in% colnames(clim)
   stopifnot("Arg clim.var must match one unique column name in clim" =
               length(match.test[match.test == TRUE]) == 1)
 
+  # Check for internal NAs
+  # Get the NAs
+  notNAs <- which(!is.na(clim[, clim.var]))
+  # Get the "body" of clim.var, which may include NAs within
+  body <- clim[, clim.var][min(notNAs):max(notNAs)]
+
+  stopifnot("clim.var has internal NAs. Missing months or years?" =
+              length(which(is.na(body))) == 0
+  )
+
+
   ###### common.years
   stopifnot("common.years must be numeric of length >= 25" =
               is.numeric(common.years) &
               length(common.years) >= 25
-            )
+  )
 
   stopifnot("common.years must exist in both clim and rwl" =
               all(common.years %in% unique(clim[, "year"])) &
               all(common.years %in% unique(rwl[, "year"]))
-              )
+  )
 
   ###### agg.fun
   stopifnot("Arg agg.fun must be either 'mean' or 'sum'" =
@@ -309,8 +326,9 @@ n_mon_corr <- function(rwl = NULL,
 
   ###### max.lag
   stopifnot("Arg max.lag must be an integer vector of length = 1" =
-              length(max.lag) == 1 |
-              is.integer(max.lag))
+              length(max.lag) == 1 &
+              is.integer(max.lag)
+            )
 
   # Accept max.lag inputs that have a negative in front
   # but change them to positive
@@ -355,10 +373,10 @@ n_mon_corr <- function(rwl = NULL,
   ###### gro.period.end
   stopifnot(
     "Invalid gro.period.end provided (must be a single integer month)" =
-      is.numeric(gro.period.end) |
-      is.integer(gro.period.end) |
+      is.integer(gro.period.end) &
       length(gro.period.end) == 1 |
-      any(gro.period.end == 1:12) == TRUE
+      any(gro.period.end %in% 1:12) &
+      length(gro.period.end) == 1
   )
 
   if (is.null(gro.period.end)) {
@@ -618,19 +636,36 @@ n_mon_corr <- function(rwl = NULL,
   }
 
   if (make.plots == TRUE) {
-    sig.only <- cor.res.list[["cor.res.dat"]][cor.res.list[["cor.res.dat"]]$p <= 0.05, ]
+    # Subset out just the significant correlations
+    # But there may not always be significant correlations
+
+    # Theoretical - just one place holder for the possible combinations
+    sig.only.th <- expand.grid(month = unique(cor.res.list[["cor.res.dat"]]$month),
+                               win.len = unique(cor.res.list[["cor.res.dat"]]$win.len),
+                               lag = unique(cor.res.list[["cor.res.dat"]]$lag),
+                               dir = unique(cor.res.list[["cor.res.dat"]]$dir))
+
+    # Empirical - what actually exists (could be none)
+    sig.only.em <- cor.res.list[["cor.res.dat"]][cor.res.list[["cor.res.dat"]]$p <= 0.05, ]
+
+    # Merge them
+    sig.only <- merge(sig.only.th, sig.only.em,
+                      by = c("month","win.len","lag","dir"),
+                      all = TRUE)
+
+    sig.only$lag <- as.character(sig.only$lag)
+
     res.agg <- aggregate(coef ~ month + win.len + lag + dir,
                          data = sig.only,
-                         FUN = \(x) length(x),
-                         drop = FALSE) # make sure the blank combinations still appear
-
-    # Replace NAs with 0s
-    res.agg$coef <- ifelse(is.na(res.agg$coef), 0, res.agg$coef)
+                         FUN = \(x) {
+                           length(na.omit(x))
+                         },
+                         drop = FALSE, # make sure the blank combinations still appear
+                         na.action = na.pass
+    )
 
     lag.levels <- res.agg$lag |> unique()
 
-    res.agg$lag <- factor(res.agg$lag, levels = lag.levels[order(as.numeric(lag.levels))])
-    res.agg$dir <- factor(res.agg$dir, levels = c("Pos.", "Neg."))
     # Calculate the percentage of significant correlations
     res.agg$prop.sig <- (res.agg$coef / length(unique(cor.res.list[["cor.res.dat"]][, "series"]))) *
       100
@@ -648,6 +683,8 @@ n_mon_corr <- function(rwl = NULL,
     colnames(mean.coef.agg)[colnames(mean.coef.agg) %in% "coef"] <- "mean.coef"
 
     res.agg <- merge(res.agg, mean.coef.agg, by = c("month", "win.len", "lag", "dir"))
+    res.agg$lag <- factor(res.agg$lag, levels = lag.levels[order(as.numeric(lag.levels))])
+    res.agg$dir <- factor(res.agg$dir, levels = c("Pos.", "Neg."))
     res.agg <- res.agg[order(res.agg$lag, res.agg$month),]
 
     # Make a plot.
@@ -726,8 +763,8 @@ n_mon_corr <- function(rwl = NULL,
         color = "white"
       ) +
       ggplot2::scale_x_continuous(breaks = unique(res.agg$comb.x.num),
-                                  labels = rep(1:12, (abs(max.lag) +
-                                                        ifelse(hemisphere == "S", 2, 1)))) +
+                                  labels = rep(1:12,
+                                               times = length(unique(res.agg$comb.x.num))/12)) +
       ggplot2::ylab(
         paste(
           "Percentage of",
@@ -808,8 +845,8 @@ n_mon_corr <- function(rwl = NULL,
         color = "white"
       ) +
       ggplot2::scale_x_continuous(breaks = unique(res.agg$comb.x.num),
-                                  labels = rep(1:12, (abs(max.lag) +
-                                                        ifelse(hemisphere == "S", 2, 1)))) +
+                                  labels = rep(1:12,
+                                               times = length(unique(res.agg$comb.x.num))/12)) +
       ggplot2::scale_y_continuous(breaks = seq(-1, 1, by = 0.2)) +
       ggplot2::ylab(
         paste(

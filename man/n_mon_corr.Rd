@@ -8,9 +8,10 @@ n_mon_corr(
   rwl = NULL,
   clim = NULL,
   clim.var = NULL,
+  common.years = NULL,
   agg.fun = "mean",
   max.win = 6,
-  win.align = "right",
+  win.align = "left",
   max.lag = 1,
   hemisphere = NULL,
   prewhiten = TRUE,
@@ -31,6 +32,10 @@ climate variable.}
 \item{clim.var}{character vector - the colname of the climate variable of interest in the \code{clim}
 data.frame.}
 
+\item{common.years}{numeric vector - a sequence of years to subset the clim and rwl data before
+running correlation analyses. Must be at least 25 years long and years must exist in clim and
+rwl. This has advantages over subsetting the climate or tree-ring data a priori. See Details.}
+
 \item{agg.fun}{character vector specifying the function to use for aggregating monthly
 climate combinations. Options are "mean" or "sum", e.g., for temperature or precipitation data,
 respectively. Default is "mean".}
@@ -41,7 +46,7 @@ window is. Values limited to between 2 and 12. Default is 6 months.}
 \item{win.align}{the alignment of the moving windows. Options are "left" or "right". If "left",
 month will indicate the starting month of each moving window and NAs will appear at the end of
 the series. If "right", month will indicate the ending month of each moving window and NAs appear
-at the beginning. The default is "right".}
+at the beginning. The default is "left".}
 
 \item{max.lag}{integer vector specifying how many years of lag to calculate calculations for.
 Default (and minimum) is 1 year.}
@@ -109,6 +114,16 @@ series). You may use Pearson correlations in \code{\link{n_mon_corr}}, but be fo
 there is no adjustment for autocorrelation in the Pearson correlation tests! Therefore, it
 is general best to use \code{corr.method = "pearson"} for comparison only, rather than actual results.
 
+The \code{common.years} argument is a way to subset the climate and tree-ring data after the moving
+windows and lags have been calculated. This results in lagged correlations that cover the same
+number of years as the current year correlations. This will not be the case if you subset the
+climate data before feeding it to \code{n_mon_corr}. E.g., if there is a 60 year overlap between a
+climate dataset and a tree-ring series, the lags will erode years from the total n of the
+correlations - a 1 year lag will be n-1, a 2 year lag will be n-2, etc. This is simply because of
+the offsets. Specifying common.years solves this problem by setting up the lags before the data
+is subset. The major caveat is that the climate data have to extend before \code{min(common.years)} in
+order for this to work. Otherwise you get the eroding years issue.
+
 A note on tree ring analyses based in the Southern hemisphere:
 \code{\link{n_mon_corr}} is designed to work in both the Northern and Southern hemispheres.
 Hemisphere matters for tree ring growth-climate relationships because tree ring formation in the
@@ -141,9 +156,10 @@ data(idPRISM)
 PS_gro_Tavg <- n_mon_corr(rwl = PerkinsSwetnam96,
                          clim = idPRISM,
                          clim.var = "Tavg.C",
+                         common.years = 1901:1990,
                          agg.fun = "mean",
                          max.win = 6,
-                         win.align = "right",
+                         win.align = "left",
                          max.lag = 2,
                          hemisphere = "N",
                          prewhiten = TRUE,
@@ -163,8 +179,9 @@ PS_gro_Tavg$`Results plots`
 PS_gro_PPT <- n_mon_corr(rwl = PerkinsSwetnam96,
                         clim = idPRISM,
                         clim.var = "PPT.mm",
+                        common.years = 1901:1990,
                         max.win = 6,
-                        win.align = "right",
+                        win.align = "left",
                         agg.fun = "sum",
                         max.lag = 2,
                         hemisphere = "N",
@@ -186,6 +203,7 @@ data(PSgroupIDs)
 PS_gro_Tavg_grouped <- n_mon_corr(rwl = PerkinsSwetnam96,
                                  clim = idPRISMgroup,
                                  clim.var = "Tavg.C",
+                                 common.years = 1901:1990,
                                  max.win = 6,
                                  win.align = "right",
                                  agg.fun = "mean",

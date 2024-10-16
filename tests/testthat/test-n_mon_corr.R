@@ -30,7 +30,10 @@ test_that("Throws error if rwl is not an rwl or data.frame", {
       rwl = 1:10, #
       clim = clim,
       clim.var = "clim.var",
+      common.years = 1951:2000,
       agg.fun = "mean",
+      max.win = 6,
+      win.align = "left",
       max.lag = 1,
       hemisphere = "N",
       prewhiten = TRUE,
@@ -43,10 +46,13 @@ test_that("Throws error if rwl is not an rwl or data.frame", {
   )
   expect_error(
     n_mon_corr(
-      rwl = "what what", #
+      rwl = "my trees", #
       clim = clim,
       clim.var = "clim.var",
+      common.years = 1951:2000,
       agg.fun = "mean",
+      max.win = 6,
+      win.align = "left",
       max.lag = 1,
       hemisphere = "N",
       prewhiten = TRUE,
@@ -66,7 +72,10 @@ test_that("Throws error if clim is not a data.frame or matrix", {
       rwl = rwl,
       clim = 1:10, #
       clim.var = "clim.var",
+      common.years = 1951:2000,
       agg.fun = "mean",
+      max.win = 6,
+      win.align = "left",
       max.lag = 1,
       hemisphere = "N",
       prewhiten = TRUE,
@@ -82,7 +91,10 @@ test_that("Throws error if clim is not a data.frame or matrix", {
       rwl = rwl,
       clim = "what what", #
       clim.var = "clim.var",
+      common.years = 1951:2000,
       agg.fun = "mean",
+      max.win = 6,
+      win.align = "left",
       max.lag = 1,
       hemisphere = "N",
       prewhiten = TRUE,
@@ -94,6 +106,7 @@ test_that("Throws error if clim is not a data.frame or matrix", {
     )
   )
 })
+
 ####
 test_that("Throws errors if clim.var isn't a character or doesn't match a column in clim", {
   expect_error(
@@ -101,7 +114,10 @@ test_that("Throws errors if clim.var isn't a character or doesn't match a column
       rwl = rwl,
       clim = clim,
       clim.var = runif(50), #
+      common.years = 1951:2000,
       agg.fun = "mean",
+      max.win = 6,
+      win.align = "left",
       max.lag = 1,
       hemisphere = "N",
       prewhiten = TRUE,
@@ -117,7 +133,10 @@ test_that("Throws errors if clim.var isn't a character or doesn't match a column
       rwl = rwl,
       clim = clim,
       clim.var = "bad.name", #
+      common.years = 1951:2000,
       agg.fun = "mean",
+      max.win = 6,
+      win.align = "left",
       max.lag = 1,
       hemisphere = "N",
       prewhiten = TRUE,
@@ -129,6 +148,70 @@ test_that("Throws errors if clim.var isn't a character or doesn't match a column
     )
   )
 })
+
+
+####
+test_that("Throws errors if common.years isn't a numeric vector of sufficent length or if
+          common years are outside of data coverage", {
+  expect_error(
+    n_mon_corr(
+      rwl = rwl,
+      clim = clim,
+      clim.var = "clim.var",
+      common.years = "the golden years", #
+      agg.fun = "mean",
+      max.win = 6,
+      win.align = "left",
+      max.lag = 1,
+      hemisphere = "N",
+      prewhiten = TRUE,
+      corr.method = "spearman",
+      gro.period.end = 9,
+      make.plot = TRUE,
+      group.IDs.df = NULL,
+      group.var = NULL
+    )
+  )
+  expect_error(
+    n_mon_corr(
+      rwl = rwl,
+      clim = clim,
+      clim.var = "clim.var",
+      common.years = 1951:1953, #
+      agg.fun = "mean",
+      max.win = 6,
+      win.align = "left",
+      max.lag = 1,
+      hemisphere = "N",
+      prewhiten = TRUE,
+      corr.method = "spearman",
+      gro.period.end = 9,
+      make.plot = TRUE,
+      group.IDs.df = NULL,
+      group.var = NULL
+    )
+  )
+  expect_error(
+    n_mon_corr(
+      rwl = rwl,
+      clim = clim,
+      clim.var = "clim.var",
+      common.years = 79:130, #
+      agg.fun = "mean",
+      max.win = 6,
+      win.align = "left",
+      max.lag = 1,
+      hemisphere = "N",
+      prewhiten = TRUE,
+      corr.method = "spearman",
+      gro.period.end = 9,
+      make.plot = TRUE,
+      group.IDs.df = NULL,
+      group.var = NULL
+    )
+  )
+})
+
 
 ####
 test_that("Throws error if not fed a valid agg.fun", {
@@ -137,7 +220,10 @@ test_that("Throws error if not fed a valid agg.fun", {
       rwl = rwl,
       clim = clim,
       clim.var = "clim.var",
+      common.years = 1951:2000,
       agg.fun = 1, #
+      max.win = 6,
+      win.align = "left",
       max.lag = 1,
       hemisphere = "N",
       prewhiten = TRUE,
@@ -153,7 +239,10 @@ test_that("Throws error if not fed a valid agg.fun", {
       rwl = rwl,
       clim = clim,
       clim.var = "clim.var",
+      common.years = 1951:2000,
       agg.fun = "average", #
+      max.win = 6,
+      win.align = "left",
       max.lag = 1,
       hemisphere = "N",
       prewhiten = TRUE,
@@ -167,13 +256,102 @@ test_that("Throws error if not fed a valid agg.fun", {
 })
 
 ####
+test_that("Throws error if not fed a valid max.win", {
+  expect_error(
+    n_mon_corr(
+      rwl = rwl,
+      clim = clim,
+      clim.var = "clim.var",
+      common.years = 1951:2000,
+      agg.fun = 1,
+      max.win = "6", #
+      win.align = "left",
+      max.lag = 1,
+      hemisphere = "N",
+      prewhiten = TRUE,
+      corr.method = "spearman",
+      gro.period.end = 9,
+      make.plot = TRUE,
+      group.IDs.df = NULL,
+      group.var = NULL
+    )
+  )
+  expect_error(
+    n_mon_corr(
+      rwl = rwl,
+      clim = clim,
+      clim.var = "clim.var",
+      common.years = 1951:2000,
+      agg.fun = "average",
+      max.win = 50, #
+      win.align = "left",
+      max.lag = 1,
+      hemisphere = "N",
+      prewhiten = TRUE,
+      corr.method = "spearman",
+      gro.period.end = 9,
+      make.plot = TRUE,
+      group.IDs.df = NULL,
+      group.var = NULL
+    )
+  )
+})
+
+
+####
+test_that("Throws error if not fed a valid win.align", {
+  expect_error(
+    n_mon_corr(
+      rwl = rwl,
+      clim = clim,
+      clim.var = "clim.var",
+      common.years = 1951:2000,
+      agg.fun = 1,
+      max.win = "6",
+      win.align = "center", #
+      max.lag = 1,
+      hemisphere = "N",
+      prewhiten = TRUE,
+      corr.method = "spearman",
+      gro.period.end = 9,
+      make.plot = TRUE,
+      group.IDs.df = NULL,
+      group.var = NULL
+    )
+  )
+  expect_error(
+    n_mon_corr(
+      rwl = rwl,
+      clim = clim,
+      clim.var = "clim.var",
+      common.years = 1951:2000,
+      agg.fun = "average",
+      max.win = 50,
+      win.align = 2, #
+      max.lag = 1,
+      hemisphere = "N",
+      prewhiten = TRUE,
+      corr.method = "spearman",
+      gro.period.end = 9,
+      make.plot = TRUE,
+      group.IDs.df = NULL,
+      group.var = NULL
+    )
+  )
+})
+
+
+####
 test_that("Throws error if not fed a valid max.lag", {
   expect_error(
     n_mon_corr(
       rwl = rwl,
       clim = clim,
       clim.var = "clim.var",
+      common.years = 1951:2000,
       agg.fun = "sum",
+      max.win = 6,
+      win.align = "left",
       max.lag = "wayback machine", #
       hemisphere = "N",
       prewhiten = TRUE,
@@ -189,7 +367,10 @@ test_that("Throws error if not fed a valid max.lag", {
       rwl = rwl,
       clim = clim,
       clim.var = "clim.var",
+      common.years = 1951:2000,
       agg.fun = "sum",
+      max.win = 6,
+      win.align = "left",
       max.lag = 0, #
       hemisphere = "N",
       prewhiten = TRUE,
@@ -209,7 +390,10 @@ test_that("Throws error if not fed a valid hemisphere", {
       rwl = rwl,
       clim = clim,
       clim.var = "clim.var",
+      common.years = 1951:2000,
       agg.fun = "sum",
+      max.win = 6,
+      win.align = "left",
       max.lag = 1,
       hemisphere = 19, #
       prewhiten = TRUE,
@@ -225,7 +409,10 @@ test_that("Throws error if not fed a valid hemisphere", {
       rwl = rwl,
       clim = clim,
       clim.var = "clim.var",
+      common.years = 1951:2000,
       agg.fun = "sum",
+      max.win = 6,
+      win.align = "left",
       max.lag = 1,
       hemisphere = "the earth is flat", #
       prewhiten = TRUE,
@@ -245,7 +432,10 @@ test_that("Throws error if not fed a valid prewhiten arg", {
       rwl = rwl,
       clim = clim,
       clim.var = "clim.var",
+      common.years = 1951:2000,
       agg.fun = "sum",
+      max.win = 6,
+      win.align = "left",
       max.lag = 1,
       hemisphere = "S",
       prewhiten = 27, #
@@ -261,7 +451,10 @@ test_that("Throws error if not fed a valid prewhiten arg", {
       rwl = rwl,
       clim = clim,
       clim.var = "clim.var",
+      common.years = 1951:2000,
       agg.fun = "sum",
+      max.win = 6,
+      win.align = "left",
       max.lag = 1,
       hemisphere = "S",
       prewhiten = "Nope", #
@@ -281,7 +474,10 @@ test_that("Throws error if not fed a valid correlation method", {
       rwl = rwl,
       clim = clim,
       clim.var = "clim.var",
+      common.years = 1951:2000,
       agg.fun = "sum",
+      max.win = 6,
+      win.align = "left",
       max.lag = 1,
       hemisphere = "N",
       prewhiten = TRUE,
@@ -297,11 +493,14 @@ test_that("Throws error if not fed a valid correlation method", {
       rwl = rwl,
       clim = clim,
       clim.var = "clim.var",
+      common.years = 1951:2000,
       agg.fun = "sum",
+      max.win = 6,
+      win.align = "left",
       max.lag = 1,
       hemisphere = "N",
       prewhiten = TRUE,
-      corr.method = "Daryl's", #
+      corr.method = "Daryl", #
       gro.period.end = 9,
       make.plot = TRUE,
       group.IDs.df = NULL,
@@ -317,7 +516,10 @@ test_that("Throws error if not fed a valid gro.period.end", {
       rwl = rwl,
       clim = clim,
       clim.var = "clim.var",
+      common.years = 1951:2000,
       agg.fun = "sum",
+      max.win = 6,
+      win.align = "left",
       max.lag = 1,
       hemisphere = "N",
       prewhiten = TRUE,
@@ -333,7 +535,10 @@ test_that("Throws error if not fed a valid gro.period.end", {
       rwl = rwl,
       clim = clim,
       clim.var = "clim.var",
+      common.years = 1951:2000,
       agg.fun = "sum",
+      max.win = 6,
+      win.align = "left",
       max.lag = 1,
       hemisphere = "N",
       prewhiten = TRUE,
@@ -349,7 +554,10 @@ test_that("Throws error if not fed a valid gro.period.end", {
       rwl = rwl,
       clim = clim,
       clim.var = "clim.var",
+      common.years = 1951:2000,
       agg.fun = "sum",
+      max.win = 6,
+      win.align = "left",
       max.lag = 1,
       hemisphere = "N",
       prewhiten = TRUE,
@@ -365,7 +573,10 @@ test_that("Throws error if not fed a valid gro.period.end", {
       rwl = rwl,
       clim = clim,
       clim.var = "clim.var",
+      common.years = 1951:2000,
       agg.fun = "sum",
+      max.win = 6,
+      win.align = "left",
       max.lag = 1,
       hemisphere = "N",
       prewhiten = TRUE,
@@ -385,7 +596,10 @@ test_that("Throws error if not fed a valid make.plot arg", {
       rwl = rwl,
       clim = clim,
       clim.var = "clim.var",
+      common.years = 1951:2000,
       agg.fun = "sum",
+      max.win = 6,
+      win.align = "left",
       max.lag = 1,
       hemisphere = "N",
       prewhiten = TRUE,
@@ -401,7 +615,10 @@ test_that("Throws error if not fed a valid make.plot arg", {
       rwl = rwl,
       clim = clim,
       clim.var = "clim.var",
+      common.years = 1951:2000,
       agg.fun = "sum",
+      max.win = 6,
+      win.align = "left",
       max.lag = 1,
       hemisphere = "N",
       prewhiten = TRUE,
@@ -421,7 +638,10 @@ test_that("Throws error if not fed a valid group.IDs.df arg", {
       rwl = rwl,
       clim = clim,
       clim.var = "clim.var",
+      common.years = 1951:2000,
       agg.fun = "sum",
+      max.win = 6,
+      win.align = "left",
       max.lag = 1,
       hemisphere = "N",
       prewhiten = TRUE,
@@ -437,7 +657,10 @@ test_that("Throws error if not fed a valid group.IDs.df arg", {
       rwl = rwl,
       clim = clim,
       clim.var = "clim.var",
+      common.years = 1951:2000,
       agg.fun = "sum",
+      max.win = 6,
+      win.align = "left",
       max.lag = 1,
       hemisphere = "N",
       prewhiten = TRUE,
@@ -457,7 +680,10 @@ test_that("Throws error if not fed a valid group.var arg", {
       rwl = rwl,
       clim = clim,
       clim.var = "clim.var",
+      common.years = 1951:2000,
       agg.fun = "sum",
+      max.win = 6,
+      win.align = "left",
       max.lag = 1,
       hemisphere = "N",
       prewhiten = TRUE,
@@ -473,7 +699,10 @@ test_that("Throws error if not fed a valid group.var arg", {
       rwl = rwl,
       clim = clim,
       clim.var = "clim.var",
+      common.years = 1951:2000,
       agg.fun = "sum",
+      max.win = 6,
+      win.align = "left",
       max.lag = 1,
       hemisphere = "N",
       prewhiten = TRUE,
@@ -494,7 +723,10 @@ test_that("Essential function works - and returns a vector under all basic varia
       rwl = rwl,
       clim = clim,
       clim.var = "clim.var",
+      common.years = 1951:2000,
       agg.fun = "sum",
+      max.win = 6,
+      win.align = "left",
       max.lag = 1,
       hemisphere = "N",
       prewhiten = TRUE,
@@ -511,7 +743,10 @@ test_that("Essential function works - and returns a vector under all basic varia
       rwl = rwl,
       clim = clim,
       clim.var = "clim.var",
+      common.years = 1951:2000,
       agg.fun = "mean", #
+      max.win = 6,
+      win.align = "left",
       max.lag = 1,
       hemisphere = "N",
       prewhiten = TRUE,
@@ -528,7 +763,71 @@ test_that("Essential function works - and returns a vector under all basic varia
       rwl = rwl,
       clim = clim,
       clim.var = "clim.var",
-      agg.fun = "mean", #
+      common.years = 1961:2000, #
+      agg.fun = "mean",
+      max.win = 6,
+      win.align = "left",
+      max.lag = 1,
+      hemisphere = "N",
+      prewhiten = TRUE,
+      corr.method = "spearman",
+      gro.period.end = 9,
+      make.plot = TRUE,
+      group.IDs.df = NULL,
+      group.var = NULL
+    )
+  )
+
+
+  expect_vector(
+    n_mon_corr(
+      rwl = rwl,
+      clim = clim,
+      clim.var = "clim.var",
+      common.years = 1961:2000,
+      agg.fun = "mean",
+      max.win = 12, #
+      win.align = "left",
+      max.lag = 1,
+      hemisphere = "N",
+      prewhiten = TRUE,
+      corr.method = "spearman",
+      gro.period.end = 9,
+      make.plot = TRUE,
+      group.IDs.df = NULL,
+      group.var = NULL
+    )
+  )
+
+  expect_vector(
+    n_mon_corr(
+      rwl = rwl,
+      clim = clim,
+      clim.var = "clim.var",
+      common.years = 1961:2000,
+      agg.fun = "mean",
+      max.win = 6,
+      win.align = "right", #
+      max.lag = 1,
+      hemisphere = "N",
+      prewhiten = TRUE,
+      corr.method = "spearman",
+      gro.period.end = 9,
+      make.plot = TRUE,
+      group.IDs.df = NULL,
+      group.var = NULL
+    )
+  )
+
+  expect_vector(
+    n_mon_corr(
+      rwl = rwl,
+      clim = clim,
+      clim.var = "clim.var",
+      common.years = 1951:2000,
+      agg.fun = "mean",
+      max.win = 6,
+      win.align = "left",
       max.lag = 3, #
       hemisphere = "N",
       prewhiten = TRUE,
@@ -545,8 +844,11 @@ test_that("Essential function works - and returns a vector under all basic varia
       rwl = rwl,
       clim = clim,
       clim.var = "clim.var",
-      agg.fun = "mean", #
-      max.lag = 3, #
+      common.years = 1951:2000,
+      agg.fun = "mean",
+      max.win = 6,
+      win.align = "left",
+      max.lag = 3,
       hemisphere = "S", #
       prewhiten = TRUE,
       corr.method = "spearman",
@@ -562,9 +864,12 @@ test_that("Essential function works - and returns a vector under all basic varia
       rwl = rwl,
       clim = clim,
       clim.var = "clim.var",
-      agg.fun = "mean", #
-      max.lag = 3, #
-      hemisphere = "S", #
+      common.years = 1951:2000,
+      agg.fun = "mean",
+      max.win = 6,
+      win.align = "left",
+      max.lag = 3,
+      hemisphere = "S",
       prewhiten = FALSE, #
       corr.method = "spearman",
       gro.period.end = 9,
@@ -579,10 +884,13 @@ test_that("Essential function works - and returns a vector under all basic varia
       rwl = rwl,
       clim = clim,
       clim.var = "clim.var",
-      agg.fun = "mean", #
-      max.lag = 3, #
-      hemisphere = "S", #
-      prewhiten = FALSE, #
+      common.years = 1951:2000,
+      agg.fun = "mean",
+      max.win = 6,
+      win.align = "left",
+      max.lag = 3,
+      hemisphere = "S",
+      prewhiten = FALSE,
       corr.method = "pearson", #
       gro.period.end = 9,
       make.plot = TRUE,
@@ -596,10 +904,13 @@ test_that("Essential function works - and returns a vector under all basic varia
       rwl = rwl,
       clim = clim,
       clim.var = "clim.var",
-      agg.fun = "mean", #
-      max.lag = 3, #
-      hemisphere = "S", #
-      prewhiten = FALSE, #
+      common.years = 1951:2000,
+      agg.fun = "mean",
+      max.win = 6,
+      win.align = "left",
+      max.lag = 3,
+      hemisphere = "S",
+      prewhiten = FALSE,
       corr.method = "kendall", #
       gro.period.end = 9,
       make.plot = TRUE,
@@ -613,11 +924,14 @@ test_that("Essential function works - and returns a vector under all basic varia
       rwl = rwl,
       clim = clim,
       clim.var = "clim.var",
-      agg.fun = "mean", #
-      max.lag = 3, #
-      hemisphere = "S", #
-      prewhiten = FALSE, #
-      corr.method = "kendall", #
+      common.years = 1951:2000,
+      agg.fun = "mean",
+      max.win = 6,
+      win.align = "left",
+      max.lag = 3,
+      hemisphere = "S",
+      prewhiten = FALSE,
+      corr.method = "kendall",
       gro.period.end = 4, #
       make.plot = TRUE,
       group.IDs.df = NULL,
@@ -630,12 +944,15 @@ test_that("Essential function works - and returns a vector under all basic varia
       rwl = rwl,
       clim = clim,
       clim.var = "clim.var",
-      agg.fun = "mean", #
-      max.lag = 3, #
-      hemisphere = "S", #
-      prewhiten = FALSE, #
-      corr.method = "kendall", #
-      gro.period.end = 4, #
+      common.years = 1951:2000,
+      agg.fun = "mean",
+      max.win = 6,
+      win.align = "left",
+      max.lag = 3,
+      hemisphere = "S",
+      prewhiten = FALSE,
+      corr.method = "kendall",
+      gro.period.end = 4,
       make.plot = FALSE, #
       group.IDs.df = NULL,
       group.var = NULL
@@ -694,7 +1011,10 @@ for (i in 1:length(test.list)) {
     rwl = mat.test,
     clim = clim,
     clim.var = "clim.var",
+    common.years = 1:50,
     agg.fun = "mean",
+    max.win = 6,
+    win.align = "left",
     max.lag = 1,
     hemisphere = "N",
     prewhiten = FALSE,
@@ -707,9 +1027,10 @@ for (i in 1:length(test.list)) {
 
   cor.res <- test10[["Correlation results"]]
 
-  # The top (or fisrt) row is the highest correlation (output is sorted),
+  # The top (or first) row is the highest correlation (output is sorted),
   # thus marker month should be the 1st row
-  test.list[[i]] <- cor.res$start.month[cor.res$win.len == 1][1] %in% marker.month
+  test.list[[i]] <- cor.res$month[cor.res$win.len %in% 1 &
+                                    cor.res$lag %in% "0"][1] %in% marker.month
 }
 expect_true(all(test.list))
 })
@@ -775,7 +1096,10 @@ of the output (grouped data)", {
       rwl = mat.test,
       clim = clim,
       clim.var = "clim.var",
+      common.years = 1:50,
       agg.fun = "mean",
+      max.win = 6,
+      win.align = "left",
       max.lag = 1,
       hemisphere = "N",
       prewhiten = FALSE,
@@ -790,10 +1114,122 @@ of the output (grouped data)", {
     # The top (or first) row is the highest correlation (output is sorted),
     # thus marker month should be the 1st row
     # We also know that the signal should be for win.len = 1 & in group = "g1"
-    test.list[[i]] <- cor.res$start.month[cor.res$win.len == 1][1] %in% marker.month &
-      cor.res$series[cor.res$win.len == 1][1] %in%
+    test.list[[i]] <- cor.res$month[cor.res$win.len == 1 &
+                                      cor.res$lag %in% "0"][1] %in% marker.month &
+      cor.res$series[cor.res$win.len == 1 &
+                       cor.res$lag %in% "0"][1] %in%
       group.IDs.df[group.IDs.df$group %in% "g1", "series"]
   }
   expect_true(all(test.list))
 })
+
+
+#### Missing data in clim
+test_that("Throws an error when clim.var has internal NAs",{
+  clim.miss <- clim
+  clim.miss[clim.miss$year %in% sample(1951:2000, 1) &
+                           clim.miss$month %in% sample(1:12, 1), "clim.var"] <- NA
+expect_error(
+  n_mon_corr(
+    rwl = rwl,
+    clim = clim.miss,
+    clim.var = "clim.var",
+    common.years = 1951:2000,
+    agg.fun = "sum",
+    max.win = 6,
+    win.align = "left",
+    max.lag = 1,
+    hemisphere = "N",
+    prewhiten = TRUE,
+    corr.method = "spearman",
+    gro.period.end = 9,
+    make.plot = FALSE,
+    group.IDs.df = NULL,
+    group.var = NULL
+  )
+)
+})
+
+test_that("Throws an error when clim.var is missing observations",{
+  clim.miss <- clim[!(clim$year %in% sample(1951:2000, 1) &
+                        clim$month %in% sample(1:12, 1)),]
+  expect_error(
+    n_mon_corr(
+      rwl = rwl,
+      clim = clim.miss,
+      clim.var = "clim.var",
+      common.years = 1951:2000,
+      agg.fun = "sum",
+      max.win = 6,
+      win.align = "left",
+      max.lag = 1,
+      hemisphere = "N",
+      prewhiten = TRUE,
+      corr.method = "spearman",
+      gro.period.end = 9,
+      make.plot = FALSE,
+      group.IDs.df = NULL,
+      group.var = NULL
+    )
+  )
+})
+
+
+#### Check that correlation coefficients are correct with an independent check
+
+test_that("Correlation coefficients are equal with an independent check", {
+  # Get the moving averages of the climate data
+  clim.ma <- moving_win_multi(clim,
+                              clim.var = "clim.var",
+                              win.lens = 1:2,
+                              win.align = "left",
+                              agg.fun = "mean")
+
+  # Set common.years here
+  common.years <- 1960:2000
+
+  rwl.comm <- rwl[rownames(rwl) %in% common.years,]
+  # Disassemble the rwl and run correlations with each climate series
+  suppressWarnings(
+  ind.test <- mapply(FUN = \(tr, tr.names) {
+    lapply(split(clim.ma[clim.ma$win.len == 2,],
+                 f = clim.ma[clim.ma$win.len == 2, "month"]), FUN = \(mon) {
+                   mon <- mon[order(mon[,"year"], decreasing = FALSE),]
+                   mon <- mon[mon[,"year"] %in% common.years,]
+                   cor.res <- corTESTsrd(x = mon[, "clim.var"],
+                              y = tr,
+                              method = "spearman",
+                              iid = FALSE,
+                              alternative = "two.sided")
+
+                   data.frame(series = tr.names,
+                              month = unique(mon[,"month"]),
+                              ind.coef = cor.res[["rho"]])
+                 }) |> do.call(what = "rbind")
+
+  }, tr = as.list(rwl.comm), tr.names = colnames(rwl.comm),
+  SIMPLIFY = FALSE) |> do.call(what = "rbind")
+  )
+
+  fun.test <- n_mon_corr(rwl = rwl,
+                         clim = clim,
+                         clim.var = "clim.var",
+                         common.years = common.years,
+                         agg.fun = "mean",
+                         max.win = 2,
+                         win.align = "left",
+                         max.lag = 1,
+                         hemisphere = "N",
+                         prewhiten = FALSE,
+                         corr.method = "spearman",
+                         gro.period.end = 9,
+                         make.plots = FALSE)
+  fun.test.res <- fun.test[["Correlation results"]]
+  # Subset to match the 2-month moving window and current year
+  fun.test.res <- fun.test.res[fun.test.res$win.len == 2 & fun.test.res$lag %in% "0",]
+  test.merge <- merge(fun.test.res, ind.test, by = c("series","month"))
+
+  expect_equal(test.merge$coef, test.merge$ind.coef)
+
+  })
 

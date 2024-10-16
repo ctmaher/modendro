@@ -8,6 +8,7 @@ multi_clim_gro_corr(
   rwl.group = NULL,
   clim.group = NULL,
   clim.var = NULL,
+  common.years = NULL,
   gro.period.end = NULL,
   agg.fun = "mean",
   max.win = 6,
@@ -28,6 +29,10 @@ climate variable.}
 
 \item{clim.var}{character vector - the colname of the climate variable of interest in the \code{clim}
 data.frame.}
+
+\item{common.years}{numeric vector - a sequence of years to subset the clim and rwl data before
+running correlation analyses. Must be at least 25 years long and years must exist in clim and
+rwl.}
 
 \item{gro.period.end}{the last month in which you expect growth to occur for your study species
 in your study region. Not crucial in this version - only draws a line in the output plot.}
