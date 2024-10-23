@@ -712,6 +712,7 @@ n_mon_corr <- function(rwl = NULL,
     # Define some ylim values here
     ylim.val <- max(abs(na.omit(res.agg$mean.coef))) + 0.1
     lag.lab.df$y.min2 <- -ylim.val; lag.lab.df$y.max2 <- -(ylim.val + 0.15*ylim.val)
+    lag.lab.df$lag <- factor(lag.lab.df$lag, levels = lag.levels[order(as.numeric(lag.levels))])
 
     x_min <- "x.min"
     x_max <- "x.max"
@@ -833,12 +834,9 @@ n_mon_corr <- function(rwl = NULL,
                          inherit.aes = FALSE,
                          color = "white",
                          size = 3) +
-      #ggplot2::scale_x_continuous(data = res.agg, labels = comb.x) +
       ggplot2::geom_line(linewidth = 0.75,
                          ggplot2::aes(group = factor(.data[[col_var]], levels = rev(1:12)))) +
-      #ggplot2::geom_point() +
       ggplot2::facet_wrap( ~ dir, ncol = 1, strip.position = "right", scales = "free_y") +
-      #ggplot2::facet_grid(dir ~ lag, switch = "x") +
       ggplot2::geom_vline(
         data = data.frame(
           xint = ifelse(hemisphere == "S",
