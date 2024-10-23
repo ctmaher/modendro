@@ -5,7 +5,16 @@
 #' monthly climate variable aggregated for every combination (lengths 1:12) of consecutive months
 #' going back a specified number of years.
 #'
-#' @param x the n_mon_cor output list object
+#' The results plots show 1) the percentage of tree-ring series that had statistically significant
+#' correlations and 2) the mean correlation coefficient (ALL correlations, not just significant
+#' ones) with all possible moving window combinations. Moving windows are represented by their start
+#' month (the x-axis) and window length (represented by the lines of different colors). Each plot
+#' is split by the direction of the relationships: positive (coef > 0) and negative (coef < 0).
+#' The x-axis is extended to the left according to the number of lag years the user specifies (with
+#' `max.lag`). Lag years are indicated by labeled rectangles just above the x-axis ticks.
+#' "0" represents the current year.
+#'
+#' @param x the n_mon_corr output list object
 #'
 #'
 #' @return 2 plots
@@ -18,6 +27,15 @@
 
 
 plot_n_mon_corr <- function(x = NULL) {
+
+
+  # Will need this warning
+  # if ((ncol(rwl) - 1) < 10 & make.plots == TRUE) {
+  #   warning("Number of tree-ring series is very low (< 10).
+  #             Be cautious interpreting results plots.")
+  # }
+
+
   # Subset out just the significant correlations
   # But there may not always be significant correlations
 

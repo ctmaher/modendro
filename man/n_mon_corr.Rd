@@ -130,15 +130,6 @@ tree rings in the Southern hemisphere, i.e., the calendar year in which growth b
 for how the climate data is aligned with the treering data. In this version, the way this is
 handled is that a "lag +1" year is added to suite of correlations so that the moving windows of
 consecutive months can extend through the growing season (and into the next calendar year).
-
-The results plots (returned as part of the output if \code{make.plots == TRUE}), show 1) the
-percentage of tree-ring series that had statistically significant correlations and 2) the mean
-correlation coefficient (ALL correlations, not just significant ones) with all possible moving
-window combinations. Moving windows are represented by their start month (the x-axis) and window
-length (represented by the lines of different colors). Each plot is split by the direction of the
-relationships: positive (coef > 0) and negative (coef < 0). The x-axis is extended to the left
-according to the number of lag years the user specifies (with \code{max.lag}). Lag years are indicated
-by labeled rectangles just above the x-axis ticks. "0" represents the current year.
 }
 \examples{
 ## Bring in some real tree-ring and climate data

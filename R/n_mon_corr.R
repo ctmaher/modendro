@@ -94,14 +94,6 @@
 #' handled is that a "lag +1" year is added to suite of correlations so that the moving windows of
 #' consecutive months can extend through the growing season (and into the next calendar year).
 #'
-#' The results plots (returned as part of the output if `make.plots == TRUE`), show 1) the
-#' percentage of tree-ring series that had statistically significant correlations and 2) the mean
-#' correlation coefficient (ALL correlations, not just significant ones) with all possible moving
-#' window combinations. Moving windows are represented by their start month (the x-axis) and window
-#' length (represented by the lines of different colors). Each plot is split by the direction of the
-#' relationships: positive (coef > 0) and negative (coef < 0). The x-axis is extended to the left
-#' according to the number of lag years the user specifies (with `max.lag`). Lag years are indicated
-#' by labeled rectangles just above the x-axis ticks. "0" represents the current year.
 #'
 #' @return A 2-4 element list containing data.frames of the correlation results, the moving-window
 # climate data used in the correlations (both prewhitened and raw if prewhiten = TRUE), the
@@ -921,10 +913,10 @@ n_mon_corr <- function(rwl = NULL,
     #}
   }
 
-  if ((ncol(rwl) - 1) < 10 & make.plots == TRUE) {
-    warning("Number of tree-ring series is very low (< 10).
-              Be cautious interpreting results plots.")
-  }
+  # if ((ncol(rwl) - 1) < 10 & make.plots == TRUE) {
+  #   warning("Number of tree-ring series is very low (< 10).
+  #             Be cautious interpreting results plots.")
+  # }
 
   # Lastly, order the Correlation results based on the highest correlation
   out.list[["Correlation results"]] <-
