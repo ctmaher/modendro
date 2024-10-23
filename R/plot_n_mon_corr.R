@@ -282,7 +282,8 @@ plot_n_mon_corr <- function(x = NULL) {
       legend.position = "right"
     )
 
-  per.plot
-  mean.plot
+  out.plot.list <- list(per.plot, mean.plot)
+  names(out.plot.list) <- c("Percent sig. corr. plot", "Mean corr. coef. plot")
+  return(out.plot.list)
 
 } # End of function
