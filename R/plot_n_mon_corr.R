@@ -282,6 +282,7 @@ plot_n_mon_corr <- function(x = NULL) {
       legend.position = "right"
     )
 
-  return(c(per.plot, mean.plot))
+  per.plot
+  mean.plot
 
 } # End of function
