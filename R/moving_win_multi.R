@@ -154,6 +154,7 @@ moving_win_multi <- function(df,
                          month = df[,"month"],
                          agg.fun = agg.fun,
                          win.len = n,
+                         win.align = win.align,
                          result = result)
     colnames(this.n)[which(colnames(this.n) %in% "result")] <- clim.var
     this.n
@@ -173,6 +174,7 @@ moving_win_multi <- function(df,
                            month = df[,"month"],
                            agg.fun = agg.fun,
                            win.len = n,
+                           win.align = win.align,
                            result = result)
       colnames(this.n)[which(colnames(this.n) %in% "result")] <- clim.var
       this.n
@@ -183,6 +185,7 @@ moving_win_multi <- function(df,
                           month = df[,"month"],
                           agg.fun = agg.fun,
                           win.len = 1,
+                          win.align = win.align,
                           result = df[,clim.var])
   colnames(orig.data)[which(colnames(orig.data) %in% "result")] <- clim.var
 

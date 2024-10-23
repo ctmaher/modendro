@@ -237,7 +237,10 @@ multi_clim_gro_corr <- function(rwl.group = NULL,
               max.year = max(na.omit(subs.for.corr[, "year"])),
               overlap = length(min(na.omit(subs.for.corr[, "year"])):
                                  max(na.omit(subs.for.corr[, "year"]))),
-              corr.method = corr.method
+              clim.var = clim.var,
+              corr.method = corr.method,
+              hemisphere = hemisphere
+
             )
             out.df[, group.var] <- unique(mo[, group.var])
             out.df
@@ -264,7 +267,9 @@ multi_clim_gro_corr <- function(rwl.group = NULL,
               max.year = max(na.omit(subs.for.corr[, "year"])),
               overlap = length(min(na.omit(subs.for.corr[, "year"])):
                                  max(na.omit(subs.for.corr[, "year"]))),
-              corr.method = corr.method
+              clim.var = clim.var,
+              corr.method = corr.method,
+              hemisphere = hemisphere
             )
             out.df[, group.var] <- unique(mo[, group.var])
             out.df

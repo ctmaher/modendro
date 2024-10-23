@@ -48,8 +48,6 @@
 #' \code{\link[corTESTsrd]{corTESTsrd}} function (also used for `corr.method = "kendall"`). This
 #' method reduces the type I error rate associated with autocorrelated series. CAUTION: Currently
 #' `corr.method = "pearson"` doesn't make any adjustments for autocorrelation. See Details below.
-#' @param make.plots logical vector indicating whether or not to produce plots. Default is TRUE.
-#' You will get a warning if you have < 10 tree-ring series. Ideally you have > 50.
 #' @param group.IDs.df an optional data.frame with 2 columns: "series", representing the names of
 #' the tree-ring series (and matching the colnames of rwl) and a group.var (name is your
 #' specification), representing a grouping (e.g., site, plot) variable.
@@ -145,7 +143,6 @@
 #'                          prewhiten = TRUE,
 #'                          corr.method = "spearman",
 #'                          gro.period.end = 9,
-#'                          make.plots = TRUE,
 #'                          group.IDs.df = NULL,
 #'                          group.var = NULL)
 #' names(PS_gro_Tavg)
@@ -168,7 +165,6 @@
 #'                         prewhiten = TRUE,
 #'                         corr.method = "spearman",
 #'                         gro.period.end = 9,
-#'                         make.plots = TRUE,
 #'                         group.IDs.df = NULL,
 #'                         group.var = NULL)
 #' names(PS_gro_PPT)
@@ -192,7 +188,6 @@
 #'                                  prewhiten = TRUE,
 #'                                  corr.method = "spearman",
 #'                                  gro.period.end = 9,
-#'                                  make.plots = TRUE,
 #'                                  group.IDs.df = PSgroupIDs,
 #'                                  group.var = "site")
 #' names(PS_gro_Tavg_grouped)
@@ -214,7 +209,7 @@ n_mon_corr <- function(rwl = NULL,
                        prewhiten = TRUE,
                        corr.method = "spearman",
                        gro.period.end = NULL,
-                       make.plots = TRUE,
+                       #make.plots = TRUE,
                        group.IDs.df = NULL,
                        group.var = NULL) {
   ############ Initial basic input error catching
@@ -393,9 +388,12 @@ n_mon_corr <- function(rwl = NULL,
   }
 
   ###### make.plots
-  stopifnot("Arg make.plot must be a logical vector" =
-              is.logical(make.plots))
+  # stopifnot("Arg make.plot must be a logical vector" =
+  #             is.logical(make.plots))
 
+  # make.plots text:
+  # logical vector indicating whether or not to produce plots. Default is TRUE.
+  # You will get a warning if you have < 10 tree-ring series. Ideally you have > 50.
   ###### group.IDs.df
 
   # Checks for multiple climate datasets when group.IDs.df is not specified,
@@ -639,262 +637,260 @@ n_mon_corr <- function(rwl = NULL,
     names(cor.res.list) <- out.list.names
   }
 
-  if (make.plots == TRUE) {
-    # Subset out just the significant correlations
-    # But there may not always be significant correlations
-
-    # Theoretical - just one place holder for the possible combinations
-    sig.only.th <- expand.grid(month = unique(cor.res.list[["cor.res.dat"]]$month),
-                               win.len = unique(cor.res.list[["cor.res.dat"]]$win.len),
-                               lag = unique(cor.res.list[["cor.res.dat"]]$lag),
-                               dir = unique(cor.res.list[["cor.res.dat"]]$dir))
-
-    # Empirical - what actually exists (could be none)
-    sig.only.em <- cor.res.list[["cor.res.dat"]][cor.res.list[["cor.res.dat"]]$p <= 0.05, ]
-
-    # Merge them
-    sig.only <- merge(sig.only.th, sig.only.em,
-                      by = c("month","win.len","lag","dir"),
-                      all = TRUE)
-
-    sig.only$lag <- as.character(sig.only$lag)
-
-    res.agg <- aggregate(coef ~ month + win.len + lag + dir,
-                         data = sig.only,
-                         FUN = \(x) {
-                           length(na.omit(x))
-                         },
-                         drop = FALSE, # make sure the blank combinations still appear
-                         na.action = na.pass
-    )
-
-    lag.levels <- res.agg$lag |> unique()
-
-    # Calculate the percentage of significant correlations
-    res.agg$prop.sig <- (res.agg$coef / length(unique(cor.res.list[["cor.res.dat"]][, "series"]))) *
-      100
-
-    # Make a new composite x-axis that combines month and lag
-    res.agg <- res.agg[order(res.agg$lag, res.agg$month),]
-    res.agg$comb.x <- paste(res.agg$lag, res.agg$month, sep = "_")
-    res.agg$comb.x <- factor(res.agg$comb.x, levels = unique(res.agg$comb.x))
-    res.agg$comb.x.num <- as.numeric(res.agg$comb.x)
-
-    mean.coef.agg <- aggregate(coef ~ month + win.len + lag + dir,
-                               data = cor.res.list[["cor.res.dat"]],
-                               FUN = \(x) mean(x),
-                               drop = FALSE) # make sure the blank combinations still appear
-    colnames(mean.coef.agg)[colnames(mean.coef.agg) %in% "coef"] <- "mean.coef"
-
-    res.agg <- merge(res.agg, mean.coef.agg, by = c("month", "win.len", "lag", "dir"))
-    res.agg$lag <- factor(res.agg$lag, levels = lag.levels[order(as.numeric(lag.levels))])
-    res.agg$dir <- factor(res.agg$dir, levels = c("Pos.", "Neg."))
-    res.agg <- res.agg[order(res.agg$lag, res.agg$month),]
-
-    # Make a plot.
-    # These 4 lines are to deal with "no visible binding" NOTEs from check()
-    x_var <- "comb.x.num"
-    x_lab <- "month"
-    y_var <- "prop.sig"
-    y_var2 <- "mean.coef"
-    col_var <- "win.len"
-    x.intercept <- "xint"
-    y.intercept <- "yint"
-
-    # For geom_tile & geom_text
-    lag.lab.df1 <- res.agg[, c("lag", "month", "comb.x", "comb.x.num")] |> unique()
-    lag.lab.df1$dir <- factor("Neg.", levels = c("Pos.","Neg."))
-
-    lag.lab.df <- aggregate(comb.x.num ~ lag + dir, data = lag.lab.df1, min)
-    colnames(lag.lab.df)[colnames(lag.lab.df) %in% "comb.x.num"] <- "x.min"
-    lag.lab.df$x.max <- aggregate(comb.x.num ~ lag + dir, data = lag.lab.df1, max)[,3] + 0.85
-    lag.lab.df$y.min <- -10; lag.lab.df$y.max <- -1
-    # Define some ylim values here
-    ylim.val <- max(abs(na.omit(res.agg$mean.coef))) + 0.1
-    lag.lab.df$y.min2 <- -ylim.val; lag.lab.df$y.max2 <- -(ylim.val + 0.15*ylim.val)
-    lag.lab.df$lag <- factor(lag.lab.df$lag, levels = lag.levels[order(as.numeric(lag.levels))])
-
-    x_min <- "x.min"
-    x_max <- "x.max"
-    y_min <- "y.min"
-    y_max <- "y.max"
-    y_min2 <- "y.min2"
-    y_max2 <- "y.max2"
-    lag_lab <- "lag"
-
-    pretty.corr.method <- ifelse(corr.method %in% "pearson", "Pearson ",
-                                 ifelse(corr.method %in% "spearman", "Spearman ",
-                                        "Kendall "))
-
-    per.plot <-
-      ggplot2::ggplot(res.agg, ggplot2::aes(.data[[x_var]], .data[[y_var]],
-                                            color = as.factor(.data[[col_var]]))) +
-      ggplot2::ggtitle(paste0(pretty.corr.method,
-                              "correlations between tree-ring and ",
-                              clim.var,
-                              " series"),
-                       subtitle = paste0("Transformation: ",
-                                         ifelse(prewhiten == TRUE, "ARIMA resids.", "None"),
-                                         "; Aggregation of climate moving windows: ",
-                                         paste0(agg.fun, "s"))) +
-      ggplot2::scale_color_manual("Moving\nwindow\nlength\n(n months)",
-                                  values = grDevices::hcl.colors(max.win, palette = "Spectral")) +
-      ggplot2::geom_rect(data = lag.lab.df,
-                         ggplot2::aes(xmin = .data[[x_min]],
-                                      xmax = .data[[x_max]],
-                                      ymin = .data[[y_min]],
-                                      ymax = .data[[y_max]]),
-                         inherit.aes = FALSE,
-                         fill = "grey15") +
-      ggplot2::geom_text(data = lag.lab.df,
-                         ggplot2::aes(x = (.data[[x_min]] + .data[[x_max]]) / 2,
-                                      y = (.data[[y_min]] + .data[[y_max]]) / 2,
-                                      label = .data[[lag_lab]]),
-                         inherit.aes = FALSE,
-                         color = "white",
-                         size = 3) +
-      #ggplot2::scale_x_continuous(data = res.agg, labels = comb.x) +
-      ggplot2::geom_line(linewidth = 0.75,
-                         ggplot2::aes(group = factor(.data[[col_var]], levels = rev(1:max.win)))) +
-      ggplot2::facet_wrap( ~ dir, ncol = 1, strip.position = "right") +
-      #ggplot2::facet_grid(dir ~ lag, switch = "x") +
-      ggplot2::geom_vline(
-        data = data.frame(
-          xint = ifelse(hemisphere == "S",
-                        res.agg$comb.x.num[res.agg$comb.x %in% paste0("+1_", gro.period.end)],
-                        res.agg$comb.x.num[res.agg$comb.x %in% paste0("0_",gro.period.end)])
-        ),
-        ggplot2::aes(xintercept = .data[[x.intercept]]),
-        color = "white"
-      ) +
-      ggplot2::scale_x_continuous(breaks = unique(res.agg$comb.x.num),
-                                  labels = rep(1:12,
-                                               times = length(unique(res.agg$comb.x.num))/12)) +
-      ggplot2::ylab(
-        paste(
-          "Percentage of",
-          length(unique(cor.res.list[["cor.res.dat"]][, "series"])),
-          "total series\nrecording significant correlations"
-        )
-      ) +
-      ggplot2::xlab(ifelse(win.align %in% "right", "End month", "Start month")) +
-      ggplot2::coord_cartesian(ylim = c(-5, 100),
-                               xlim = c(min(res.agg$comb.x.num), max(res.agg$comb.x.num))) +
-      ggplot2::theme_dark() +
-      ggplot2::theme(
-        panel.spacing.x = ggplot2::unit(-0.1, "lines"),
-        panel.background = ggplot2::element_rect(fill = "black"),
-        plot.background = ggplot2::element_rect(fill = "black"),
-        legend.background = ggplot2::element_rect(fill = "black"),
-        panel.grid = ggplot2::element_line(color = "grey40"),
-        legend.text = ggplot2::element_text(color = "white"),
-        legend.title = ggplot2::element_text(color = "white"),
-        axis.title = ggplot2::element_text(color = "white"),
-        axis.text = ggplot2::element_text(color = "white"),
-        plot.title = ggplot2::element_text(color = "white"),
-        plot.subtitle = ggplot2::element_text(color = "white"),
-        legend.position = "right"
-      )
-
-    ### Mean coef plot
-
-    mean.plot <-
-      ggplot2::ggplot(res.agg, ggplot2::aes(.data[[x_var]], .data[[y_var2]],
-                                            color = as.factor(.data[[col_var]]))) +
-      ggplot2::ggtitle(paste0(pretty.corr.method,
-                              "correlations between tree-ring and ",
-                              clim.var,
-                              " series"),
-                       subtitle = paste0("Transformation: ",
-                                         ifelse(prewhiten == TRUE, "ARIMA resids.", "None"),
-                                         "; Aggregation of climate moving windows: ",
-                                         paste0(agg.fun,"s"))) +
-      ggplot2::scale_color_manual("Moving\nwindow\nlength\n(n months)",
-                                  values = grDevices::hcl.colors(max.win, palette = "Spectral")) +
-      # Invisible hline to set the ylim
-      ggplot2::geom_hline(
-        data = data.frame(
-          yint = c(ylim.val,0,0,-ylim.val), # This defines the ylim
-          dir = factor(c("Pos.","Pos.","Neg.","Neg."), levels = c("Neg.","Pos."))
-        ),
-        ggplot2::aes(yintercept = .data[[y.intercept]]),
-        color = NA
-      ) +
-      ggplot2::geom_rect(data = lag.lab.df,
-                         ggplot2::aes(xmin = .data[[x_min]],
-                                      xmax = .data[[x_max]],
-                                      ymin = .data[[y_min2]],
-                                      ymax = .data[[y_max2]]),
-                         inherit.aes = FALSE,
-                         fill = "grey15") +
-      ggplot2::geom_text(data = lag.lab.df,
-                         ggplot2::aes(x = (.data[[x_min]] + .data[[x_max]]) / 2,
-                                      y = (.data[[y_min2]] + .data[[y_max2]]) / 2,
-                                      label = .data[[lag_lab]]),
-                         inherit.aes = FALSE,
-                         color = "white",
-                         size = 3) +
-      ggplot2::geom_line(linewidth = 0.75,
-                         ggplot2::aes(group = factor(.data[[col_var]], levels = rev(1:12)))) +
-      ggplot2::facet_wrap( ~ dir, ncol = 1, strip.position = "right", scales = "free_y") +
-      ggplot2::geom_vline(
-        data = data.frame(
-          xint = ifelse(hemisphere == "S",
-                        res.agg$comb.x.num[res.agg$comb.x %in% paste0("+1_", gro.period.end)],
-                        res.agg$comb.x.num[res.agg$comb.x %in% paste0("0_",gro.period.end)])
-        ),
-        ggplot2::aes(xintercept = .data[[x.intercept]]),
-        color = "white"
-      ) +
-      ggplot2::scale_x_continuous(breaks = unique(res.agg$comb.x.num),
-                                  labels = rep(1:12,
-                                               times = length(unique(res.agg$comb.x.num))/12)) +
-      ggplot2::scale_y_continuous(breaks = seq(-1, 1, by = 0.2)) +
-      ggplot2::ylab(
-        paste(
-          "Mean correlation coefficent of\n",
-          length(unique(cor.res.list[["cor.res.dat"]][, "series"])),
-          "total series"
-        )
-      ) +
-      ggplot2::xlab(ifelse(win.align %in% "right", "End month", "Start month")) +
-      ggplot2::coord_cartesian(xlim = c(min(res.agg$comb.x.num), max(res.agg$comb.x.num))) +
-      ggplot2::theme_dark() +
-      ggplot2::theme(
-        panel.spacing.x = ggplot2::unit(-0.1, "lines"),
-        panel.background = ggplot2::element_rect(fill = "black"),
-        plot.background = ggplot2::element_rect(fill = "black"),
-        legend.background = ggplot2::element_rect(fill = "black"),
-        panel.grid = ggplot2::element_line(color = "grey40"),
-        legend.text = ggplot2::element_text(color = "white"),
-        legend.title = ggplot2::element_text(color = "white"),
-        axis.title = ggplot2::element_text(color = "white"),
-        axis.text = ggplot2::element_text(color = "white"),
-        plot.title = ggplot2::element_text(color = "white"),
-        plot.subtitle = ggplot2::element_text(color = "white"),
-        legend.position = "right"
-      )
-
-
-  }
+  # if (make.plots == TRUE) {
+  #   # Subset out just the significant correlations
+  #   # But there may not always be significant correlations
+  #
+  #   # Theoretical - just one place holder for the possible combinations
+  #   sig.only.th <- expand.grid(month = unique(cor.res.list[["cor.res.dat"]]$month),
+  #                              win.len = unique(cor.res.list[["cor.res.dat"]]$win.len),
+  #                              lag = unique(cor.res.list[["cor.res.dat"]]$lag),
+  #                              dir = unique(cor.res.list[["cor.res.dat"]]$dir))
+  #
+  #   # Empirical - what actually exists (could be none)
+  #   sig.only.em <- cor.res.list[["cor.res.dat"]][cor.res.list[["cor.res.dat"]]$p <= 0.05, ]
+  #
+  #   # Merge them
+  #   sig.only <- merge(sig.only.th, sig.only.em,
+  #                     by = c("month","win.len","lag","dir"),
+  #                     all = TRUE)
+  #
+  #   sig.only$lag <- as.character(sig.only$lag)
+  #
+  #   res.agg <- aggregate(coef ~ month + win.len + lag + dir,
+  #                        data = sig.only,
+  #                        FUN = \(x) {
+  #                          length(na.omit(x))
+  #                        },
+  #                        drop = FALSE, # make sure the blank combinations still appear
+  #                        na.action = na.pass
+  #   )
+  #
+  #   lag.levels <- res.agg$lag |> unique()
+  #
+  #   # Calculate the percentage of significant correlations
+  #   res.agg$prop.sig <- (res.agg$coef / length(unique(cor.res.list[["cor.res.dat"]][, "series"]))) *
+  #     100
+  #
+  #   # Make a new composite x-axis that combines month and lag
+  #   res.agg <- res.agg[order(res.agg$lag, res.agg$month),]
+  #   res.agg$comb.x <- paste(res.agg$lag, res.agg$month, sep = "_")
+  #   res.agg$comb.x <- factor(res.agg$comb.x, levels = unique(res.agg$comb.x))
+  #   res.agg$comb.x.num <- as.numeric(res.agg$comb.x)
+  #
+  #   mean.coef.agg <- aggregate(coef ~ month + win.len + lag + dir,
+  #                              data = cor.res.list[["cor.res.dat"]],
+  #                              FUN = \(x) mean(x),
+  #                              drop = FALSE) # make sure the blank combinations still appear
+  #   colnames(mean.coef.agg)[colnames(mean.coef.agg) %in% "coef"] <- "mean.coef"
+  #
+  #   res.agg <- merge(res.agg, mean.coef.agg, by = c("month", "win.len", "lag", "dir"))
+  #   res.agg$lag <- factor(res.agg$lag, levels = lag.levels[order(as.numeric(lag.levels))])
+  #   res.agg$dir <- factor(res.agg$dir, levels = c("Pos.", "Neg."))
+  #   res.agg <- res.agg[order(res.agg$lag, res.agg$month),]
+  #
+  #   # Make a plot.
+  #   # These 4 lines are to deal with "no visible binding" NOTEs from check()
+  #   x_var <- "comb.x.num"
+  #   x_lab <- "month"
+  #   y_var <- "prop.sig"
+  #   y_var2 <- "mean.coef"
+  #   col_var <- "win.len"
+  #   x.intercept <- "xint"
+  #   y.intercept <- "yint"
+  #
+  #   # For geom_tile & geom_text
+  #   lag.lab.df1 <- res.agg[, c("lag", "month", "comb.x", "comb.x.num")] |> unique()
+  #   lag.lab.df1$dir <- factor("Neg.", levels = c("Pos.","Neg."))
+  #
+  #   lag.lab.df <- aggregate(comb.x.num ~ lag + dir, data = lag.lab.df1, min)
+  #   colnames(lag.lab.df)[colnames(lag.lab.df) %in% "comb.x.num"] <- "x.min"
+  #   lag.lab.df$x.max <- aggregate(comb.x.num ~ lag + dir, data = lag.lab.df1, max)[,3] + 0.85
+  #   lag.lab.df$y.min <- -10; lag.lab.df$y.max <- -1
+  #   # Define some ylim values here
+  #   ylim.val <- max(abs(na.omit(res.agg$mean.coef))) + 0.1
+  #   lag.lab.df$y.min2 <- -ylim.val; lag.lab.df$y.max2 <- -(ylim.val + 0.15*ylim.val)
+  #   lag.lab.df$lag <- factor(lag.lab.df$lag, levels = lag.levels[order(as.numeric(lag.levels))])
+  #
+  #   x_min <- "x.min"
+  #   x_max <- "x.max"
+  #   y_min <- "y.min"
+  #   y_max <- "y.max"
+  #   y_min2 <- "y.min2"
+  #   y_max2 <- "y.max2"
+  #   lag_lab <- "lag"
+  #
+  #   pretty.corr.method <- ifelse(corr.method %in% "pearson", "Pearson ",
+  #                                ifelse(corr.method %in% "spearman", "Spearman ",
+  #                                       "Kendall "))
+  #
+  #   per.plot <-
+  #     ggplot2::ggplot(res.agg, ggplot2::aes(.data[[x_var]], .data[[y_var]],
+  #                                           color = as.factor(.data[[col_var]]))) +
+  #     ggplot2::ggtitle(paste0(pretty.corr.method,
+  #                             "correlations between tree-ring and ",
+  #                             clim.var,
+  #                             " series"),
+  #                      subtitle = paste0("Transformation: ",
+  #                                        ifelse(prewhiten == TRUE, "ARIMA resids.", "None"),
+  #                                        "; Aggregation of climate moving windows: ",
+  #                                        paste0(agg.fun, "s"))) +
+  #     ggplot2::scale_color_manual("Moving\nwindow\nlength\n(n months)",
+  #                                 values = grDevices::hcl.colors(max.win, palette = "Spectral")) +
+  #     ggplot2::geom_rect(data = lag.lab.df,
+  #                        ggplot2::aes(xmin = .data[[x_min]],
+  #                                     xmax = .data[[x_max]],
+  #                                     ymin = .data[[y_min]],
+  #                                     ymax = .data[[y_max]]),
+  #                        inherit.aes = FALSE,
+  #                        fill = "grey15") +
+  #     ggplot2::geom_text(data = lag.lab.df,
+  #                        ggplot2::aes(x = (.data[[x_min]] + .data[[x_max]]) / 2,
+  #                                     y = (.data[[y_min]] + .data[[y_max]]) / 2,
+  #                                     label = .data[[lag_lab]]),
+  #                        inherit.aes = FALSE,
+  #                        color = "white",
+  #                        size = 3) +
+  #     ggplot2::geom_line(linewidth = 0.75,
+  #                        ggplot2::aes(group = factor(.data[[col_var]], levels = rev(1:max.win)))) +
+  #     ggplot2::facet_wrap( ~ dir, ncol = 1, strip.position = "right") +
+  #     ggplot2::geom_vline(
+  #       data = data.frame(
+  #         xint = ifelse(hemisphere == "S",
+  #                       res.agg$comb.x.num[res.agg$comb.x %in% paste0("+1_", gro.period.end)],
+  #                       res.agg$comb.x.num[res.agg$comb.x %in% paste0("0_",gro.period.end)])
+  #       ),
+  #       ggplot2::aes(xintercept = .data[[x.intercept]]),
+  #       color = "white"
+  #     ) +
+  #     ggplot2::scale_x_continuous(breaks = unique(res.agg$comb.x.num),
+  #                                 labels = rep(1:12,
+  #                                              times = length(unique(res.agg$comb.x.num))/12)) +
+  #     ggplot2::ylab(
+  #       paste(
+  #         "Percentage of",
+  #         length(unique(cor.res.list[["cor.res.dat"]][, "series"])),
+  #         "total series\nrecording significant correlations"
+  #       )
+  #     ) +
+  #     ggplot2::xlab(ifelse(win.align %in% "right", "End month", "Start month")) +
+  #     ggplot2::coord_cartesian(ylim = c(-5, 100),
+  #                              xlim = c(min(res.agg$comb.x.num), max(res.agg$comb.x.num))) +
+  #     ggplot2::theme_dark() +
+  #     ggplot2::theme(
+  #       panel.spacing.x = ggplot2::unit(-0.1, "lines"),
+  #       panel.background = ggplot2::element_rect(fill = "black"),
+  #       plot.background = ggplot2::element_rect(fill = "black"),
+  #       legend.background = ggplot2::element_rect(fill = "black"),
+  #       panel.grid = ggplot2::element_line(color = "grey40"),
+  #       legend.text = ggplot2::element_text(color = "white"),
+  #       legend.title = ggplot2::element_text(color = "white"),
+  #       axis.title = ggplot2::element_text(color = "white"),
+  #       axis.text = ggplot2::element_text(color = "white"),
+  #       plot.title = ggplot2::element_text(color = "white"),
+  #       plot.subtitle = ggplot2::element_text(color = "white"),
+  #       legend.position = "right"
+  #     )
+  #
+  #   ### Mean coef plot
+  #
+  #   mean.plot <-
+  #     ggplot2::ggplot(res.agg, ggplot2::aes(.data[[x_var]], .data[[y_var2]],
+  #                                           color = as.factor(.data[[col_var]]))) +
+  #     ggplot2::ggtitle(paste0(pretty.corr.method,
+  #                             "correlations between tree-ring and ",
+  #                             clim.var,
+  #                             " series"),
+  #                      subtitle = paste0("Transformation: ",
+  #                                        ifelse(prewhiten == TRUE, "ARIMA resids.", "None"),
+  #                                        "; Aggregation of climate moving windows: ",
+  #                                        paste0(agg.fun,"s"))) +
+  #     ggplot2::scale_color_manual("Moving\nwindow\nlength\n(n months)",
+  #                                 values = grDevices::hcl.colors(max.win, palette = "Spectral")) +
+  #     # Invisible hline to set the ylim
+  #     ggplot2::geom_hline(
+  #       data = data.frame(
+  #         yint = c(ylim.val,0,0,-ylim.val), # This defines the ylim
+  #         dir = factor(c("Pos.","Pos.","Neg.","Neg."), levels = c("Neg.","Pos."))
+  #       ),
+  #       ggplot2::aes(yintercept = .data[[y.intercept]]),
+  #       color = NA
+  #     ) +
+  #     ggplot2::geom_rect(data = lag.lab.df,
+  #                        ggplot2::aes(xmin = .data[[x_min]],
+  #                                     xmax = .data[[x_max]],
+  #                                     ymin = .data[[y_min2]],
+  #                                     ymax = .data[[y_max2]]),
+  #                        inherit.aes = FALSE,
+  #                        fill = "grey15") +
+  #     ggplot2::geom_text(data = lag.lab.df,
+  #                        ggplot2::aes(x = (.data[[x_min]] + .data[[x_max]]) / 2,
+  #                                     y = (.data[[y_min2]] + .data[[y_max2]]) / 2,
+  #                                     label = .data[[lag_lab]]),
+  #                        inherit.aes = FALSE,
+  #                        color = "white",
+  #                        size = 3) +
+  #     ggplot2::geom_line(linewidth = 0.75,
+  #                        ggplot2::aes(group = factor(.data[[col_var]], levels = rev(1:12)))) +
+  #     ggplot2::facet_wrap( ~ dir, ncol = 1, strip.position = "right", scales = "free_y") +
+  #     ggplot2::geom_vline(
+  #       data = data.frame(
+  #         xint = ifelse(hemisphere == "S",
+  #                       res.agg$comb.x.num[res.agg$comb.x %in% paste0("+1_", gro.period.end)],
+  #                       res.agg$comb.x.num[res.agg$comb.x %in% paste0("0_",gro.period.end)])
+  #       ),
+  #       ggplot2::aes(xintercept = .data[[x.intercept]]),
+  #       color = "white"
+  #     ) +
+  #     ggplot2::scale_x_continuous(breaks = unique(res.agg$comb.x.num),
+  #                                 labels = rep(1:12,
+  #                                              times = length(unique(res.agg$comb.x.num))/12)) +
+  #     ggplot2::scale_y_continuous(breaks = seq(-1, 1, by = 0.2)) +
+  #     ggplot2::ylab(
+  #       paste(
+  #         "Mean correlation coefficent of\n",
+  #         length(unique(cor.res.list[["cor.res.dat"]][, "series"])),
+  #         "total series"
+  #       )
+  #     ) +
+  #     ggplot2::xlab(ifelse(win.align %in% "right", "End month", "Start month")) +
+  #     ggplot2::coord_cartesian(xlim = c(min(res.agg$comb.x.num), max(res.agg$comb.x.num))) +
+  #     ggplot2::theme_dark() +
+  #     ggplot2::theme(
+  #       panel.spacing.x = ggplot2::unit(-0.1, "lines"),
+  #       panel.background = ggplot2::element_rect(fill = "black"),
+  #       plot.background = ggplot2::element_rect(fill = "black"),
+  #       legend.background = ggplot2::element_rect(fill = "black"),
+  #       panel.grid = ggplot2::element_line(color = "grey40"),
+  #       legend.text = ggplot2::element_text(color = "white"),
+  #       legend.title = ggplot2::element_text(color = "white"),
+  #       axis.title = ggplot2::element_text(color = "white"),
+  #       axis.text = ggplot2::element_text(color = "white"),
+  #       plot.title = ggplot2::element_text(color = "white"),
+  #       plot.subtitle = ggplot2::element_text(color = "white"),
+  #       legend.position = "right"
+  #     )
+  #
+  #
+  # }
 
 
   if (prewhiten == TRUE) {
-    if (make.plots == TRUE) {
-      out.list <- list(cor.res.list[["cor.res.dat"]],
-                       cor.res.list[["clim.dat.pw"]],
-                       cor.res.list[["clim.dat"]],
-                       cor.res.list[["rwl.dat"]],
-                       list(per.plot, mean.plot))
-      names(out.list) <-
-        c(
-          "Correlation results",
-          "Climate data (prewhitened)",
-          "Climate data (raw)",
-          "Ring-width series (prewhitened)",
-          "Results plots"
-        )
-    } else {
+    # if (make.plots == TRUE) {
+    #   out.list <- list(cor.res.list[["cor.res.dat"]],
+    #                    cor.res.list[["clim.dat.pw"]],
+    #                    cor.res.list[["clim.dat"]],
+    #                    cor.res.list[["rwl.dat"]],
+    #                    list(per.plot, mean.plot))
+    #   names(out.list) <-
+    #     c(
+    #       "Correlation results",
+    #       "Climate data (prewhitened)",
+    #       "Climate data (raw)",
+    #       "Ring-width series (prewhitened)",
+    #       "Results plots"
+    #     )
+    # } else {
       out.list <- list(cor.res.list[["cor.res.dat"]],
                        cor.res.list[["clim.dat.pw"]],
                        cor.res.list[["clim.dat"]],
@@ -906,23 +902,23 @@ n_mon_corr <- function(rwl = NULL,
           "Climate data (raw)",
           "Ring-width series (prewhitened)"
         )
-    }
+    #}
 
   } else {
-    if (make.plots == TRUE) {
-      out.list <- list(cor.res.list[["cor.res.dat"]],
-                       cor.res.list[["clim.dat"]],
-                       list(per.plot, mean.plot))
-      names(out.list) <-
-        c("Correlation results",
-          "Climate data (raw)",
-          "Results plots")
-
-    } else {
+    # if (make.plots == TRUE) {
+    #   out.list <- list(cor.res.list[["cor.res.dat"]],
+    #                    cor.res.list[["clim.dat"]],
+    #                    list(per.plot, mean.plot))
+    #   names(out.list) <-
+    #     c("Correlation results",
+    #       "Climate data (raw)",
+    #       "Results plots")
+    #
+    # } else {
       out.list <- list(cor.res.list[["cor.res.dat"]], cor.res.list[["clim.dat"]])
       names(out.list) <-
-        c("Correlation results", "Correlation data")
-    }
+        c("Correlation results", "Climate data (raw)")
+    #}
   }
 
   if ((ncol(rwl) - 1) < 10 & make.plots == TRUE) {
