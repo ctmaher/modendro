@@ -283,7 +283,7 @@ plot_n_mon_corr <- function(x = NULL) {
     )
 
   out.plot.list <- list(per.plot, mean.plot,
-                        res.agg[,c("month","win.len","lag","dir","coef","prop.sig","mean.coef")])
+                        res.agg[,c("month","win.len","lag","dir","prop.sig","mean.coef")])
   names(out.plot.list) <- c("Percent sig. corr. plot", "Mean corr. coef. plot", "Aggregated data")
   return(out.plot.list)
 
