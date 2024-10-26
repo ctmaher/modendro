@@ -7,8 +7,7 @@
 #' locally absent rings are marked with NA. This can cause problems for many analyses.
 #'
 #' This function is tailored to work with tree-ring series, but could do simple corrections to
-#' climate data as well. Instead of 0, which would be non-sensical for climate data, you could use
-#' mean of the whole series.
+#' other kinds of data as well. The choice of the new.val is up to you in those cases.
 #'
 #' Warning: for the default of new.val = 0, make sure that the NAs do indeed represent missing or
 #' locally absent rings!
