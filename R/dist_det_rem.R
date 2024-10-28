@@ -144,7 +144,7 @@ dist_det_rem <- function(rwi,
              aic = FALSE)$resid |>
           rev() # flip it back to the correct chronological order
         # subset just the ones that need to be filled in & attach to beginning of rest of resids
-        c(br[1:x$order], na.omit(x$resid)) |>
+        c(br[1:x$order], as.numeric(na.omit(x$resid))) |>
           as.numeric()
       } else {
         # If best fit order was 0, just return the AR resids (no backcasting).
@@ -217,7 +217,7 @@ dist_det_rem <- function(rwi,
   #if (var.type %in% "s_bi") {
   var <- lapply(mov_avgs[orig.IDs], FUN = \(x) {
     lapply(x, FUN = \(x) {
-      s_bi(na.omit(x$value))$s_bi
+      s_bi(as.numeric(na.omit(x$value)))$s_bi
     })
   })
 

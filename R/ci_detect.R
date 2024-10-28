@@ -175,7 +175,7 @@ ci_detect <- function(rwl,
   # 1st element of cp_out is a rwl-data.frame of the residual transformed and detrended series-
   # take this and turn it into a list, with NAs removed from each series
   # Simplify = FALSE keeps the rownames (which are the years)
-  cp_list <- apply(cp_out[[1]], MARGIN = 2, simplify = FALSE, FUN = \(x) na.omit(x))
+  cp_list <- apply(cp_out[[1]], MARGIN = 2, simplify = FALSE, FUN = \(x) as.numeric(na.omit(x)))
   cp_list <- cp_list[orig.IDs] # make sure names are ordered
   # Run the dist_det_rem() process
   # The for loop makes sense here - after the 1st iteration (based on the original data),
@@ -206,11 +206,11 @@ ci_detect <- function(rwl,
   # Make the detrend curves a list
   detrend.curves <- apply(cp_out[["Detrend curves"]][orig.IDs],
                           MARGIN = 2,
-                          FUN = \(x) {na.omit(x)},
+                          FUN = \(x) {as.numeric(na.omit(x))},
                           simplify = FALSE)
 
   retrended <- mapply(FUN = \(x, y) {
-    x + na.omit(y)
+    x + as.numeric(na.omit(y))
   }, x = dist_iter[[length(dist_iter)]][["Corrected RWI"]][orig.IDs],
   y = detrend.curves[orig.IDs])
 
@@ -237,11 +237,11 @@ ci_detect <- function(rwl,
   # The original rwl as a list, with no NAs
   orig.rwl <- apply(rwl,
                     MARGIN = 2,
-                    FUN = \(x) {na.omit(x)},
+                    FUN = \(x) {as.numeric(na.omit(x))},
                     simplify = FALSE)
 
   dis_index <- mapply(FUN = \(x, y) {
-    na.omit(x) - y
+    as.numeric(na.omit(x)) - y
   }, x = orig.rwl[orig.IDs], y = untransformed[orig.IDs], SIMPLIFY = FALSE)
 
   # Restore the rwl-data.frame format for the disturbance-free and disturbance index series
