@@ -31,6 +31,10 @@
 #' optimal power by species. This assumes your series IDs contain this information in a systematic
 #' way. If not, you could also just create separate rwls for each of the groups you are interested
 #' in, set `universal = TRUE` and leave `ID.group.substr` unspecified.
+#' The essential idea of a "universal power transformation" comes from a GitHub issues post in the
+#' dplR repository by Stefan Klesse (2020). My approach here only scratches the surface of the idea
+#' presented by Klesse, but is an incremental step in that direction.
+#'
 #'
 #' @param rwl A rwl object (read in by dplR's  \code{\link[dplR]{read.rwl}}). Essentially a
 #' data.frame with columns names as series IDs and years as rownames.
@@ -49,6 +53,9 @@
 #' Cook, E. R., and Peters, K. (1997) Calculating unbiased tree-ring indices for the study of
 #' climatic and environmental change.
 #' \emph{The Holocene}, \strong{7}(3), 361-370.
+#'
+#' Klesse, S. (2020) "universal" or "signal-free" power transformation
+#' https://github.com/OpenDendro/dplR/issues/8
 #'
 #' @seealso \code{\link{pwr_t_rwl}}, \code{\link{cp_detrend}}
 #'

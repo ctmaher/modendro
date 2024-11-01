@@ -137,19 +137,19 @@ plot_ci_detect <- function(ci_output) {
 
   whole_series <-
     lapply(ci_output[["Disturbance removal iterations"]], FUN = \(x) {
-      x[[1]][orig.IDs] # make sure the order matches
+      x[["Corrected RWI"]][orig.IDs] # make sure the order matches
     })
 
 
   # This pulls out just the disturbance removal iterations with the specific disturbance metadata
   dist_curves_only <-
     lapply(ci_output[["Disturbance removal iterations"]], FUN = \(x) {
-      x[[2]][orig.IDs] # make sure the order matches
+      x[["Disturbance curves"]][orig.IDs] # make sure the order matches
     })
 
   dist_detection_only <-
     lapply(ci_output[["Disturbance removal iterations"]], FUN = \(x) {
-      x[[3]][orig.IDs] # make sure the order matches
+      x[["Disturbance detection"]][orig.IDs] # make sure the order matches
     })
   # The outermost layer of these lists represents the iterations. Within each of those inner lists,
   # there are data.frames or a character vector for each of the series.

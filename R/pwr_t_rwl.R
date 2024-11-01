@@ -4,26 +4,37 @@
 #' Function to apply power transformation to a tree ring series.
 #'
 #' @details
-#' This function uses the estimated optimal power of transformation and a simple set of selection criteria to transform a heteroscastic
-#'  (variance changes with mean) tree ring series into a ± homoscedastic one. The selection criteria are as follows:
-#'  If the estimated power is ≤ 0.1, then log10 transform. If greater than 1, don't transform the series. The set of
-#'  estimated optimal powers that is actually used (applied as: ring width ^ opt pwr) lies between 0.1 < opt pwr ≤ 1.
+#' This function uses the estimated optimal power of transformation and a simple set of selection
+#' criteria to transform a heteroscastic (variance changes with mean) tree ring series into a ±
+#' homoscedastic one. The selection criteria are as follows: If the estimated power is ≤ 0.1, then
+#' log10 transform. If greater than 1, don't transform the series. The set of estimated optimal
+#' powers that is actually used (applied as: ring width ^ opt pwr) lies between 0.1 < opt pwr ≤ 1.
 #'
-#' See \code{\link{find_opt_pwr}}, \code{\link{cp_detrend}},and Cook and Peters (1997) for more details.
+#' See \code{\link{find_opt_pwr}}, \code{\link{cp_detrend}},and Cook and Peters (1997) for more
+#' details.
 #'
 #' Some cleaning of the rwl data is performed before transformation: because log(0) is undefined,
-#' 0 ring width values are replaced with the minimum value possible given the resolution of the data,
-#' which for tree ring data is typically 0.01 or 0.001 mm.
+#' 0 ring width values are replaced with the minimum value possible given the resolution of the
+#' data, which for tree ring data is typically 0.01 or 0.001 mm.
 #'
 #'
-#' @param rwl A rwl object (read in by dplR's \code{\link[dplR]{read.rwl}}). Essentially a data.frame with columns names as series IDs and years as rownames.
-#' @param universal A logical vector indicating whether to compute a single "universal" optimal power for all series within a group (if `TRUE` and arg `ID.group.substr` is unspecified, will assume all series in the rwl). If `FALSE`, the function estimates a separate optimal power for each individual series.
-#' @param ID.group.substr A numeric vector of length 2 that determines a sub grouping for calculating "universal" optimal power. Ulitmately passes to \code{\link[base]{substr}} as the start (1st number) and stop (2nd number) args to split the series IDs in your rwl into groups (performed in \code{\link{find_opt_pwr}}).
+#' @param rwl A rwl object (read in by dplR's \code{\link[dplR]{read.rwl}}). Essentially a
+#' data.frame with columns names as series IDs and years as rownames.
+#' @param universal A logical vector indicating whether to compute a single "universal" optimal
+#' power for all series within a group (if `TRUE` and arg `ID.group.substr` is unspecified, will
+#' assume all series in the rwl). If `FALSE`, the function estimates a separate optimal power for
+#' each individual series.
+#' @param ID.group.substr A numeric vector of length 2 that determines a sub grouping for
+#' calculating "universal" optimal power. Ulitmately passes to \code{\link[base]{substr}} as the
+#' start (1st number) and stop (2nd number) args to split the series IDs in your rwl into groups
+#' (performed in \code{\link{find_opt_pwr}}).
 #'
-#' @return A two-element list, 1 is the transformed series and 2 contains the messages about the transformations
+#' @return A two-element list, 1 is the transformed series and 2 contains the messages about the
+#' transformations
 #'
 #' @references
-#' Cook, E. R., and Peters, K. (1997) Calculating unbiased tree-ring indices for the study of climatic and environmental change.
+#' Cook, E. R., and Peters, K. (1997) Calculating unbiased tree-ring indices for the study of
+#' climatic and environmental change.
 #' \emph{The Holocene}, \strong{7}(3), 361-370.
 #'
 #' @seealso \code{\link{find_opt_pwr}}, \code{\link{cp_detrend}}
@@ -67,7 +78,8 @@ pwr_t_rwl <- function(rwl, universal = FALSE, ID.group.substr = NULL) {
 
   orig.IDs <- colnames(rwl) # capture the original names in their original order
 
-  # Replace ≤0 values in both rwls with the minimum possible non-zero value given the resolution of the data
+  # Replace ≤0 values in both rwls with the minimum possible non-zero value given the resolution of
+  # the data
   # & make sure they match
   min.value <- ifelse(sapply(na.omit(unlist(rwl)),
                              FUN = \(x) nchar(sub(".", "", x, fixed=TRUE))) |>
