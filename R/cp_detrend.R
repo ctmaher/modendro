@@ -22,7 +22,7 @@
 #' should be FALSE (the default), but when used in \code{\link{ci_detect}} it is TRUE to detect
 #' deviations from any long term trend. Passes to \code{\link[dplR]{detrend}}.
 #' @param standardize Logical vector indicating whether to standardize the output detrended &
-#' transformed residuals (default is TRUE). See details for more information.
+#' transformed residuals (default is FALSE). See details for more information.
 #'
 #' @details
 #' For decades, the most common method of removing long-term size/age trends from tree ring width
@@ -119,7 +119,7 @@ cp_detrend <-
            detrend.method = "Mean",
            nyrs = NULL,
            pos.slope = FALSE,
-           standardize = TRUE) {
+           standardize = FALSE) {
     # Power transform series prior to detrending using methods of Cook and Peters (1997)
 
     # Error catching

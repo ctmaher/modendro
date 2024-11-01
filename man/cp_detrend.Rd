@@ -11,7 +11,7 @@ cp_detrend(
   detrend.method = "Mean",
   nyrs = NULL,
   pos.slope = FALSE,
-  standardize = TRUE
+  standardize = FALSE
 )
 }
 \arguments{
@@ -39,7 +39,7 @@ should be FALSE (the default), but when used in \code{\link{ci_detect}} it is TR
 deviations from any long term trend. Passes to \code{\link[dplR]{detrend}}.}
 
 \item{standardize}{Logical vector indicating whether to standardize the output detrended &
-transformed residuals (default is TRUE). See details for more information.}
+transformed residuals (default is FALSE). See details for more information.}
 }
 \value{
 A named list with the following elements:
