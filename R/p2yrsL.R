@@ -69,12 +69,16 @@ p2yrsL <- function(rwl, limit = 2.6) {
   )
 
   # Calculate rolling (2 year) sums
-  sum2yrs <- apply(rwl, MARGIN = 2, function(x) rowSums(embed(x, 2))) |> as.data.frame()
-  # Add an NA row on top for proper alignment with the actual ring widths,
-  # such that p2yrs = rw(i) / rw(i) + rw(i-1)
-  sum2yrs <- rbind(rep(NA, ncol(sum2yrs)), sum2yrs)
+  # Add an NA at the beginning for proper alignment with the actual ring widths,
+  # such that p2yrs = rw(i) / (rw(i) + rw(i-1))
+  sum2yrs <- apply(rwl, MARGIN = 2, \(x) {
+    c(NA, base::rowSums(stats::embed(x, dimension = 2)))
+    }) |>
+    as.data.frame()
+
+  # sum2yrs <- rbind(rep(NA, ncol(sum2yrs)), sum2yrs)
   # Calculate the proportion of 2 years for each year
-  p2yrs <- rwl/sum2yrs
+  p2yrs <- rwl / sum2yrs
 
   ## Set up outer margins for "limited" trimming
   # Calculate means

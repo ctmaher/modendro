@@ -128,15 +128,18 @@ moving_win_multi <- function(df,
 
   all.yrs <- df[,"year"] |> unique()
   stopifnot(
-    "One or more years are missing in the climate data df" =
+    "One or more years are missing data in the climate data df" =
       length(all.yrs) == length(min(all.yrs):max(all.yrs))
   )
 
-  mo.count <- aggregate(month ~ year, data = df, length)
+  mo.count <- aggregate(month ~ year, data = df, FUN = length, na.action = na.omit)
   stopifnot(
-    "One or more years are missing months in the climate data df" =
+    "One or more years are missing ≥ 1 months' worth of data in the climate data df" =
       all(mo.count[,"month"] == 12)
   )
+
+  # By the same token as above, check for internal NAs
+
 
   ## Run through the meat of the function
   # Run cumsum() on the clim.var

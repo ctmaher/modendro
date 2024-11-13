@@ -17,8 +17,6 @@
 #' use as an aggregate in `method = "rings"`. For `method = "dist"`, `n.rings` sets the "floor" of
 #' the number of rings to be aggregated. Default is 5 rings, which is really the minimum you should
 #' use for a mean.
-#' @param diam.df A data.frame containing series names and the outside diameter measurements
-#' associated with the tree those series belong to. For `method = "modeled"` only.
 #' @param plot.hist Logical vector that turns on or off a histogram of the estimated years to pith.
 #' This is an important guide to choosing the method or setting `n.rings` for method `"rings"`. See
 #' details below.
@@ -35,8 +33,8 @@
 #' necessary for each series all at once.
 #'
 #' Method "rings" is what most researchers will be familiar with - this is simply the mean of the
-#' specified innermost `n.rings`. The default is 5 rings, but this may be too few for some samples
-#' or datasets. Use the 'plot.hist' output to check this - if you have some extreme values (large
+#' specified innermost `n.rings`. The default is 10 rings, but check if this is the right amount for
+#' your dataset. Use the 'plot.hist' output to check this - if you have some extreme values (large
 #' values of y2pith), you may need to increase `n.rings` or switch to method "dist". Extreme y2pith
 #' values can arise from large d2pith values and/or if the innermost n.rings happen to be very
 #' narrow. The take home message is that the value of `n.rings` is not allowing a robust enough
@@ -81,9 +79,11 @@
 yrs_to_pith <- function(rwl = NULL,
                         d2pith = NULL,
                         method = "dist",
-                        n.rings = 5,
-                        diam.df = NULL,
+                        n.rings = 10,
                         plot.hist = TRUE) {
+
+
+
   ## Error catching & warnings
 
   #
