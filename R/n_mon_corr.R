@@ -21,8 +21,6 @@
 #' @param common.years numeric vector - a sequence of years to subset the clim and rwl data before
 #' running correlation analyses. Must be at least 25 years long and years must exist in clim and
 #' rwl. This has advantages over subsetting the climate or tree-ring data a priori. See Details.
-#' @param gro.period.end the last month in which you expect growth to occur for your study species
-#' in your study region. Not crucial in this version - only draws a line in the output plot.
 #' @param agg.fun character vector specifying the function to use for aggregating monthly
 #' climate combinations. Options are "mean" or "sum", e.g., for temperature or precipitation data,
 #' respectively. Default is "mean".
@@ -48,6 +46,8 @@
 #' \code{\link[corTESTsrd]{corTESTsrd}} function (also used for `corr.method = "kendall"`). This
 #' method reduces the type I error rate associated with autocorrelated series. CAUTION: Currently
 #' `corr.method = "pearson"` doesn't make any adjustments for autocorrelation. See Details below.
+#' @param gro.period.end the last month in which you expect growth to occur for your study species
+#' in your study region. Not crucial in this version - only draws a line in the output plot.
 #' @param group.IDs.df an optional data.frame with 2 columns: "series", representing the names of
 #' the tree-ring series (and matching the colnames of rwl) and a group.var (name is your
 #' specification), representing a grouping (e.g., site, plot) variable.

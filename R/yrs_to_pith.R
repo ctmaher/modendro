@@ -190,14 +190,18 @@ yrs_to_pith <- function(rwl = NULL,
   # Make a histogram
   if (plot.hist == TRUE) {
     x_val <- "y2pith" # Strange work-around to "no visible binding for global variable" NOTE
-    ggplot2::ggplot(merged.att, aes(x = .data[[x_val]])) +
+    hist.out <- ggplot2::ggplot(merged.att, aes(x = .data[[x_val]])) +
       ggplot2::geom_histogram(binwidth = 5) +
       ggplot2::xlab(paste("Estimated years to pith;\n",
                  ifelse(method %in% "rings",
                         paste("method = 'rings', mean of innermost", n.rings, "rings"),
                         paste("method = 'dist', with min. of", n.rings, "rings"))))
-  }
 
-  merged.att
+    out.list <- list(merged.att, hist.out)
+    names(out.list) <- c("y2pith data.frame", "Histogram")
+    out.list
+  } else {
+    merged.att
+  }
 
 }
