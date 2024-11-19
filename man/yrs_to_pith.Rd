@@ -32,7 +32,8 @@ This is an important guide to choosing the method or setting \code{n.rings} for 
 details below.}
 }
 \value{
-A data.frame with at least 4 columns: c("series", "d2pith", "mean.rw", "y2pith").
+A data.frame with at least 4 columns: c("series", "d2pith", "mean.rw", "y2pith"). Or a
+list with the data.frame and a histogram
 }
 \description{
 Function to estimate the number of years to pith from estimated distance to pith, like that

@@ -51,7 +51,8 @@
 #' depend on have a large sample size - either multiple radii per tree, many trees, or both.
 #'
 #'
-#' @return A data.frame with at least 4 columns: c("series", "d2pith", "mean.rw", "y2pith").
+#' @return A data.frame with at least 4 columns: c("series", "d2pith", "mean.rw", "y2pith"). Or a
+#' list with the data.frame and a histogram
 #'
 #' @references
 #' Applequist, M. B. (1958). A simple pith locator for use with off-center increment cores.
