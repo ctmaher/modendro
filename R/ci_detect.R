@@ -92,7 +92,6 @@
 #'  \code{\link{plot_cp_detrend}}
 #'
 #' @import dplR
-#' @importFrom zoo rollmean
 #' @import stats
 #' @export
 #'

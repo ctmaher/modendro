@@ -19,7 +19,6 @@ Imports:
     tidyr (>= 1.0.0),
     cowplot,
     stats,
-    zoo,
     DescTools,
     corTESTsrd,
     forecast (>= 8.0.0),

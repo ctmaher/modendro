@@ -9,8 +9,9 @@
 #' @param x a numeric vector
 #'
 #'
-#' @return a 2-column, 1-row data.frame with 2 estimates of s_bi: the main one from the Hoaglin et
-#' al book & the Kafadar (1979) version that the authors also mention.
+#' @return a 2-column, 1-row data.frame with 2 estimates of the biweight scale:
+#' s_bi: the main one from the Hoaglin et al book and
+#' s_bi_kafadar: the Kafadar (1979) version that the Hoaglin et al also mention.
 #'
 #' @references
 #' Hoaglin, D. C., F. Mosteller, and J. W. Tukey. 1983. Understanding robust and exploratory data

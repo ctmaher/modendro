@@ -94,7 +94,6 @@
 #' @seealso \code{\link{ci_detect}}, \code{\link{plot_ci_detect}}
 #'
 #' @import dplR
-#' @importFrom zoo rollmean
 #' @import stats
 #' @importFrom DescTools TukeyBiweight
 #' @export
@@ -182,25 +181,30 @@ dist_det_rem <- function(rwi,
     max.win <- min(max.win, round(nrow(x) / 3))
 
     win_lens <- min.win:max.win
-    ma_list <- lapply(win_lens, \(w) {
-      # Extract the values from the data frame
-      values <- x[, "value"]
 
-      # Compute the moving average using rollmean from the zoo package
-      ma <- zoo::rollmean(values,
-                     k = w,
-                     align = "left",
-                     fill = NA)
+    x[, "year"] <- as.numeric(rownames(x))
 
-      # Return the result
-      data.frame(value = ma)
+    # Calculate moving windows
+    # Run cumsum() on the resids
+    cs <- cumsum(c(0, x[, "value"])) # all windows start with cumsum(), so just do this once
+    ma_list <- lapply(win_lens, FUN = \(n) {
+      result <- cs[(n + 1):length(cs)] - cs[1:(length(cs) - n)]
+      # left align
+      result <- c(result, rep(NA, n - 1)) / n
+
+      this.n <- data.frame(year = x[,"year"],
+                           win.len = n,
+                           value = result)
+      this.n
     })
+
+
     # Pass on the window lengths as names
     names(ma_list) <- win_lens
     ma_list
   })
 
-  # The outer level of mov_avgs are each moving window length, with the series inside
+  # The outer level of mov_avgs is a series, with each moving window length inside
   # each of those
 
   ## Define upper and lower disturbance thresholds for each moving window length
@@ -208,7 +212,7 @@ dist_det_rem <- function(rwi,
   # average series
   tbrms <- lapply(mov_avgs[orig.IDs], FUN = \(x) {
     lapply(x, FUN = \(x) {
-      DescTools::TukeyBiweight(x$value, const = 9, na.rm = TRUE)
+      DescTools::TukeyBiweight(x[,"value"], const = 9, na.rm = TRUE)
       #dplr::tbrm(x$value, C = 9) # The dplR version
     })
   })
@@ -217,7 +221,7 @@ dist_det_rem <- function(rwi,
   #if (var.type %in% "s_bi") {
   var <- lapply(mov_avgs[orig.IDs], FUN = \(x) {
     lapply(x, FUN = \(x) {
-      s_bi(as.numeric(na.omit(x$value)))$s_bi
+      s_bi(as.numeric(na.omit(x[,"value"])))$s_bi
     })
   })
 
@@ -402,23 +406,28 @@ dist_det_rem <- function(rwi,
         # Residual series and moving averages are data.frames already
         ar_resid_vals <- b
         ar_resid_vals[, "type"] <- "AR residuals"
+        ar_resid_vals[, "year"] <- as.numeric(rownames(ar_resid_vals))
         ar_ma_vals <- c[[as.character(win_len)]]
         ar_ma_vals[, "type"] <- paste0(win_len, "-year mean")
+        ar_ma_vals[, "year"] <- as.numeric(rownames(ar_resid_vals))
 
         # The following are just single values - they must be repeated
         tbrm_vals <-
-          data.frame(value = rep(d[[as.character(win_len)]], nrow(ar_ma_vals)),
+          data.frame(year = ar_resid_vals[, "year"],
+                     value = rep(d[[as.character(win_len)]], nrow(ar_ma_vals)),
                      type = "TBRM")
         lo_thresh_vals <-
-          data.frame(value = rep(e[[as.character(win_len)]], nrow(ar_ma_vals)),
+          data.frame(year = ar_resid_vals[, "year"],
+                     value = rep(e[[as.character(win_len)]], nrow(ar_ma_vals)),
                      type = "Detection thresh.")
         hi_thresh_vals <-
-          data.frame(value = rep(x[[as.character(win_len)]], nrow(ar_ma_vals)),
+          data.frame(year = ar_resid_vals[, "year"],
+                     value = rep(x[[as.character(win_len)]], nrow(ar_ma_vals)),
                      type = " ")
 
         # bind them together & return the result
-        rbind(ar_resid_vals,
-              ar_ma_vals,
+        rbind(ar_resid_vals[, c("year", "value", "type")],
+              ar_ma_vals[, c("year", "value", "type")],
               tbrm_vals,
               lo_thresh_vals,
               hi_thresh_vals)
@@ -470,7 +479,7 @@ dist_det_rem <- function(rwi,
           dist_period <- rbind(dist_period, rest_of_series)
 
           # Use TBRM of rest of series for value of d in the Hugershoff equation below
-          d <- TukeyBiweight(rest_of_series$rwi, na.rm = TRUE)
+          d <- DescTools::TukeyBiweight(rest_of_series$rwi, na.rm = TRUE)
         }
 
         # Record the direction of the disturbance
@@ -613,7 +622,7 @@ dist_det_rem <- function(rwi,
             # Calculate the TBRM for the period
             tbrm_recent_rwi <-
               series_df$rwi[series_df$year %in% b_dist] |>
-              TukeyBiweight()
+              DescTools::TukeyBiweight()
           }
         }
 
@@ -631,6 +640,7 @@ dist_det_rem <- function(rwi,
 
 
   # Now the corrected rwi values can be inserted into the series to remove the disturbances
+  # This is coming out wrong - as na.omit objects instead of rwis with year.
   rwi2 <- mapply(
     FUN = \(x, y) {
       # Control for the ones with no disturbances
