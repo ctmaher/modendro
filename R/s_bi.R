@@ -14,7 +14,7 @@
 #' s_bi_kafadar: the Kafadar (1979) version that the Hoaglin et al also mention.
 #'
 #' @references
-#' Hoaglin, D. C., F. Mosteller, and J. W. Tukey. 1983. Understanding robust and exploratory data
+#' Hoaglin, D. C., F. Mosteller, and J. W. Tukey. (1983) Understanding robust and exploratory data
 #' analysis. New York: Wiley.
 #'
 #' Cook, E. R., and Peters, K. (1997) Calculating unbiased tree-ring indices for the study of
