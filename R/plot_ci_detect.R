@@ -136,20 +136,20 @@ plot_ci_detect <- function(ci_output) {
   # then bind all of them together for each series ID.
 
   whole_series <-
-    lapply(ci_output[["Disturbance removal iterations"]], FUN = \(x) {
-      x[["Corrected RWI"]][orig.IDs] # make sure the order matches
+    lapply(ci_output[["Disturbance removal iterations"]], FUN = \(iter) {
+      iter[["Corrected RWI"]][orig.IDs] # make sure the order matches
     })
 
 
   # This pulls out just the disturbance removal iterations with the specific disturbance metadata
   dist_curves_only <-
-    lapply(ci_output[["Disturbance removal iterations"]], FUN = \(x) {
-      x[["Disturbance curves"]][orig.IDs] # make sure the order matches
+    lapply(ci_output[["Disturbance removal iterations"]], FUN = \(iter) {
+      iter[["Disturbance curves"]][orig.IDs] # make sure the order matches
     })
 
   dist_detection_only <-
-    lapply(ci_output[["Disturbance removal iterations"]], FUN = \(x) {
-      x[["Disturbance detection"]][orig.IDs] # make sure the order matches
+    lapply(ci_output[["Disturbance removal iterations"]], FUN = \(iter) {
+      iter[["Disturbance detection"]][orig.IDs] # make sure the order matches
     })
   # The outermost layer of these lists represents the iterations. Within each of those inner lists,
   # there are data.frames or a character vector for each of the series.
@@ -159,10 +159,15 @@ plot_ci_detect <- function(ci_output) {
   # use a list of the names to pass the iterations to the data
 
   dist_curves_df <- Map(f = \(x, y) {
-    # This inner Map() does
+    # This inner Map() is like mapply(), but it can do more than two lists
     Map(
       f = \(i, e, y) {
-        if (is.character(i)) {
+        if (is.data.frame(i)) {
+          i$series <- e
+          i$iter <- y
+          i
+
+        } else {
           # Skip the "No disturbances detected" ones
           i <-
             data.frame(
@@ -179,10 +184,6 @@ plot_ci_detect <- function(ci_output) {
           i$iter <- y
           i
 
-        } else {
-          i$series <- e
-          i$iter <- y
-          i
         }
       },
       i = x,
@@ -201,11 +202,24 @@ plot_ci_detect <- function(ci_output) {
   # (curves & dist-free series) and the entire series as it was at the start of this iteration.
   # This is included in the whole_series list.
   dist_detection_df <- Map(
-    f = \(x, y, z) {
+    f = \(iter.det, this.iter, corrected.rwi) {
       Map(
         f = \(i, e, y, z) {
-          if (is.character(i)) {
-            # Skip the "No disturbances detected" ones
+          if (is.data.frame(i)) { # If i is a data.frame
+
+            years <- as.numeric(names(z))
+            z <-
+              data.frame(value = z,
+                         type = "Detrended resids.")
+            z$year <- years
+            i$year <- rep(years, times = 5)
+            i <- rbind(i, z)
+            i$series <- e
+            i$iter <- y
+            i
+
+          } else { # if not, it probably is "No disturbances detected"
+
             years <- as.numeric(names(z))
             z <-
               data.frame(value = z,
@@ -218,30 +232,19 @@ plot_ci_detect <- function(ci_output) {
             i$series <- e
             i$iter <- y
             i
-          } else {
-            years <- as.numeric(names(z))
-            z <-
-              data.frame(value = z,
-                         type = "Detrended resids.")
-            z$year <- years
-            i$year <- rep(years, times = 5)
-            i <- rbind(i, z)
-            i$series <- e
-            i$iter <- y
-            i
           }
         },
-        i = x,
-        e = names(x),
-        y = y,
-        z = z
+        i = iter.det,
+        e = names(iter.det),
+        y = this.iter,
+        z = corrected.rwi
       ) |>
         do.call(what = "rbind")
 
     },
-    x = dist_detection_only,
-    y = names(dist_detection_only),
-    z = whole_series
+    iter.det = dist_detection_only,
+    this.iter = names(dist_detection_only),
+    corrected.rwi = whole_series
   ) |>
     do.call(what = "rbind")
 
@@ -314,14 +317,14 @@ plot_ci_detect <- function(ci_output) {
         col_lt_val <- "type"
         dist_det_plot <-
           ggplot2::ggplot(na.omit(det_no_transRW),
-                 aes(.data[[x_val]], .data[[y_val]],
-                     color = .data[[col_lt_val]], linetype = .data[[col_lt_val]])) +
+                          ggplot2::aes(.data[[x_val]], .data[[y_val]],
+                                       color = .data[[col_lt_val]], linetype = .data[[col_lt_val]])) +
           ggplot2::scale_color_manual(
             name = NULL,
             values = c("grey80", "black", "black", "black", "orange")
           ) +
           ggplot2::scale_linetype_manual(name = NULL,
-                                values = c(1, 1, 3, 3, 1)) +
+                                         values = c(1, 1, 3, 3, 1)) +
           ggplot2::annotate(
             geom = "rect",
             xmin = min(rem_iter$year, na.rm = TRUE),
@@ -334,11 +337,11 @@ plot_ci_detect <- function(ci_output) {
           ggplot2::ylab("AR resids.") +
           ggplot2::scale_x_continuous(breaks = clean_breaks) +
           ggplot2:: theme(
-            panel.background = element_blank(),
-            panel.grid = element_blank(),
-            axis.title.x = element_blank(),
-            axis.text.x = element_blank(),
-            legend.key = element_blank(),
+            panel.background = ggplot2::element_blank(),
+            panel.grid = ggplot2::element_blank(),
+            axis.title.x = ggplot2::element_blank(),
+            axis.text.x = ggplot2::element_blank(),
+            legend.key = ggplot2::element_blank(),
             legend.position = "top"
           ) +
           # Use the single factor level to label the plot
@@ -431,21 +434,23 @@ plot_ci_detect <- function(ci_output) {
         # Plot
         dist_rem_plot <-
           ggplot2::ggplot(na.omit(rem_series),
-                 aes(.data[[x_val]], .data[[y_val]],
-                     color = .data[[col_lt_val]], linewidth = .data[[col_lt_val]])) +
-          ggplot2::scale_color_manual(name = element_blank(),
-                             values = c("black", "grey20", curve_col)) +
-          ggplot2::scale_linewidth_manual(name = element_blank(), values = c(0.75, 0.25, 0.5)) +
-          ggplot2::scale_linetype_manual(name = element_blank(), values = c(1, 1, 1)) +
+                          ggplot2::aes(.data[[x_val]], .data[[y_val]],
+                                       color = .data[[col_lt_val]], linewidth = .data[[col_lt_val]])) +
+          ggplot2::scale_color_manual(name = ggplot2::element_blank(),
+                                      values = c("black", "grey20", curve_col)) +
+          ggplot2::scale_linewidth_manual(name = ggplot2::element_blank(),
+                                          values = c(0.75, 0.25, 0.5)) +
+          ggplot2::scale_linetype_manual(name = ggplot2::element_blank(),
+                                         values = c(1, 1, 1)) +
           ggplot2::geom_hline(yintercept = 0, linetype = 3) +
           ggplot2::geom_line() +
           ggplot2::ylab("Detrended resids.") +
           ggplot2::scale_x_continuous(breaks = clean_breaks) +
           ggplot2::theme(
-            panel.background = element_blank(),
-            panel.grid = element_blank(),
-            axis.title.x = element_blank(),
-            legend.key = element_blank(),
+            panel.background = ggplot2::element_blank(),
+            panel.grid = ggplot2::element_blank(),
+            axis.title.x = ggplot2::element_blank(),
+            legend.key = ggplot2::element_blank(),
             legend.position = "top"
           ) +
           ggplot2::labs(subtitle = ifelse(
@@ -528,12 +533,12 @@ plot_ci_detect <- function(ci_output) {
         col_lt_val <- "type"
         col_var2 <- "dir"
         # Plot
-        ggplot2::ggplot(dat, aes(.data[[x_val]],
-                        .data[[y_val]],
-                        linewidth = .data[[col_lt_val]],)) +
+        ggplot2::ggplot(dat, ggplot2::aes(.data[[x_val]],
+                                          .data[[y_val]],
+                                          linewidth = .data[[col_lt_val]],)) +
           ggplot2::geom_segment(
             data = dist,
-            aes(
+            ggplot2::aes(
               x = .data[[x_val]],
               xend = .data[[x_val]],
               y = -Inf,
@@ -544,23 +549,23 @@ plot_ci_detect <- function(ci_output) {
             inherit.aes = FALSE
           ) +
           ggplot2::scale_color_manual(name = "Disturb. type",
-                             values = col_val) +
+                                      values = col_val) +
           ggplot2::geom_line() +
           ggplot2::scale_linewidth_manual(name = "Series", values = c(0.75, 0.25)) +
           ggplot2::ylab("Ring width (mm)") +
           ggplot2::scale_x_continuous(breaks = dist$year) +
           ggplot2::theme(
-            panel.background = element_blank(),
-            panel.grid = element_blank(),
-            axis.title.x = element_blank(),
+            panel.background = ggplot2::element_blank(),
+            panel.grid = ggplot2::element_blank(),
+            axis.title.x = ggplot2::element_blank(),
             legend.position = "top",
             legend.direction = "horizontal",
-            legend.key = element_blank(),
-            axis.text.x = element_text(angle = 45)
+            legend.key = ggplot2::element_blank(),
+            axis.text.x = ggplot2::element_text(angle = 45)
           ) +
           ggplot2::guides(
-            linewidth = guide_legend(title.position = "top", order = 1),
-            color = guide_legend(title.position = "top", order = 2)
+            linewidth = ggplot2::guide_legend(title.position = "top", order = 1),
+            color = ggplot2::guide_legend(title.position = "top", order = 2)
           ) +
           ggplot2::ggtitle(paste("Intervention detection results for series ID:", ID))
       }

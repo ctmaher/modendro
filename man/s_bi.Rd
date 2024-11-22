@@ -10,8 +10,9 @@ s_bi(x)
 \item{x}{a numeric vector}
 }
 \value{
-a 2-column, 1-row data.frame with 2 estimates of s_bi: the main one from the Hoaglin et
-al book & the Kafadar (1979) version that the authors also mention.
+a 2-column, 1-row data.frame with 2 estimates of the biweight scale:
+s_bi: the main one from the Hoaglin et al book and
+s_bi_kafadar: the Kafadar (1979) version that the Hoaglin et al also mention.
 }
 \description{
 This function calculates the biweight scale (s_bi) - a robust variance estimator based on the
@@ -24,7 +25,7 @@ s_bi(rnorm(100))
 
 }
 \references{
-Hoaglin, D. C., F. Mosteller, and J. W. Tukey. 1983. Understanding robust and exploratory data
+Hoaglin, D. C., F. Mosteller, and J. W. Tukey. (1983) Understanding robust and exploratory data
 analysis. New York: Wiley.
 
 Cook, E. R., and Peters, K. (1997) Calculating unbiased tree-ring indices for the study of

@@ -377,7 +377,7 @@ dist_det_rem <- function(rwi,
           if (nrow(y) > 0) {
             # if there is only a neg disturbance
             y
-          } else {
+          } else { # no disturbances
             "No disturbances detected"
           }
         }

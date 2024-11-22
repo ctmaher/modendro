@@ -174,7 +174,14 @@ ci_detect <- function(rwl,
   # 1st element of cp_out is a rwl-data.frame of the residual transformed and detrended series-
   # take this and turn it into a list, with NAs removed from each series
   # Simplify = FALSE keeps the rownames (which are the years)
-  cp_list <- apply(cp_out[[1]], MARGIN = 2, simplify = FALSE, FUN = \(x) as.numeric(na.omit(x)))
+  cp_list <- apply(cp_out[["Resid. detrended series"]],
+                   MARGIN = 2,
+                   simplify = FALSE,
+                   FUN = \(x) {
+                     x1 <- as.numeric(na.omit(x))
+                     names(x1) <- names(x[!is.na(x)])
+                     x1
+                   })
   cp_list <- cp_list[orig.IDs] # make sure names are ordered
   # Run the dist_det_rem() process
   # The for loop makes sense here - after the 1st iteration (based on the original data),
