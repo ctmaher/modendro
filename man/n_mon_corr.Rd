@@ -177,7 +177,8 @@ PS_gro_PPT <- n_mon_corr(rwl = PerkinsSwetnam96,
                         group.IDs.df = NULL,
                         group.var = NULL)
 names(PS_gro_PPT)
-PS_gro_PPT$`Results plots`
+# Take a look at the plots
+plot_n_mon_corr(PS_gro_PPT)
 # Strongest signal is Oct-Jan total precip.
 
 
@@ -200,7 +201,7 @@ PS_gro_Tavg_grouped <- n_mon_corr(rwl = PerkinsSwetnam96,
                                  group.IDs.df = PSgroupIDs,
                                  group.var = "site")
 names(PS_gro_Tavg_grouped)
-PS_gro_Tavg_grouped$`Results plots`
+plot_n_mon_corr(PS_gro_Tavg_grouped)
 # Similar result, but not identical - now month = Apr with a 2-month moving window
 # The climate data is slightly different for each site, so some differences in results are not
 # surprising.
