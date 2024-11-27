@@ -42,7 +42,7 @@ plot_cp_detrend <- function(cp_out) {
                           series.name = "series",
                           dat.name = "value",
                           trim = TRUE,
-                          na.warn = FALSE)
+                          new.val.internal.na = NULL)
 
     long.rw$type <- "rw"
 
@@ -55,7 +55,7 @@ plot_cp_detrend <- function(cp_out) {
                           series.name = "series",
                           dat.name = "value",
                           trim = TRUE,
-                          na.warn = FALSE)
+                          new.val.internal.na = NULL)
 
     long.trans$type <- "pwr.t_cu"
 
@@ -66,7 +66,7 @@ plot_cp_detrend <- function(cp_out) {
                              series.name = "series",
                              dat.name = "value",
                              trim = TRUE,
-                             na.warn = FALSE)
+                             new.val.internal.na = NULL)
 
     long.curv$type <- "pwr.t_cu"
 
@@ -77,7 +77,7 @@ plot_cp_detrend <- function(cp_out) {
                             series.name = "series",
                             dat.name = "value",
                             trim = TRUE,
-                            na.warn = FALSE)
+                            new.val.internal.na = NULL)
     # long.detr <- tidyr::pivot_longer(
     #   detr,
     #   cols = -year,

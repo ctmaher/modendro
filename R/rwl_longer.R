@@ -15,9 +15,9 @@
 #' @param trim Logical vector indicating whether to trim off NA sequences at the beginning or end
 #' of individual series. Default is TRUE. Will not remove missing rings that are represented with
 #' NA (i.e., NA values within the series).
-#' @param na.warn Logical vector indicating whether to give a warning when there are NAs in the
-#' middle of measurments in the rwl or not (i.e., indicating a missing ring). Mostly for internal
-#' `modendro` use.
+#' @param new.val.internal.na Numeric vector giving a new value to replace NAs in the
+#' middle of measurement series (i.e., some measurement protocols leave NAs for missing/locally
+#' absent rings). E.g., `0` makes sense. If `NULL`, these values are left as NAs.
 #'
 #' @return A data.frame with 3 columns: 1) "year", 2) "series", 3) dat.name ("rw", "rw.mm",
 #' "bai.mm" or whatever you name this)
@@ -40,7 +40,7 @@ rwl_longer <- function(rwl = NULL,
                        series.name = "series",
                        dat.name = "rw",
                        trim = TRUE,
-                       na.warn = TRUE) {
+                       new.val.internal.na = NULL) {
   ## Error catching & warnings
   #
   stopifnot(
@@ -66,6 +66,17 @@ rwl_longer <- function(rwl = NULL,
 
   stopifnot("trim must be a logical vector (TRUE or FALSE)" =
               is.logical(trim))
+
+  stopifnot("new.val.internal.na must be NULL or a numeric vector of length = 1" =
+              length(new.val.internal.na) == 1 &
+              is.null(new.val.internal.na) |
+              is.numeric(new.val.internal.na))
+
+
+  # Replace the internal NAs if given a new value to do so
+  if (is.numeric(new.val.internal.na)) {
+  rwl <- modendro::rwl_replace_internal_NAs(rwl, new.val = new.val.internal.na)
+  }
 
   # Get the series names before we add a year column
   series.cols <- colnames(rwl)
@@ -99,13 +110,6 @@ rwl_longer <- function(rwl = NULL,
       series.dfs[series.dfs[, "year"] %in% end.years[, "min.year"]:end.years[, "max.year"], ]
     }, series.dfs = long.rwl.split, end.years = year.spans,
     SIMPLIFY = FALSE) |> do.call(what = "rbind")
-
-    if (na.warn == TRUE) {
-    if (any(is.na(long.rwl.trim[,dat.name])) == TRUE) {
-      warning("NA values found within tree ring series. Are NAs used to represent missing rings? 0
-              would be better.")
-    }
-    }
 
     as.data.frame(long.rwl.trim)
     } else { # just return everything, NAs & all.

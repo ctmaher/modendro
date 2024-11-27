@@ -9,7 +9,7 @@ rwl_longer(
   series.name = "series",
   dat.name = "rw",
   trim = TRUE,
-  na.warn = TRUE
+  new.val.internal.na = NULL
 )
 }
 \arguments{
@@ -26,9 +26,9 @@ data. Default is "rw".}
 of individual series. Default is TRUE. Will not remove missing rings that are represented with
 NA (i.e., NA values within the series).}
 
-\item{na.warn}{Logical vector indicating whether to give a warning when there are NAs in the
-middle of measurments in the rwl or not (i.e., indicating a missing ring). Mostly for internal
-\code{modendro} use.}
+\item{new.val.internal.na}{Numeric vector giving a new value to replace NAs in the
+middle of measurement series (i.e., some measurement protocols leave NAs for missing/locally
+absent rings). E.g., \code{0} makes sense. If \code{NULL}, these values are left as NAs.}
 }
 \value{
 A data.frame with 3 columns: 1) "year", 2) "series", 3) dat.name ("rw", "rw.mm",

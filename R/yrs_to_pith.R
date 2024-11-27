@@ -142,7 +142,7 @@ yrs_to_pith <- function(rwl = NULL,
                     series.name = "series",
                     dat.name = "rw",
                     trim = TRUE,
-                    na.warn = FALSE)
+                    new.val.internal.na = NULL)
   # Split by series
   xdf.list <- split(xdf, f = xdf$series)
 

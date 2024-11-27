@@ -36,7 +36,9 @@
 #'
 
 
-longer_rwl <- function(df = NULL, series.name = NULL, dat.name = NULL) {
+longer_rwl <- function(df = NULL,
+                       series.name = NULL,
+                       dat.name = NULL) {
   ## Error catching & warnings
   stopifnot(
     "df is not an object of class 'data.frame', or 'matrix'" =
