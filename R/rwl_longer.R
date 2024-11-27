@@ -68,9 +68,9 @@ rwl_longer <- function(rwl = NULL,
               is.logical(trim))
 
   stopifnot("new.val.internal.na must be NULL or a numeric vector of length = 1" =
-              length(new.val.internal.na) == 1 &
               is.null(new.val.internal.na) |
-              is.numeric(new.val.internal.na))
+              (length(new.val.internal.na) == 1 &
+              is.numeric(new.val.internal.na)))
 
 
   # Replace the internal NAs if given a new value to do so
