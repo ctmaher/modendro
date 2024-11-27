@@ -38,17 +38,17 @@ The rwl-format data.frame is the standard for the important dplR package, and mo
 ```{r example 1}
 library(modendro)
 data("PerkinsSwetnam96")
-head(PerkinsSwetnam96) # typical rwl-format
+head(PerkinsSwetnam96)[,1:5] # typical rwl-format
 
 
-# PS.long <- rwl_longer(rwl = PerkinsSwetnam96,
-#                       series.name = "series", # name the series IDs whatever you want
-#                       dat.name = "rw.mm", # same for the measurement data
-#                       trim = TRUE, # trim off the NAs before and after a series
-#                       new.val.internal.na = NULL) # leave NAs internal to the measurement series
-# # Note that we could replace internal NAs here if there were any (e.g., with 0s)
-# 
-# head(PS.long) # familiar format
+PS.long <- rwl_longer(rwl = PerkinsSwetnam96,
+                      series.name = "series", # name the series IDs whatever you want
+                      dat.name = "rw.mm", # same for the measurement data
+                      trim = TRUE, # trim off the NAs before and after a series
+                      new.val.internal.na = NULL) # leave NAs internal to the measurement series
+# Note that we could replace internal NAs here if there were any (e.g., with 0s)
+
+head(PS.long) # familiar format
 
 ```
 
@@ -58,13 +58,13 @@ Once our tree-ring data is in the familiar (to me anyway) long format, we do all
 
 data("PSgroupIDs")
 
-# PS.long.sites <- merge(PS.long, PSgroupIDs, by = "series")
-# 
-# library(ggplot2)
-# 
-# ggplot(PS.long.sites, aes(year, rw.mm)) +
-#   geom_line(alpha = 0.5) +
-#   facet_wrap( ~ site)
+PS.long.sites <- merge(PS.long, PSgroupIDs, by = "series")
+
+library(ggplot2)
+
+ggplot(PS.long.sites, aes(year, rw.mm, group = series)) +
+  geom_line(alpha = 0.5) +
+  facet_wrap( ~ site, ncol = 1)
 
 ```
 

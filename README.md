@@ -42,52 +42,31 @@ library(modendro)
 #>   method            from
 #>   as.zoo.data.frame zoo
 data("PerkinsSwetnam96")
-head(PerkinsSwetnam96) # typical rwl-format
-#>     TWP05 TWP07 TWP08 TWP13 TWP14 TWP17 TWP20 TWP21 TWM05 SDP45 SDP46 SDP24
-#> 726    NA    NA    NA    NA    NA    NA    NA    NA    NA    NA    NA    NA
-#> 727    NA    NA    NA    NA    NA    NA    NA    NA    NA    NA    NA    NA
-#> 728    NA    NA    NA    NA    NA    NA    NA    NA    NA    NA    NA    NA
-#> 729    NA    NA    NA    NA    NA    NA    NA    NA    NA    NA    NA    NA
-#> 730    NA    NA    NA    NA    NA    NA    NA    NA    NA    NA    NA    NA
-#> 731    NA    NA    NA    NA    NA    NA    NA    NA    NA    NA    NA    NA
-#>     SDP30 SDP34 SDP11 SDP43 SDP36 SDP50 SDM28 SDP21 SDP26 SDP28 SDM10 SDM30
-#> 726    NA    NA    NA    NA    NA    NA    NA    NA    NA    NA    NA    NA
-#> 727    NA    NA    NA    NA    NA    NA    NA    NA    NA    NA    NA    NA
-#> 728    NA    NA    NA    NA    NA    NA    NA    NA    NA    NA    NA    NA
-#> 729    NA    NA    NA    NA    NA    NA    NA    NA    NA    NA    NA    NA
-#> 730    NA    NA    NA    NA    NA    NA    NA    NA    NA    NA    NA    NA
-#> 731    NA    NA    NA    NA    NA    NA    NA    NA    NA    NA    NA    NA
-#>     UPS09 UPS12 UPS16 UPS30 UPS31 UPS32 UPS35 UPS03 UPS04 UPS40 UPM06 UPSM6
-#> 726    NA    NA    NA    NA    NA    NA    NA    NA    NA    NA    NA    NA
-#> 727    NA    NA    NA    NA    NA    NA    NA    NA    NA    NA    NA    NA
-#> 728    NA    NA    NA    NA    NA    NA    NA    NA    NA    NA    NA    NA
-#> 729    NA    NA    NA    NA    NA    NA    NA    NA    NA    NA    NA    NA
-#> 730    NA    NA    NA    NA    NA    NA    NA    NA    NA    NA    NA    NA
-#> 731    NA    NA    NA    NA    NA    NA    NA    NA    NA    NA    NA    NA
-#>     UPSM1 UPSM2 UPM5 UPM3 UPM12 UPM14 UPM17 UPM16 UPM09 UPM25 RRR05 RRR06 RRR07
-#> 726    NA    NA   NA   NA    NA    NA    NA    NA    NA    NA    NA    NA    NA
-#> 727    NA    NA   NA   NA    NA    NA    NA    NA    NA    NA    NA    NA    NA
-#> 728    NA    NA   NA   NA    NA    NA    NA    NA    NA    NA    NA    NA    NA
-#> 729    NA    NA   NA   NA    NA    NA    NA    NA    NA    NA    NA    NA    NA
-#> 730    NA    NA   NA   NA    NA    NA    NA    NA    NA    NA    NA    NA    NA
-#> 731    NA    NA   NA   NA    NA    NA    NA    NA    NA    NA    NA    NA    NA
-#>     RRR15 RRR19 RRR22 RRR24 RRR26 RRR27 RRR28 RRR30
-#> 726  0.63    NA    NA    NA    NA    NA    NA    NA
-#> 727  0.57    NA    NA    NA    NA    NA    NA    NA
-#> 728  0.60    NA    NA    NA    NA    NA    NA    NA
-#> 729  0.47    NA    NA    NA    NA    NA    NA    NA
-#> 730  0.42    NA    NA    NA    NA    NA    NA    NA
-#> 731  0.39    NA    NA    NA    NA    NA    NA    NA
+head(PerkinsSwetnam96)[,1:5] # typical rwl-format
+#>     TWP05 TWP07 TWP08 TWP13 TWP14
+#> 726    NA    NA    NA    NA    NA
+#> 727    NA    NA    NA    NA    NA
+#> 728    NA    NA    NA    NA    NA
+#> 729    NA    NA    NA    NA    NA
+#> 730    NA    NA    NA    NA    NA
+#> 731    NA    NA    NA    NA    NA
 
 
-# PS.long <- rwl_longer(rwl = PerkinsSwetnam96,
-#                       series.name = "series", # name the series IDs whatever you want
-#                       dat.name = "rw.mm", # same for the measurement data
-#                       trim = TRUE, # trim off the NAs before and after a series
-#                       new.val.internal.na = NULL) # leave NAs internal to the measurement series
-# # Note that we could replace internal NAs here if there were any (e.g., with 0s)
-# 
-# head(PS.long) # familiar format
+PS.long <- rwl_longer(rwl = PerkinsSwetnam96,
+                      series.name = "series", # name the series IDs whatever you want
+                      dat.name = "rw.mm", # same for the measurement data
+                      trim = TRUE, # trim off the NAs before and after a series
+                      new.val.internal.na = NULL) # leave NAs internal to the measurement series
+# Note that we could replace internal NAs here if there were any (e.g., with 0s)
+
+head(PS.long) # familiar format
+#>             year series rw.mm
+#> RRR05.58876 1319  RRR05  0.42
+#> RRR05.58877 1320  RRR05  0.46
+#> RRR05.58878 1321  RRR05  0.34
+#> RRR05.58879 1322  RRR05  0.32
+#> RRR05.58880 1323  RRR05  0.42
+#> RRR05.58881 1324  RRR05  0.33
 ```
 
 Once our tree-ring data is in the familiar (to me anyway) long format,
@@ -100,13 +79,15 @@ for plotting.
 
 data("PSgroupIDs")
 
-# PS.long.sites <- merge(PS.long, PSgroupIDs, by = "series")
-# 
-# library(ggplot2)
-# 
-# ggplot(PS.long.sites, aes(year, rw.mm)) +
-#   geom_line(alpha = 0.5) +
-#   facet_wrap( ~ site)
+PS.long.sites <- merge(PS.long, PSgroupIDs, by = "series")
+
+library(ggplot2)
+
+ggplot(PS.long.sites, aes(year, rw.mm, group = series)) +
+  geom_line(alpha = 0.5) +
+  facet_wrap( ~ site, ncol = 1)
 ```
+
+<img src="man/figures/README-example 2-1.png" width="100%" />
 
 More to come…
