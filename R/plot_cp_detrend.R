@@ -182,7 +182,7 @@ plot_cp_detrend <- function(cp_out) {
           ggplot2::theme(
             strip.placement = "outside",
             strip.background = element_blank(),
-            strip.text = element_text(size = 10),
+            strip.text = element_text(size = 8),
             strip.clip = "off",
             axis.title.x = element_blank(),
             axis.title.y = element_blank(),

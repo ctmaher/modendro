@@ -15,8 +15,6 @@
 #' @param common.years numeric vector - a sequence of years to subset the clim and rwl data before
 #' running correlation analyses. Must be at least 25 years long and years must exist in clim and
 #' rwl.
-#' @param gro.period.end the last month in which you expect growth to occur for your study species
-#' in your study region. Not crucial in this version - only draws a line in the output plot.
 #' @param agg.fun character vector specifying the function to use for aggregating monthly
 #' climate combinations. Options are "mean" or "sum", e.g., for temperature or precipitation data,
 #' respectively. Default is "mean".
@@ -50,7 +48,6 @@ multi_clim_gro_corr <- function(rwl.group = NULL,
                                 clim.group = NULL,
                                 clim.var = NULL,
                                 common.years = NULL,
-                                gro.period.end = NULL,
                                 agg.fun = "mean",
                                 max.win = 6,
                                 win.align = "right",

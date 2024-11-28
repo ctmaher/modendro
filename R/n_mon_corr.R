@@ -46,8 +46,6 @@
 #' \code{\link[corTESTsrd]{corTESTsrd}} function (also used for `corr.method = "kendall"`). This
 #' method reduces the type I error rate associated with autocorrelated series. CAUTION: Currently
 #' `corr.method = "pearson"` doesn't make any adjustments for autocorrelation. See Details below.
-#' @param gro.period.end the last month in which you expect growth to occur for your study species
-#' in your study region. Not crucial in this version - only draws a line in the output plot.
 #' @param group.IDs.df an optional data.frame with 2 columns: "series", representing the names of
 #' the tree-ring series (and matching the colnames of rwl) and a group.var (name is your
 #' specification), representing a grouping (e.g., site, plot) variable.
@@ -134,7 +132,6 @@
 #'                          hemisphere = "N",
 #'                          prewhiten = TRUE,
 #'                          corr.method = "spearman",
-#'                          gro.period.end = 9,
 #'                          group.IDs.df = NULL,
 #'                          group.var = NULL)
 #' names(PS_gro_Tavg)
@@ -156,7 +153,6 @@
 #'                         hemisphere = "N",
 #'                         prewhiten = TRUE,
 #'                         corr.method = "spearman",
-#'                         gro.period.end = 9,
 #'                         group.IDs.df = NULL,
 #'                         group.var = NULL)
 #' names(PS_gro_PPT)
@@ -180,7 +176,6 @@
 #'                                  hemisphere = "N",
 #'                                  prewhiten = TRUE,
 #'                                  corr.method = "spearman",
-#'                                  gro.period.end = 9,
 #'                                  group.IDs.df = PSgroupIDs,
 #'                                  group.var = "site")
 #' names(PS_gro_Tavg_grouped)
@@ -201,8 +196,6 @@ n_mon_corr <- function(rwl = NULL,
                        hemisphere = NULL,
                        prewhiten = TRUE,
                        corr.method = "spearman",
-                       gro.period.end = NULL,
-                       #make.plots = TRUE,
                        group.IDs.df = NULL,
                        group.var = NULL) {
   ############ Initial basic input error catching
@@ -363,22 +356,22 @@ n_mon_corr <- function(rwl = NULL,
   )
 
   ###### gro.period.end
-  stopifnot(
-    "Invalid gro.period.end provided (must be a single integer month)" =
-      is.integer(gro.period.end) &
-      length(gro.period.end) == 1 |
-      any(gro.period.end %in% 1:12) &
-      length(gro.period.end) == 1
-  )
-
-  if (is.null(gro.period.end)) {
-    cat(
-      "You haven't specified the gro.period.end - the last month you expect growth is possible -\n",
-      "You should have an approximate idea of what month works for your study system.\n"
-    )
-    gro.period.end <-
-      readline(prompt = "Last month of radial growth = ") |> as.integer()
-  }
+  # stopifnot(
+  #   "Invalid gro.period.end provided (must be a single integer month)" =
+  #     is.integer(gro.period.end) &
+  #     length(gro.period.end) == 1 |
+  #     any(gro.period.end %in% 1:12) &
+  #     length(gro.period.end) == 1
+  # )
+  #
+  # if (is.null(gro.period.end)) {
+  #   cat(
+  #     "You haven't specified the gro.period.end - the last month you expect growth is possible -\n",
+  #     "You should have an approximate idea of what month works for your study system.\n"
+  #   )
+  #   gro.period.end <-
+  #     readline(prompt = "Last month of radial growth = ") |> as.integer()
+  # }
 
   ###### make.plots
   # stopifnot("Arg make.plot must be a logical vector" =
@@ -573,7 +566,7 @@ n_mon_corr <- function(rwl = NULL,
       clim.var = clim.var,
       common.years = common.years,
       group.var = group.var,
-      gro.period.end = gro.period.end,
+      #gro.period.end = gro.period.end,
       agg.fun = agg.fun,
       max.win = max.win,
       win.align = win.align,
@@ -598,7 +591,7 @@ n_mon_corr <- function(rwl = NULL,
         clim.var = clim.var,
         common.years = common.years,
         group.var = group.var,
-        gro.period.end = gro.period.end,
+        #gro.period.end = gro.period.end,
         agg.fun = agg.fun,
         max.win = max.win,
         win.align = win.align,

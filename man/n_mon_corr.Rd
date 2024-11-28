@@ -16,7 +16,6 @@ n_mon_corr(
   hemisphere = NULL,
   prewhiten = TRUE,
   corr.method = "spearman",
-  gro.period.end = NULL,
   group.IDs.df = NULL,
   group.var = NULL
 )
@@ -64,9 +63,6 @@ This is common practice before using standard methods for cross-correlations. De
 \code{\link[corTESTsrd]{corTESTsrd}} function (also used for \code{corr.method = "kendall"}). This
 method reduces the type I error rate associated with autocorrelated series. CAUTION: Currently
 \code{corr.method = "pearson"} doesn't make any adjustments for autocorrelation. See Details below.}
-
-\item{gro.period.end}{the last month in which you expect growth to occur for your study species
-in your study region. Not crucial in this version - only draws a line in the output plot.}
 
 \item{group.IDs.df}{an optional data.frame with 2 columns: "series", representing the names of
 the tree-ring series (and matching the colnames of rwl) and a group.var (name is your
@@ -151,7 +147,6 @@ PS_gro_Tavg <- n_mon_corr(rwl = PerkinsSwetnam96,
                          hemisphere = "N",
                          prewhiten = TRUE,
                          corr.method = "spearman",
-                         gro.period.end = 9,
                          group.IDs.df = NULL,
                          group.var = NULL)
 names(PS_gro_Tavg)
@@ -173,7 +168,6 @@ PS_gro_PPT <- n_mon_corr(rwl = PerkinsSwetnam96,
                         hemisphere = "N",
                         prewhiten = TRUE,
                         corr.method = "spearman",
-                        gro.period.end = 9,
                         group.IDs.df = NULL,
                         group.var = NULL)
 names(PS_gro_PPT)
@@ -197,7 +191,6 @@ PS_gro_Tavg_grouped <- n_mon_corr(rwl = PerkinsSwetnam96,
                                  hemisphere = "N",
                                  prewhiten = TRUE,
                                  corr.method = "spearman",
-                                 gro.period.end = 9,
                                  group.IDs.df = PSgroupIDs,
                                  group.var = "site")
 names(PS_gro_Tavg_grouped)
