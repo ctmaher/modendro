@@ -182,6 +182,67 @@ analysis of growth-climate relationships using tree-rings and monthly
 climate data. The concept is relatively simple, in practice it is not so
 simple!
 
+The basic operation is to take monthly climate data and compute every
+possible contiguous monthly aggregate window given a user-specified n
+months (2-12 month aggregates possible) and for a set of lag years. The
+monthly aggregate windows are continuous across (lagged) annual
+boundaries. Then, `n_mon_corr()` computes correlations with each of
+these monthly aggregates and every single tree-ring series in your rwl.
+As such, this is a “brute-force” type of operation and can be somewhat
+slow, depending on the parameters.
+
+`n_mon_corr()` works in both hemispheres - if hemisphere = “S” is
+selected, then a +1 “lag” is added to whatever lags you specify (e.g.,
+-2, -1, 0, +1). This is because the convention of assigning years to
+tree-rings in the southern hemisphere is to use the year that growth
+starts in. Since growth will usually continue through the Gregorian new
+year, the +1 is there to accommodate the full range of possible monthly
+climate aggregates into the growing season.
+
+I have built in operations like “prewhitening” so that the both the
+climate aggregates (generated inside the function) and the tree-ring
+data get treated the same way. In most tree-ring analyses, prewhitening
+means residuals from an autoregressive model of the ring-width series,
+the goal of which is to remove autocorrelation (includes trends) and
+leave only the high-frequency variability that resembles white noise. In
+practice, I have found that the simple `ar()` is not always adequate to
+model all of the autocorrelation in tree-ring or climate series. A more
+complex time-series model does better, like an ARIMA model.
+`n_mon_corr()` uses `auto.arima()` from the `forecast` package to find a
+best-fit ARIMA model, and then extracts the residuals. ARIMA models
+don’t model the variability, so all of the high-frequency component is
+retained, including any changes in variability over time (i.e.,
+volatility). All this is to say that `n_mon_corr()` does a more honest
+job of removing autocorrelation than traditional tree-ring approaches.
+We want this before doing cross-correlations between two time series!
+
+The default method for correlations is a Spearman rank correlation -
+this is to allow for the detection of possibly non-linear associations
+between tree-rings and climate. For significance testing of the
+individual correlation analyses, I use a method described by Lun et
+al. (2022), Journal of Applied Statistics, 50(14) that adjusts the
+significance assuming that there is autocorrelation in the time-series.
+For “prewhitened” series, this will probably be a bit conservative, but
+is useful if you want to run both “prewhitened” and not series to try to
+understand the influence that trends may have on the relationships - as
+such it makes sense that both types of series are treated with the same
+significance test. Hence the default. Kendall rank correlations are also
+possible and use this adjusted significance test. *Pearson correlations
+are an option, but there is no adjustment for autocorrelation* in
+Pearson. I don’t recommend it.
+
+If you turn off “prewhitening”, be aware of the effects of
+autocorrelated time-series in cross-correlations. This is a problem for
+the *correlation coefficients*, not the significance testing per se. See
+Yule (1926), Journal of the Royal Statistical Society 89(1). The take
+away is that for cross-correlations between highly autocorrelated time
+series (i.e., low-frequency amplitudes are much greater than
+high-frequency amplitudes), correlation coefficients are nearly always
+very high, even though they may be meaningless.
+
+The `n_mon_corr()` documentation has more details on the various
+arguments.
+
 ``` r
 # Bring in some climate data associated with the tree ring data we loaded earlier
 data("idPRISM")
@@ -194,8 +255,8 @@ head(idPRISM)
 #> 421 1927-05-15 1927     5  98.99000   2.400000
 #> 526 1935-06-15 1935     6  33.36333   8.300000
 
-PS.corr <- n_mon_corr(rwl = PerkinsSwetnam96,
-                      clim = idPRISM,
+PS.corr <- n_mon_corr(rwl = PerkinsSwetnam96, 
+                      clim = idPRISM, 
                       clim.var = "Tavg.C",
                       common.years = 1895:1991,
                       agg.fun = "mean",
@@ -212,17 +273,62 @@ PS.corr <- n_mon_corr(rwl = PerkinsSwetnam96,
 #>     Interpret correlations cautiously.
 #> UPM3, UPM12, UPM16, UPM09
 
-PS.corr.plots <- plot_n_mon_corr(PS.corr)
-
-PS.corr.plots[[1]]
+names(PS.corr)
+#> [1] "Correlation results"             "Climate data (prewhitened)"     
+#> [3] "Climate data (raw)"              "Ring-width series (prewhitened)"
 ```
 
-<img src="man/figures/README-example 3.1-1.png" width="100%" />
+Note the warnings about series that don’t have enough overlap with the
+climate data.
+
+The output of `n_mon_corr()` includes the individual correlation
+results, the monthly aggreated climate data (prewhitened & raw), and the
+prewhitened ring widths. This allows you to inspect each of these
+elements.
+
+As with other `modendro` functions, there is a separate plotting
+function. This is designed to deal with multiple (a lot of) ring width
+series, so keep that in mind.
+
+The first plot shows the percentage of significant correlations for each
+month and each window length, the second shows the mean correlation
+coefficients of the same. These are two ways to find the strongest
+signals across lags and moving window lengths. Lags are indicated by
+labeled rectangles at the bottom of the plots (-2, -1, 0).
+
+I include the aggregated data used to make the plots as well, for some
+added transparency.
 
 ``` r
-PS.corr.plots[[2]]
+
+PS.corr.plots <- plot_n_mon_corr(PS.corr)
+
+names(PS.corr.plots)
+#> [1] "Percent sig. corr. plot" "Mean corr. coef. plot"  
+#> [3] "Aggregated data"
+
+PS.corr.plots[["Percent sig. corr. plot"]]
 ```
 
-<img src="man/figures/README-example 3.1-2.png" width="100%" />
+<img src="man/figures/README-example 3.2-1.png" width="100%" />
+
+``` r
+PS.corr.plots[["Mean corr. coef. plot"]]
+```
+
+<img src="man/figures/README-example 3.2-2.png" width="100%" />
+
+``` r
+PS.corr.plots[["Aggregated data"]] |> head()
+#>    month win.len lag  dir prop.sig   mean.coef
+#> 3      1       1  -2 Neg.  0.00000 -0.06144863
+#> 4      1       1  -2 Pos. 10.81081  0.15089999
+#> 9      1       2  -2 Neg.  0.00000 -0.03508997
+#> 10     1       2  -2 Pos. 21.62162  0.21733757
+#> 15     1       3  -2 Neg.  0.00000 -0.03507990
+#> 16     1       3  -2 Pos. 21.62162  0.22710420
+```
 
 ## Example: detection and removal of disturbances in tree-ring series
+
+Detection of release or suppression events…
