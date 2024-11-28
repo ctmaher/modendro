@@ -137,3 +137,92 @@ head(comb.rwl)[,1:5]
 ```
 
 ## Example: power transformation & detrending ala Cook & Peters (1997)
+
+Cook & Peters describe a method in their 1997 paper in The Holocene for
+removing age/size trends from tree-ring series in a way that minimizes
+bias that can result from using more traditional methods. Specifically,
+C&P’s method involves power transforming raw ring widths to homogenize
+variance, fitting a trend, and then *subtracting* the trend line to get
+power transformed detrended residual series.
+
+In modendro, the `cp_detrend()` function does this. I should say that
+you can do this with a string of dplR functions, but `cp_detrend()`
+contains the entire operation in a single function. The trend fitting
+and subtraction step is done using dplR’s `detrend()` function, allowing
+all the detrend curve options availble. Additionally, `cp_detrend()` is
+much more transparent and returns information about the power
+transformation, including the power used. Another reason for this
+detailed output is that this is the process used in the modendro
+function `ci_detect()`, which I’ll demonstrate below. The `cp_detrend()`
+process can be visualized with the `plot_cp_detrend()` function.
+
+``` r
+
+PS.cp <- cp_detrend(PerkinsSwetnam96, detrend.method = "ModNegExp")
+names(PS.cp) # output is a list
+#> [1] "Resid. detrended series" "Detrend curves"         
+#> [3] "Transformed ring widths" "Transformation metadata"
+#> [5] "Detrending metadata"     "Raw ring widths"
+
+PS.cp[["Transformation metadata"]][["RRR19"]]
+#>       series optimal.pwr            action
+#> RRR19  RRR19   0.2308274 Power transformed
+
+PS.cp.plots <- plot_cp_detrend(PS.cp)
+
+PS.cp.plots[["RRR19"]]
+```
+
+<img src="man/figures/README-example 2.1-1.png" width="100%" />
+
+## Example: flexible growth-climate relationships
+
+`n_mon_corr()` is a modendro function that is for exploratory data
+analysis of growth-climate relationships using tree-rings and monthly
+climate data. The concept is relatively simple, in practice it is not so
+simple!
+
+``` r
+# Bring in some climate data associated with the tree ring data we loaded earlier
+data("idPRISM")
+head(idPRISM)
+#>           Date year month    PPT.mm     Tavg.C
+#> 1   1895-01-15 1895     1 219.04667  -8.733333
+#> 106 1903-02-15 1903     2  15.02333 -12.866667
+#> 211 1911-03-15 1911     3  50.58667  -4.066667
+#> 316 1919-04-15 1919     4  87.31667   0.800000
+#> 421 1927-05-15 1927     5  98.99000   2.400000
+#> 526 1935-06-15 1935     6  33.36333   8.300000
+
+PS.corr <- n_mon_corr(rwl = PerkinsSwetnam96,
+                      clim = idPRISM,
+                      clim.var = "Tavg.C",
+                      common.years = 1895:1991,
+                      agg.fun = "mean",
+                      max.win = 6,
+                      win.align = "left",
+                      max.lag = 2,
+                      hemisphere = "N",
+                      prewhiten = TRUE,
+                      corr.method = "spearman")
+#> The following tree-ring series have < 4 years overlap with clim data
+#>     and will be removed from rwl:
+#> TWP05, TWP13, TWP20, TWP21, SDP36, SDP26, SDP28, SDM10, UPS12, UPS16, UPS31, UPS35, UPS04, UPSM1, UPM5, UPM14, UPM25, RRR19, RRR26, RRR28
+#> The following tree-ring series have < 25 years overlap with clim data.
+#>     Interpret correlations cautiously.
+#> UPM3, UPM12, UPM16, UPM09
+
+PS.corr.plots <- plot_n_mon_corr(PS.corr)
+
+PS.corr.plots[[1]]
+```
+
+<img src="man/figures/README-example 3.1-1.png" width="100%" />
+
+``` r
+PS.corr.plots[[2]]
+```
+
+<img src="man/figures/README-example 3.1-2.png" width="100%" />
+
+## Example: detection and removal of disturbances in tree-ring series

@@ -16,12 +16,12 @@ knitr::opts_chunk$set(
 # modendro: more dendro (tree-ring) functions
 
 <!-- badges: start -->
+
 <!-- badges: end -->
 
 modendro is a collection of functions to do a variety of tree-ring analyses that are not available elsewhere or are improvements on existing analyses: various utility functions for wrangling tree-ring data, power transformation & detrending, flexible climate-growth correlations to identify the strongest seasonal climate signals, and disturbance detection & removal.
 
 My inclusion of an analysis method in modendro does not imply broad endorsement of the method. My goal is to make available some of these methods that I've found useful in the past but had to write my own code for. Enjoy and I hope some of these are useful for you too!
-  
 
 ## Installation
 
@@ -71,7 +71,7 @@ ggplot(PS.long.sites, aes(year, rw.mm, group = series)) +
 
 ```
 
-Another useful application of `rwl_longer()` is when we have several rwl-format files that we want to bind together. This is not intuitive with the rwl-format - the number of rows may not line up and the columns won't either. This is simple with the long format. 
+Another useful application of `rwl_longer()` is when we have several rwl-format files that we want to bind together. This is not intuitive with the rwl-format - the number of rows may not line up and the columns won't either. This is simple with the long format.
 
 We'll borrow some data from the dplR package for this.
 
@@ -101,8 +101,56 @@ head(comb.rwl)[,1:5]
 
 ```
 
-
 ## Example: power transformation & detrending ala Cook & Peters (1997)
+
+Cook & Peters describe a method in their 1997 paper in The Holocene for removing age/size trends from tree-ring series in a way that minimizes bias that can result from using more traditional methods. Specifically, C&P's method involves power transforming raw ring widths to homogenize variance, fitting a trend, and then *subtracting* the trend line to get power transformed detrended residual series.
+
+In modendro, the `cp_detrend()` function does this. I should say that you can do this with a string of dplR functions, but `cp_detrend()` contains the entire operation in a single function. The trend fitting and subtraction step is done using dplR's `detrend()` function, allowing all the detrend curve options availble. Additionally, `cp_detrend()` is much more transparent and returns information about the power transformation, including the power used. Another reason for this detailed output is that this is the process used in the modendro function `ci_detect()`, which I'll demonstrate below. The `cp_detrend()` process can be visualized with the `plot_cp_detrend()` function.
+
+```{r example 2.1}
+
+PS.cp <- cp_detrend(PerkinsSwetnam96, detrend.method = "ModNegExp")
+names(PS.cp) # output is a list
+
+PS.cp[["Transformation metadata"]][["RRR19"]]
+
+PS.cp.plots <- plot_cp_detrend(PS.cp)
+
+PS.cp.plots[["RRR19"]]
+
+```
+
+## Example: flexible growth-climate relationships
+
+`n_mon_corr()` is a modendro function that is for exploratory data analysis of growth-climate relationships using tree-rings and monthly climate data. The concept is relatively simple, in practice it is not so simple!
+
+
+```{r example 3.1}
+# Bring in some climate data associated with the tree ring data we loaded earlier
+data("idPRISM")
+head(idPRISM)
+
+PS.corr <- n_mon_corr(rwl = PerkinsSwetnam96,
+                      clim = idPRISM,
+                      clim.var = "Tavg.C",
+                      common.years = 1895:1991,
+                      agg.fun = "mean",
+                      max.win = 6,
+                      win.align = "left",
+                      max.lag = 2,
+                      hemisphere = "N",
+                      prewhiten = TRUE,
+                      corr.method = "spearman")
+
+PS.corr.plots <- plot_n_mon_corr(PS.corr)
+
+PS.corr.plots[[1]]
+PS.corr.plots[[2]]
+
+```
+
+
+## Example: detection and removal of disturbances in tree-ring series
 
 
 
