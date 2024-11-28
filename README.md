@@ -8,16 +8,15 @@
 
 modendro is a collection of functions to do a variety of tree-ring
 analyses that are not available elsewhere or are improvements on
-existing analyses: power transformation & detrending, disturbance
-detection, flexible climate-growth correlations to identify the
-strongest seasonal climate signals, & various utility functions for
-wrangling tree-ring data. The functions in modendro are designed to work
-with the common tree-ring measurement formats that have years as
-rownames and series names as colnames (i.e., the resulting format from
-the `read.` functions in the dplR package). Within R, this format is
-just a particularly-structured data.frame. The modendro functions don’t
-“know” what file format the measurements originated from, and the only
-things that matter are the rownames and the colnames
+existing analyses: various utility functions for wrangling tree-ring
+data, power transformation & detrending, flexible climate-growth
+correlations to identify the strongest seasonal climate signals, and
+disturbance detection & removal.
+
+My inclusion of an analysis method in modendro does not imply broad
+endorsement of the method. My goal is to make available some of these
+methods that I’ve found useful in the past but had to write my own code
+for. Enjoy and I hope some of these are useful for you too!
 
 ## Installation
 
@@ -29,12 +28,15 @@ You can install the development version of modendro from
 devtools::install_github("ctmaher/modendro")
 ```
 
+I recommend you do this often, as modendro is under active development.
+
 ## Example: convert rwl-format data.frames to “long” format - and back
 
-The rwl-format data.frame is the standard for the important dplR
-package, and modendro inherits this. However, this format is
-inconvenient for many other standard operations in R - a “long” format
-would be much more useful. Enter modendro’s `rwl_longer()` function
+The rwl-format data.frame (rownames are years, colnames are series
+names) is the standard for the important dplR package, and modendro
+inherits this. However, this format is inconvenient for many other
+standard operations in R - a “long” format would be much more useful.
+Enter modendro’s `rwl_longer()` function.
 
 ``` r
 library(modendro)
@@ -88,6 +90,50 @@ ggplot(PS.long.sites, aes(year, rw.mm, group = series)) +
   facet_wrap( ~ site, ncol = 1)
 ```
 
-<img src="man/figures/README-example 2-1.png" width="100%" />
+<img src="man/figures/README-example 1.2-1.png" width="100%" />
 
-More to come…
+Another useful application of `rwl_longer()` is when we have several
+rwl-format files that we want to bind together. This is not intuitive
+with the rwl-format - the number of rows may not line up and the columns
+won’t either. This is simple with the long format.
+
+We’ll borrow some data from the dplR package for this.
+
+We may want to convert this joined data back into a single rwl-format
+data.frame, e.g., for export or for unifying analyses in modendro or
+dplR. We can do this with modendro’s `longer_rwl()`.
+
+``` r
+
+library(dplR)
+#> This is dplR version 1.7.7.
+#> dplR is part of openDendro https://opendendro.org.
+#> New users can visit https://opendendro.github.io/dplR-workshop/ to get started.
+data("ca533")
+
+ca533.long <- rwl_longer(ca533,
+                         series.name = "series",
+                         dat.name = "rw.mm")
+
+comb.long <- rbind(PS.long, ca533.long)
+
+# note that longer_rwl() doesn't care if you have other variables in your long data.frame
+# We'll add some here to illustrate that
+comb.long$foo <- "bar"
+comb.long$bar <- "foo"
+
+comb.rwl <- longer_rwl(df = comb.long,
+                       series.name = "series",
+                       dat.name = "rw.mm")
+
+head(comb.rwl)[,1:5]
+#>     RRR05 RRR06 RRR07 RRR15 RRR19
+#> 626    NA    NA    NA    NA    NA
+#> 627    NA    NA    NA    NA    NA
+#> 628    NA    NA    NA    NA    NA
+#> 629    NA    NA    NA    NA    NA
+#> 630    NA    NA    NA    NA    NA
+#> 631    NA    NA    NA    NA    NA
+```
+
+## Example: power transformation & detrending ala Cook & Peters (1997)
