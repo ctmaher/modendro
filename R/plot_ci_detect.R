@@ -355,13 +355,17 @@ plot_ci_detect <- function(ci_output) {
 
 
         ## The removal plots
-        dist_long <-
-          tidyr::pivot_longer(
-            rem_iter[,!c(colnames(rem_iter) %in% "rwi.cor")],
-            cols = c("curve", "rwi"),
-            names_to = "type",
-            values_to = "value"
-          ) |> as.data.frame()
+        # Have to split up the RWI and disturbance curve series - ie make a long-format df
+        dist_long.1 <- rem_iter[,c("rwi","year","dir","dur","x","eq","series","iter","process")]
+        colnames(dist_long.1)[1] <- "value"
+        dist_long.1$type <- "rwi"
+
+        dist_long.2 <- rem_iter[,c("curve","year","dir","dur","x","eq","series","iter","process")]
+        colnames(dist_long.2)[1] <- "value"
+        dist_long.2$type <- "curve"
+
+        dist_long <- rbind(dist_long.1, dist_long.2)
+
 
         # add 1 year each before and after to the rwi - this is for plotting aesthetics
         # without this, the disturbance section appears to float above/below the disturbance-free

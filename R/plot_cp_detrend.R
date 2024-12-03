@@ -78,13 +78,7 @@ plot_cp_detrend <- function(cp_out) {
                             dat.name = "value",
                             trim = TRUE,
                             new.val.internal.na = NULL)
-    # long.detr <- tidyr::pivot_longer(
-    #   detr,
-    #   cols = -year,
-    #   names_to = "series" ,
-    #   values_to = "value"
-    # ) |>
-    #   as.data.frame()
+
     long.detr$type <- "de"
 
     # rbind all the long-format data.frames together

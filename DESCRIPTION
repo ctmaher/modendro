@@ -16,7 +16,6 @@ Depends: R (>= 4.0.0)
 Imports: 
     dplR (>= 1.7.4),
     ggplot2 (>= 3.5.0),
-    tidyr (>= 1.0.0),
     cowplot,
     stats,
     DescTools,

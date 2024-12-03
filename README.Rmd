@@ -109,14 +109,14 @@ In modendro, the `cp_detrend()` function does this. I should say that you can do
 
 ```{r example 2.1}
 
-PS.cp <- cp_detrend(PerkinsSwetnam96, detrend.method = "ModNegExp")
+PS.cp <- cp_detrend(PerkinsSwetnam96, detrend.method = "ModHugershoff")
 names(PS.cp) # output is a list
 
-PS.cp[["Transformation metadata"]][["RRR19"]]
+PS.cp[["Transformation metadata"]][["RRR27"]]
 
 PS.cp.plots <- plot_cp_detrend(PS.cp)
 
-PS.cp.plots[["RRR19"]]
+PS.cp.plots[["RRR27"]]
 
 ```
 
@@ -184,5 +184,27 @@ PS.corr.plots[["Aggregated data"]] |> head()
 
 ## Example: detection and removal of disturbances in tree-ring series
 
-Detection of release or suppression events...
+There are several existing methods for detecting release or suppression events in tree-ring series - the `TRADER` package for R offers several methods for detecting growth releases and the `dfoliatR` package offers methods for detecting suppression events from insect defoliators. To my knowledge, there has not been an implementation of the time-series based intervention detection methods developed by Druckenbrod et al (2005, 2013) and later by Rydval et al. (2016, 2018). modendro's `ci_detect()` is an R implementation of this method, called "curve intervention detection". See `?ci_detect` for full citations. This method simultaneously identifies and removes suppression and release events in tree-ring series.
+
+The curve intervention detection method starts with detrending the ring-width series using Cook & Peters (1997) methods, described above. This step is done inside of `ci_detect()` using `cp_detrend()`. You can choose the detrending curve method here as well - although be aware that the choice of method can influence the detection of suppression and release events! An extreme example would be to use a very flexible spline, which will do a thorough job of removing anything that might qualify as a disturbance. Reasonable choices are "ModNegExp" and "ModHugershoff". The default is "Mean", which does no actual detrending.
+
+After initial detrending, autoregressive (AR) residuals of the detrended power-transformed series are obtained from a best-fit AR model. The function then computes multiple moving averages (defaults 9-30 years) of the AR residuals, and any moving averages that exceed a variance threshold are identified as disturbances. In the first iteration, the largest of these identified disturbances is selected and a Hugershoff-type curve is fit to the disturbance and the remainder of the series. Then this curve is subtracted from the series and AR residuals and moving averages are re-calculated, starting a new iteration. Iterations are repeated until no more disturbances are detected or the user-defined maximum iterations is reached.
+
+After detection and removal iterations are complete, the "corrected" series is back transformed and "retrended" to return a "disturbance-free" set of ring-widths in original units. This process allows a kind of counter-factual view of how a tree might have grown without disturbances. `ci_detect()` also returns a "disturbance index", the difference between the original and the corrected ring-widths, for each ring-width series in a rwl-format data.frame. The disturbances detected are returned in a data.frame that has the estimated start year, duration, direction of the disturbance, and the equation of the fitted curve.
+
+One of the implicit features of curve intervention detection is that disturbances can generally be defined by a Hugershoff-type curve - that is they often have a relatively abrupt initiation and a slow recovery to previous conditions.
+
+Let's employ the same tree-ring dataset that we've been using for the previous analyses. Then we'll use `plot_ci_detect()` to show plots of the disturbance detection and removal iterations and the final results plot for a single tree's series.
+
+```{r}
+PS.cid <- ci_detect(PerkinsSwetnam96, detrend.method = "ModHugershoff")
+
+PS.cid.plots <- plot_ci_detect(PS.cid)
+
+PS.cid.plots[["Disturbance detection & removal plots"]][["RRR27"]]
+
+PS.cid.plots[["Final disturbance-free series plots"]][["RRR27"]]
+
+```
+
 
