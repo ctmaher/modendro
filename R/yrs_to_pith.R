@@ -15,8 +15,8 @@
 #' `"dist"`. Default is "dist". See details below.
 #' @param n.rings Numeric vector of length 1 representing the number of rings (years) you want to
 #' use as an aggregate in `method = "rings"`. For `method = "dist"`, `n.rings` sets the "floor" of
-#' the number of rings to be aggregated. Default is 5 rings, which is really the minimum you should
-#' use for a mean.
+#' the number of rings to be aggregated. Default is 10 rings, which is probably near the minimum you
+#' should use for a mean.
 #' @param plot.hist Logical vector that turns on or off a histogram of the estimated years to pith.
 #' This is an important guide to choosing the method or setting `n.rings` for method `"rings"`. See
 #' details below.

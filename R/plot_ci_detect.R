@@ -40,7 +40,6 @@
 #' @import ggplot2
 #' @importFrom cowplot plot_grid
 #' @import labeling
-#' @importFrom tidyr pivot_longer
 #' @export
 #'
 #' @examples
