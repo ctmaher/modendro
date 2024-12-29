@@ -11,11 +11,24 @@ read_pos(path = NULL)
 }
 \value{
 A list containing 2-3 data.frames for ring widths, attributes, and the original
-coordinates (for single .pos files only).
+coordinates (for single .pos files only). The ring widths are in "long format", which is the more
+flexible format for most analyses. If you need to export this data as a .rwl, for example, you
+can use \code{\link{longer_rwl}} and dplR's \code{\link[dplR]{write.rwl}}.
 }
 \description{
 This function reads in .pos files from CooRecorder (Cybis Elektronik & Data AB, Larsson &
 Larsson). \code{read_pos} can handle a single file or a directory containing multiple .pos files.
+
+The motivation of this function is to replicate some of the basic operations of CDendro in R.
+This circumvents of some of the arcane tree-ring file formats which don't allow users to take
+full advantage of the great features of CooRecorder, such as point labels, comments, etc. It also
+calculates the ring widths with greater precision (they are not rounded by default) than what
+CDendro exports.
+
+For the forseeable future, \code{read_pos} will only work with .pos files from CooRecorder 7.8 or
+greater - which is the earliest version (I think!) to include the actual pith coordinates in the
+.pos files. There is also the stipulation that the file \emph{must} contain the outer year of the ring
+width measurements. I'm not sure which version of CooRecorder started including this.
 }
 \details{
 If path is a directory the function will search all sub-directories for .pos files, thus
@@ -25,4 +38,15 @@ The main outputs are a "Ring widths" data.frame containing the ring widths (whol
 , and early wood, as applicable) and any year-specific point labels and an "Attributes"
 data.frame containing the distance to pith, the outer data, the inner-most date, the radius (sum
 of all ring widths plus the distance to pith), and the comment for whole series.
+}
+\examples{
+# example code
+
+}
+\references{
+Larsson & Larsson (2023) \emph{CDendro and CooRecorder programs of the CDendro package},
+Cybis Elektronik & Data AB. https://www.cybis.se/forfun/dendro/index.htm
+}
+\seealso{
+\code{\link{longer_rwl}}, \code{\link{rwl_longer}}, \code{\link{p2yrsL}}
 }
