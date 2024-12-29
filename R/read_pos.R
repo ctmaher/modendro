@@ -395,7 +395,7 @@ read_pos <- function(path = NULL) {
       attributes <- data.frame(series = seriesID,
                                d2pith.mm = all.coords$dist.mm[all.coords$type %in% "pith"],
                                out.date = OD,
-                               in.date = min(ring.widths$year, na.rm = TRUE),
+                               in.date = min(whole.ring.widths1$year, na.rm = TRUE),
                                radius.mm = sum(all.coords$dist.mm[!(all.coords$type %in% "multi2")],
                                                na.rm = TRUE),
                                comment = comment)
