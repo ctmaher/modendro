@@ -4,11 +4,13 @@
 #' This function reads in .pos files from CooRecorder (Cybis Elektronik & Data AB, Larsson &
 #' Larsson). `read_pos` can handle a single file or a directory containing multiple .pos files.
 #'
+#' Note that in the current implementation, the multiple .pos files mode can be pretty slow.
+#'
 #' The motivation of this function is to replicate some of the basic operations of CDendro in R.
-#' This circumvents of some of the arcane tree-ring file formats which don't allow users to take
-#' full advantage of the great features of CooRecorder, such as point labels, comments, etc. It also
-#' calculates the ring widths with greater precision (they are not rounded by default) than what
-#' CDendro exports.
+#' This allows the user to avoid saving tree-ring collections using some of the arcane tree-ring
+#' file formats which don't allow users to take full advantage of the great features of CooRecorder,
+#' such as point labels, comments, etc. It also calculates the ring widths with greater precision
+#' (they are not rounded by default) than what CDendro exports.
 #'
 #' For the forseeable future, `read_pos` will only work with .pos files from CooRecorder 7.8 or
 #' greater - which is the earliest version (I think!) to include the actual pith coordinates in the
@@ -71,11 +73,13 @@ read_pos <- function(path = NULL) {
               length(pos.files[grep("\\.pos{1}", pos.files)]) >= 1)
 
 
-  out.list <- lapply(pos.files, FUN = \(file) {
+  out.list <- lapply(pos.files, FUN = \(f) {
+
     raw.input <- scan(
-      file = file,
+      file = f,
       what = "character",
       sep = ";",
+      quote = "",
       quiet = TRUE
     )
 
@@ -109,7 +113,6 @@ read_pos <- function(path = NULL) {
       seriesID <- strsplit(top.line[[1]][length(top.line[[1]])], split = ".pos")[[1]][1]
 
       ## Get the outer date
-      # I wonder if it is possible to have a file without a date?
       date.line <- raw.input[grep("DATED", raw.input)] |>
         strsplit(split = " ")
 
@@ -141,6 +144,7 @@ read_pos <- function(path = NULL) {
       ## Get comments if they exist - should be between OD and pith coordinates
       # This needs to be the line after DATED and before Pith Coords or "Written"
       # Written will always exist, but pith coords may not
+      # Sometimes these elements are in other places, so we have to control for that too.
       if (is.null(pith.coords.df)) {
         if ((grep("Written", raw.input) - grep("DATED", raw.input)) > 1) {
           comment.lines <- raw.input[(grep("DATED", raw.input) + 1):(grep("Written",
@@ -162,6 +166,8 @@ read_pos <- function(path = NULL) {
           comment <- NA
         }
       }
+
+      comment <- ifelse(length(comment) > 1, NA, comment)
 
       ## Get the actual coordinates
       # The license info seems to be the 2nd-to-last line before the rest of the coordinates
@@ -296,6 +302,7 @@ read_pos <- function(path = NULL) {
       # I don't know how to do that though.
       all.coords$index <- as.numeric(rownames(all.coords))
 
+      # If the series ends in a pith, a multi2, or a gap2, or a combination, we have problems
       year.vec <- mapply(
         FUN = \(x, y) {
           rep(x, each = y)
@@ -306,7 +313,18 @@ read_pos <- function(path = NULL) {
       ) |>
         do.call(what = "c")
 
-      all.coords$year <- c(NA, year.vec)
+      if (is.null(pith.coords.df) &&
+          all.coords$type[nrow(all.coords)] %in% c("reg","multi1")){
+
+        all.coords$year <- year.vec
+
+      } else {
+        if (all.coords$type[(nrow(all.coords) - 1)] %in% c("gap2","multi2")) {
+          all.coords$year <- c(NA, year.vec, NA)
+        } else {
+          all.coords$year <- c(NA, year.vec)
+        }
+      }
 
       all.coords$year1 <- ifelse(is.na(all.coords$year1),
                                  all.coords$year,
@@ -372,9 +390,8 @@ read_pos <- function(path = NULL) {
       if (any(all.coords$type %in% "W")) {
         #
         seas.wood.widths1 <- all.coords[!(all.coords$new.type %in%
-                                            c("multi2", "gap2", "pith")) &
-                                          !substr(all.coords$new.type, 1, 4) %in%
-                                          "gap.", ]
+                                            c("multi2", "gap2", "pith")), ]
+        #
 
         #
         seas.wood.widths <- lapply(split(seas.wood.widths1, f = seas.wood.widths1$year),
@@ -450,12 +467,19 @@ read_pos <- function(path = NULL) {
 
       attributes <- data.frame(
         series = seriesID,
-        d2pith.mm = all.coords$dist.mm[all.coords$type %in% "pith"],
+        d2pith.mm = ifelse(is.null(pith.coords.df),
+                           NA,
+                           all.coords$dist.mm[all.coords$type %in% "pith"]),
         out.date = OD,
         in.date = min(whole.ring.widths1$year, na.rm = TRUE),
-        radius.mm = sum(all.coords$dist.mm[!(all.coords$type %in% "multi2")], na.rm = TRUE),
-        comment = comment
+        total.rw.mm = sum(all.coords$dist.mm[!(all.coords$type %in% "multi2")], na.rm = TRUE)
       )
+
+      attributes$radius.mm <- ifelse(is.null(pith.coords.df),
+                                     NA,
+                                     attributes$total.rw.mm + attributes$d2pith.mm)
+      attributes$comment <- comment
+
 
       # also include automatic rwl-format conversion as well?
       # This dosn't make sense because this is just one series.

@@ -19,11 +19,13 @@ can use \code{\link{longer_rwl}} and dplR's \code{\link[dplR]{write.rwl}}.
 This function reads in .pos files from CooRecorder (Cybis Elektronik & Data AB, Larsson &
 Larsson). \code{read_pos} can handle a single file or a directory containing multiple .pos files.
 
+Note that in the current implementation, the multiple .pos files mode can be pretty slow.
+
 The motivation of this function is to replicate some of the basic operations of CDendro in R.
-This circumvents of some of the arcane tree-ring file formats which don't allow users to take
-full advantage of the great features of CooRecorder, such as point labels, comments, etc. It also
-calculates the ring widths with greater precision (they are not rounded by default) than what
-CDendro exports.
+This allows the user to avoid saving tree-ring collections using some of the arcane tree-ring
+file formats which don't allow users to take full advantage of the great features of CooRecorder,
+such as point labels, comments, etc. It also calculates the ring widths with greater precision
+(they are not rounded by default) than what CDendro exports.
 
 For the forseeable future, \code{read_pos} will only work with .pos files from CooRecorder 7.8 or
 greater - which is the earliest version (I think!) to include the actual pith coordinates in the
