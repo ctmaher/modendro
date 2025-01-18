@@ -4,7 +4,8 @@
 #' This function reads in .pos files from CooRecorder (Cybis Elektronik & Data AB, Larsson &
 #' Larsson). `read_pos` can handle a single file or a directory containing multiple .pos files.
 #'
-#' Note that in the current implementation, the multiple .pos files mode can be pretty slow.
+#' Note that in the current implementation, the multiple .pos files mode can be slow if there are
+#' 1000s of files.
 #'
 #' The motivation of this function is to replicate some of the basic operations of CDendro in R.
 #' This allows the user to avoid saving tree-ring collections using some of the arcane tree-ring
@@ -27,12 +28,14 @@
 #' @param path file path to a single .pos file or a directory that may contain several .pos files.
 #'
 #' @details If path is a directory the function will search all sub-directories for .pos files, thus
-#' accomodating a range of directory structures. The output is slightly different if `path` leads to
-#' a single file - the "raw" coordinates are also returned in this case.
-#' The main outputs are a "Ring widths" data.frame containing the ring widths (whole ring, late wood
-#' , and early wood, as applicable) and any year-specific point labels and an "Attributes"
-#' data.frame containing the distance to pith, the outer data, the inner-most date, the radius (sum
-#' of all ring widths plus the distance to pith), and the comment for whole series.
+#' accomodating a range of directory structures. The main outputs are a "Ring widths" data.frame
+#' containing the ring widths (whole ring, late wood, and early wood, as applicable) and any
+#' year-specific point labels and an "Attributes" data.frame containing the distance to pith, the
+#' outer data, the inner-most date, the radius (sum of all ring widths plus the distance to pith),
+#' and the comment for whole series. The raw coordinates are also part of the output list. Plotting
+#' the coordinates can be a helpful quick diagnostic for errors without having to open CooRecorder.
+#' The last item in the output list contains a data.frame that lists all the series not read in and
+#' the reason for this.
 #'
 #' @return A list containing 2-3 data.frames for ring widths, attributes, and the original
 #' coordinates (for single .pos files only). The ring widths are in "long format", which is the more
@@ -655,12 +658,17 @@ read_pos <- function(path = NULL) {
     }) |>
       do.call(what = "rbind")
 
+    coord <- lapply(out.list[which(sapply(out.list, class) %in% "list")], FUN = \(x) {
+      x[["Raw coordinates"]]
+    }) |>
+      do.call(what = "rbind")
+
     tbdr <- out.list[which(sapply(out.list, class) %in% "data.frame")] |>
       do.call(what = "rbind")
 
-    new.out.list <- list(rw, att, tbdr)
+    new.out.list <- list(rw, att, coord, tbdr)
 
-    names(new.out.list) <- c("Ring widths", "Attributes", "Not read")
+    names(new.out.list) <- c("Ring widths", "Attributes", "Raw coordinates", "Not read")
 
     if (length(tbdr) >= 1) {
       warning("Some files not read. See 'Not read' list for details.")

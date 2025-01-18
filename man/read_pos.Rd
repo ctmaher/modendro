@@ -19,7 +19,8 @@ can use \code{\link{longer_rwl}} and dplR's \code{\link[dplR]{write.rwl}}.
 This function reads in .pos files from CooRecorder (Cybis Elektronik & Data AB, Larsson &
 Larsson). \code{read_pos} can handle a single file or a directory containing multiple .pos files.
 
-Note that in the current implementation, the multiple .pos files mode can be pretty slow.
+Note that in the current implementation, the multiple .pos files mode can be slow if there are
+1000s of files.
 
 The motivation of this function is to replicate some of the basic operations of CDendro in R.
 This allows the user to avoid saving tree-ring collections using some of the arcane tree-ring
@@ -41,12 +42,14 @@ width measurements. I'm not sure which version of CooRecorder started including 
 }
 \details{
 If path is a directory the function will search all sub-directories for .pos files, thus
-accomodating a range of directory structures. The output is slightly different if \code{path} leads to
-a single file - the "raw" coordinates are also returned in this case.
-The main outputs are a "Ring widths" data.frame containing the ring widths (whole ring, late wood
-, and early wood, as applicable) and any year-specific point labels and an "Attributes"
-data.frame containing the distance to pith, the outer data, the inner-most date, the radius (sum
-of all ring widths plus the distance to pith), and the comment for whole series.
+accomodating a range of directory structures. The main outputs are a "Ring widths" data.frame
+containing the ring widths (whole ring, late wood, and early wood, as applicable) and any
+year-specific point labels and an "Attributes" data.frame containing the distance to pith, the
+outer data, the inner-most date, the radius (sum of all ring widths plus the distance to pith),
+and the comment for whole series. The raw coordinates are also part of the output list. Plotting
+the coordinates can be a helpful quick diagnostic for errors without having to open CooRecorder.
+The last item in the output list contains a data.frame that lists all the series not read in and
+the reason for this.
 }
 \examples{
 # example code
