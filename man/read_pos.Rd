@@ -27,6 +27,13 @@ file formats which don't allow users to take full advantage of the great feature
 such as point labels, comments, etc. It also calculates the ring widths with greater precision
 (they are not rounded by default) than what CDendro exports.
 
+A possible error in CooRecorder is that points can be saved out of order. Usually CooRecorder
+will give you an "Erroneous point order" message, but it will save the file anyhow. This can
+wreak havoc on determining ring widths. read_pos has a simple way of determining if there are
+out of order points and it will warn you if it finds something but will read in the file anyway.
+Go check those files in CooRecorder - some will be false positives, others will truly be messed
+up.
+
 For the forseeable future, \code{read_pos} will only work with .pos files from CooRecorder 7.8 or
 greater - which is the earliest version (I think!) to include the actual pith coordinates in the
 .pos files. There is also the stipulation that the file \emph{must} contain the outer year of the ring

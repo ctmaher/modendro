@@ -12,6 +12,13 @@
 #' such as point labels, comments, etc. It also calculates the ring widths with greater precision
 #' (they are not rounded by default) than what CDendro exports.
 #'
+#' A possible error in CooRecorder is that points can be saved out of order. Usually CooRecorder
+#' will give you an "Erroneous point order" message, but it will save the file anyhow. This can
+#' wreak havoc on determining ring widths. read_pos has a simple way of determining if there are
+#' out of order points and it will warn you if it finds something but will read in the file anyway.
+#' Go check those files in CooRecorder - some will be false positives, others will truly be messed
+#' up.
+#'
 #' For the forseeable future, `read_pos` will only work with .pos files from CooRecorder 7.8 or
 #' greater - which is the earliest version (I think!) to include the actual pith coordinates in the
 #' .pos files. There is also the stipulation that the file *must* contain the outer year of the ring
@@ -75,6 +82,8 @@ read_pos <- function(path = NULL) {
 
   out.list <- lapply(pos.files, FUN = \(f) {
 
+    #f <- pos.files
+
     raw.input <- scan(
       file = f,
       what = "character",
@@ -82,6 +91,8 @@ read_pos <- function(path = NULL) {
       quote = "",
       quiet = TRUE
     )
+
+    # Control for this being empty - have had issues with this.
 
     # Setup check for CooRecorder version
     CR.ver.string <- raw.input[grep("CooRecorder=", raw.input)] |>
@@ -136,6 +147,9 @@ read_pos <- function(path = NULL) {
           label = NA,
           type = "pith"
         )
+
+        pith.coords.df$type <- factor(pith.coords.df$type,
+                                      levels = c("reg", "multi1", "multi2", "W", "gap", "pith"))
       } else {
         # If no pith coords
         pith.coords.df <- NULL
@@ -169,10 +183,20 @@ read_pos <- function(path = NULL) {
 
       comment <- ifelse(length(comment) > 1, NA, comment)
 
-      ## Get the actual coordinates
+      ## Get the point coordinates
       # The license info seems to be the 2nd-to-last line before the rest of the coordinates
       # There is a blank line in between
-      coord.start <- grep("licensedTo", raw.input) + 2
+      # This is usually true but not always! Maybe I need more of a positive ID of the coordinates.
+      # Find the first line that contains just coordinates. That is, two stings coercible to
+      # numeric that are separated by a comma. The key is that there is nothing else in the string.
+      # coord.start <- grep("licensedTo", raw.input) + 2
+
+      # This method will not count gaps or season wood - but I'm pretty sure it is not
+      # possible to have these as the first point.
+      suppressWarnings(
+        coord.start <- which(!is.na(sapply(strsplit(raw.input, split = ","),
+                                           FUN = \(x) as.numeric(x[[1]]))))[1]
+      )
 
       # get all the coords separated from the header
       ring.bound.raw <- raw.input[coord.start:length(raw.input)]
@@ -190,7 +214,9 @@ read_pos <- function(path = NULL) {
       ring.bound <- rep(ring.bound.raw, times = ring.bound.df$zeros.rep)
 
 
-      ring.bound.df <- lapply(ring.bound, FUN = \(x) {
+      names(ring.bound) <- 1:length(ring.bound)
+
+      ring.bound.df <- mapply(FUN = \(x, x.names) {
         if (!(substr(x, 1, 1) %in% "D")) {
           # for regular and multi coords
           # check for label, get it if exists
@@ -201,7 +227,7 @@ read_pos <- function(path = NULL) {
           # in the cases of multipoints, split by spaces. If single points this leaves it unchanged.
           coords.string1 <- strsplit(coords.string, "\\s+")[[1]]
 
-          if (length(coords.string1) == 1) {
+          if (length(coords.string1) == 1) { # "regular points"
             coords <- strsplit(coords.string1, split = ",")
             coords.df <- data.frame(
               series = seriesID,
@@ -210,7 +236,7 @@ read_pos <- function(path = NULL) {
               label = label,
               type = "reg"
             )
-          } else {
+          } else { # multi points
             coords1 <- coords.string1[1] |> strsplit(split = ",")
             coords2 <- coords.string1[2] |> strsplit(split = ",")
             coords.df <- data.frame(
@@ -219,6 +245,7 @@ read_pos <- function(path = NULL) {
               y = c(as.numeric(coords1[[1]][2]), as.numeric(coords2[[1]][2])),
               label = label,
               type = c("multi1", "multi2")
+              #type = c(paste0("multi1_", x.names), paste0("multi2_", x.names))
             )
           }
 
@@ -263,76 +290,150 @@ read_pos <- function(path = NULL) {
 
         }
         coords.df
-      }) |> do.call(what = "rbind")
+      }, x = ring.bound, x.names = names(ring.bound), SIMPLIFY = FALSE) |>
+        do.call(what = "rbind")
 
-      all.coords <- rbind(ring.bound.df, pith.coords.df)
+      # Sometimes the files have "Erroneous order" messages, (points are out of out of order).
+      # We can order the points by their x or y position. Leave out pith for now if it's there -
+      # it always should go at the end.
+      # The following several lines fix the order if it is broken
+
+      # Each set of coords needs a unique identifier
+      ring.bound.df$orig.index <- 1:nrow(ring.bound.df)
+
+      ggplot(ring.bound.df) +
+        geom_path(aes(x, y), inherit.aes = F) +
+        geom_point(aes(x, y, color = type), inherit.aes = F) +
+        coord_fixed()
+
+      # A fairly simple way to determine if any points are out of order is to see if there are any
+      # directional changes in the differences of BOTH the axis. 1 at a time is okay and plausible.
+      check.diffs <- ring.bound.df
+      check.diffs$x.diff <- c(NA, diff(check.diffs$x))
+      check.diffs$y.diff <- c(NA, diff(check.diffs$y))
+
+      # The top row has NA diffs and must be removed
+      check.diffs <- check.diffs[-1,]
+
+      # Define the direction of movement
+      check.diffs$x.dir <- ifelse(check.diffs$x.diff < 0, "neg", "pos")
+      check.diffs$y.dir <- ifelse(check.diffs$y.diff < 0, "neg", "pos")
+
+      # 0 diffs should take on the neg or pos label of the preceding point for direction
+      # Must also account for 0 diffs at the top of - take the next one instead of the previous one
+      for (i in seq_along(check.diffs$x.dir)) {
+        if (check.diffs$x.diff[i] == 0) {
+          if (length(check.diffs$x.dir[i - 1]) == 0) {
+            check.diffs$x.dir[i] <- check.diffs$x.dir[i + 1]
+          } else {
+            check.diffs$x.dir[i] <- check.diffs$x.dir[i - 1]
+          }
+        }
+      }
+
+      for (i in seq_along(check.diffs$y.dir)) {
+        if (check.diffs$y.diff[i] == 0) {
+          if (length(check.diffs$x.dir[i - 1]) == 0) {
+            check.diffs$y.dir[i] <- check.diffs$y.dir[i + 1]
+          } else {
+            check.diffs$y.dir[i] <- check.diffs$y.dir[i - 1]
+          }
+        }
+      }
+
+      # Have to exclude the multi2 diffs, as those will represent the diff between multi points.
+      # This assumes that the multi points are in order - they will be with respect to each other,
+      # because I parsed them.
+      check.diffs <- check.diffs[!(check.diffs$type %in% "multi2"),]
+
+      # Find the prevailing direction of each axis
+      # Note that this is imperfect in that there can be multiple "prevailing" directions!
+      # Tree-ring series may twist in such a way that the short axis can have two prevailing
+      # directions. There are a lot of observations in these cases though.
+      # This might be impossible. I might have to give a warning and proceed anyway.
+      x.prevailing <- aggregate(series ~ x.dir, data = check.diffs, length)
+      y.prevailing <- aggregate(series ~ y.dir, data = check.diffs, length)
+
+      check.diffs$x.head <- ifelse(check.diffs$x.dir %in%
+                                     x.prevailing$x.dir[which.max(x.prevailing$series)],
+                                   "norm", "div")
+      check.diffs$y.head <- ifelse(check.diffs$y.dir %in%
+                                     y.prevailing$y.dir[which.max(y.prevailing$series)],
+                                   "norm", "div")
+
+      # If we have any observations where BOTH heading components are divergent, then we may have
+      # erroneous point order. Read these in anyway, but give a warning and a tag.
+
+      # Set up the null data.frame
+      error.df <- data.frame(file = f, message = NA)
+
+      if (any(check.diffs$x.head %in% "div" & check.diffs$y.head %in% "div")) {
+
+        warning(paste0("Check ", unique(check.diffs$series), ".pos"," in CooRecorder - ",
+                       "possible erroneous point order"))
+
+        error.df <- data.frame(file = f,
+                               message = paste0("Check this file in CooRecorder - ",
+                                                "possible erroneous point order"))
+
+      }
+
+      # Files that end in a gap should be trimmed - I think this is rare but is possible
+      if(ring.bound.df$type[nrow(ring.bound.df)] %in% c("gap","gap1","gap2")) {
+        ring.bound.df <- ring.bound.df[1:(nrow(ring.bound.df) - 1),]
+      }
+
+      # The coordinates can look inverted vertically relative to what I see in CooRecorder.
+      # This doesn't matter for the distances
+
+      # Add the pith coordinates. Note that the pith coords are sometimes flipped on the y axis
+      # relative to the other coords.
+      # This should not affect the distance, however. What matters is that the pith coords appear
+      # at the bottom or end of the other points.
+      all.coords <- rbind(ring.bound.df[, c("series","x","y","label","type")], pith.coords.df)
 
       # Clean up the label
       all.coords$label <- ifelse(all.coords$label %in% "", NA, all.coords$label)
 
+      # type as a factor
       all.coords$type <- factor(all.coords$type,
                                 levels = c("reg", "multi1", "multi2", "W", "gap", "pith"))
 
-
-      # The coordinates look inverted vertically relative to what I see in CooRecorder,
-      # but this doesn't matter for the distances
-
       # Calculate the distances in mm using Pythagorean Theorem
-      all.coords$x.dist <- c(NA, diff(all.coords$x))
-      all.coords$y.dist <- c(NA, diff(all.coords$y))
+      all.coords$x.dist <- c(NA, diff(all.coords$x, lag = 1, differences = 1))
+      all.coords$y.dist <- c(NA, diff(all.coords$y, lag = 1, differences = 1))
       all.coords$dist.mm <- sqrt(all.coords$x.dist^2 + all.coords$y.dist^2)
 
+      ## Assigning years based on OD and the order of points
       # If there is season wood, then we need to add the two distances together for each year.
       # If there is a gap, I need to subtract (or skip) the distance indicated by the gap.
       # Gaps can be indicated by 2 points (we skip the distance between them) or by a single point
       # (we skip the distance between a regular point and the gap point - also would apply to
       # "W" points).
       # The order of points is the only thing that indicates the year each point is associated with.
-      all.coords$year1 <- NA
-      all.coords$year1[all.coords$type %in%
-                         c("reg", "multi1")] <- seq(from = OD,
-                                                    to = (OD -
-                                                            (nrow(all.coords[all.coords$type
-                                                                             %in%
-                                                                               c("reg", "multi1"),
-                                                            ]) - 1)),
-                                                    by = -1)
-      # Assigning the correct year to the season wood, gap, and the multi2 points -
-      # what I can think of so far is to get the year of the nearest reg point *before* each
-      # I don't know how to do that though.
-      all.coords$index <- as.numeric(rownames(all.coords))
+      #all.coords$year1 <- NA
+      all.coords$year <- NA
+      all.coords$year[all.coords$type %in%
+                        c("reg", "multi1")] <- seq(from = OD,
+                                                   to = (OD -
+                                                           (nrow(all.coords[all.coords$type
+                                                                            %in%
+                                                                              c("reg", "multi1"),
+                                                           ]) - 1)),
+                                                   by = -1)
 
-      # If the series ends in a pith, a multi2, or a gap2, or a combination, we have problems
-      year.vec <- mapply(
-        FUN = \(x, y) {
-          rep(x, each = y)
-        },
-        x = all.coords$year1[!is.na(all.coords$year1)],
-        y = c(diff(all.coords$index[!is.na(all.coords$year1)]), NA),
-        SIMPLIFY = FALSE
-      ) |>
-        do.call(what = "c")
 
-      if (is.null(pith.coords.df) &&
-          all.coords$type[nrow(all.coords)] %in% c("reg","multi1")){
-
-        all.coords$year <- year.vec
-
-      } else {
-        if (all.coords$type[(nrow(all.coords) - 1)] %in% c("gap2","multi2")) {
-          all.coords$year <- c(NA, year.vec, NA)
-        } else {
-          all.coords$year <- c(NA, year.vec)
+      for (i in seq_along(all.coords$year)) {
+        if (is.na(all.coords$year[i])) {
+          all.coords$year[i] <- all.coords$year[i - 1]
         }
       }
 
-      all.coords$year1 <- ifelse(is.na(all.coords$year1),
-                                 all.coords$year,
-                                 all.coords$year1)
+      # Year needs to be shifted by 1
+      all.coords$year <- c(NA, all.coords$year[1:(nrow(all.coords) - 1)])
 
-      all.coords$year[all.coords$type %in% "pith"] <-
-        all.coords$year1[all.coords$type %in% "pith"] <-
-        NA
+
+      all.coords$year[all.coords$type %in% "pith"] <- NA
 
       # Gaps need some special handling - two gaps in a row need new labels - gap1 & gap2.
       # We will ignore gap2 distances, but keep gap1. Single gaps will stay as "gap", and we will
@@ -371,8 +472,6 @@ read_pos <- function(path = NULL) {
 
 
       # Whole ring width is now the sum of dist.mm within each year, excluding multi2 and gaps
-      # Will this work for single gap points? Currently the wrong side of the gap is
-      # getting deleted.
       whole.ring.widths <- aggregate(dist.mm ~ year,
                                      data = all.coords[!(all.coords$new.type %in%
                                                            c("multi2", "gap2", "pith")) &
@@ -384,6 +483,9 @@ read_pos <- function(path = NULL) {
       # Add the seriesID
       whole.ring.widths$series <- seriesID
 
+      # ggplot(whole.ring.widths, aes(year, rw.mm)) +
+      #   geom_line()
+
       ## Get seasonwood widths if they exist
       # These already exist actually, but need to be labeled properly
 
@@ -391,43 +493,53 @@ read_pos <- function(path = NULL) {
         #
         seas.wood.widths1 <- all.coords[!(all.coords$new.type %in%
                                             c("multi2", "gap2", "pith")), ]
-        #
+        # Do some error catching here - check for multiple W points per year. If this happens,
+        # skip the EW/LW points and give the user a message about potential errors
+        per.year.check <- aggregate(type ~ year, data = seas.wood.widths1, length)
+        if (any(per.year.check[,"type"] > 2)) {
+          paste0("Possibly multiple seasonwood boundaries detected in ",
+                 per.year.check[per.year.check$type > 2, "year"],".",
+                 "Seasonwood data not read.")
+          whole.ring.widths$lw.mm <- NA
+          whole.ring.widths$ew.mm <- NA
+        } else {
 
-        #
-        seas.wood.widths <- lapply(split(seas.wood.widths1, f = seas.wood.widths1$year),
-                                   FUN = \(this.year) {
-                                     if (any(this.year$type %in% "W")) {
-                                       # have to deal with the gaps if they exist
-                                       if (any(this.year$type %in% "gap")) {
-                                         for (i in 1:nrow(this.year)) {
-                                           if (this.year$type[i] %in% "gap" &&
-                                               i < nrow(this.year)) {
-                                             # Add "gap" dist to the next row
-                                             this.year$dist.mm[i + 1] <- this.year$dist.mm[i + 1] +
-                                               this.year$dist.mm[i]
+          #
+          seas.wood.widths <- lapply(split(seas.wood.widths1, f = seas.wood.widths1$year),
+                                     FUN = \(this.year) {
+                                       if (any(this.year$type %in% "W")) {
+                                         # have to deal with the gaps if they exist
+                                         if (any(this.year$type %in% "gap")) {
+                                           for (i in 1:nrow(this.year)) {
+                                             if (this.year$type[i] %in% "gap" &&
+                                                 i < nrow(this.year)) {
+                                               # Add "gap" dist to the next row
+                                               this.year$dist.mm[i + 1] <- this.year$dist.mm[i + 1] +
+                                                 this.year$dist.mm[i]
+                                             }
                                            }
                                          }
+                                         this.year <- this.year[!(this.year$type %in% "gap"), ]
+                                         this.year$wood.portion <- c("LW", "EW")
+                                       } else {
+                                         this.year$wood.portion <- "WR"
                                        }
-                                       this.year <- this.year[!(this.year$type %in% "gap"), ]
-                                       this.year$wood.portion <- c("LW", "EW")
-                                     } else {
-                                       this.year$wood.portion <- "WR"
-                                     }
-                                     this.year
+                                       this.year
 
-                                   }) |> do.call(what = "rbind")
-
-        # Add the seasonwood points to the whole ring widths
-        lw <- seas.wood.widths[seas.wood.widths$wood.portion %in% "LW", c("year", "dist.mm")]
-        colnames(lw)[colnames(lw) %in% "dist.mm"] <- "lw.mm"
-
-        ew <- seas.wood.widths[seas.wood.widths$wood.portion %in% "EW", c("year", "dist.mm")]
-        colnames(ew)[colnames(ew) %in% "dist.mm"] <- "ew.mm"
-
-        whole.ring.widths <- Reduce(f = \(x, y) base::merge(x, y, by = "year"),
-                                    list(whole.ring.widths, lw, ew))
+                                     }) |> do.call(what = "rbind")
 
 
+          # Add the seasonwood points to the whole ring widths
+          lw <- seas.wood.widths[seas.wood.widths$wood.portion %in% "LW", c("year", "dist.mm")]
+          colnames(lw)[colnames(lw) %in% "dist.mm"] <- "lw.mm"
+
+          ew <- seas.wood.widths[seas.wood.widths$wood.portion %in% "EW", c("year", "dist.mm")]
+          colnames(ew)[colnames(ew) %in% "dist.mm"] <- "ew.mm"
+
+          whole.ring.widths <- Reduce(f = \(x, y) base::merge(x, y, by = "year"),
+                                      list(whole.ring.widths, lw, ew))
+
+        }
       } else {
         whole.ring.widths$lw.mm <- NA
         whole.ring.widths$ew.mm <- NA
@@ -437,7 +549,7 @@ read_pos <- function(path = NULL) {
       # Also need to get the labels back for the appropriate years
       # Prep the labels
       year.labels <- aggregate(
-        label ~ year1,
+        label ~ year,
         all.coords,
         na.action = na.pass,
         drop = FALSE,
@@ -459,11 +571,13 @@ read_pos <- function(path = NULL) {
       whole.ring.widths1 <- merge(
         whole.ring.widths,
         year.labels,
-        by.x = "year",
-        by.y = "year1",
+        by = "year",
+        # by.y = "year1",
         all.y = FALSE
       )
 
+      # ggplot(whole.ring.widths1, aes(year, rw.mm)) +
+      #   geom_line()
 
       attributes <- data.frame(
         series = seriesID,
@@ -479,6 +593,7 @@ read_pos <- function(path = NULL) {
                                      NA,
                                      attributes$total.rw.mm + attributes$d2pith.mm)
       attributes$comment <- comment
+      attributes$error.message <- error.df$message
 
 
       # also include automatic rwl-format conversion as well?
@@ -488,44 +603,68 @@ read_pos <- function(path = NULL) {
         "Ring widths" = whole.ring.widths1[, c("series", "year", "rw.mm",
                                                "ew.mm", "lw.mm", "label")],
         "Attributes" = attributes,
-        "Raw coordinates" = all.coords
+        "Raw coordinates" = all.coords[, c("series", "year", "x", "y",
+                                           "dist.mm", "type", "label")]
       )
 
       this.series.list
+
     } else {
-      # file doesn't meet criteria above for DENDRO files & CooRecorder version
+      # file doesn't meet criteria above for DENDRO files, CooRecorder version, or is not
+      # dated.
+      # Get specific here for the individual file
+      if (length(grep("DENDRO", raw.input[1])) != 1) {
+        tbdr.df <- data.frame(file = f,
+                              message = "This file could not be identified as a DENDRO file (another data type?)")
+      }
 
-      warning(
-        "Some .pos files in path were not DENDRO files, were not CooRecorder 7.8 or greater, or
-  where not dated (no outer year assigned in CooRecorder) - these were skipped"
-      )
+      if (CR.ver < 780) {
+        tbdr.df <- data.frame(file = f,
+                              message = "This file was not made with CooRecorder ≥7.8 (do an update & resave file)")
+      } else {
 
-      this.series.list <- NA
-      this.series.list
+        if (length(grep("DATED", raw.input)) < 1) {
+          tbdr.df <- data.frame(file = f,
+                                message = "This file was not dated (no outer year assigned in CooRecorder)")
+        }}
+
+      tbdr.df
     }
   })
 
   if (length(out.list) == 1) {
     # If a single series, just return the out.list
-    out.list[[1]]
+    # Make an exception if it falls under "not read"
+    if (any(colnames(out.list[[1]]) %in% "message")) {
+      warning(paste0("File not read: ", out.list[[1]]$message))
+    } else {
+      out.list[[1]]
+    }
+
   } else {
     # If many series, bind the ring widths and
     # attributes into single data.frames
 
-    rw <- lapply(out.list[!is.na(out.list)], FUN = \(x) {
+    rw <- lapply(out.list[which(sapply(out.list, class) %in% "list")], FUN = \(x) {
       x[["Ring widths"]]
     }) |>
       do.call(what = "rbind")
 
-    att <- lapply(out.list[!is.na(out.list)], FUN = \(x) {
+    att <- lapply(out.list[which(sapply(out.list, class) %in% "list")], FUN = \(x) {
       x[["Attributes"]]
     }) |>
       do.call(what = "rbind")
 
-    new.out.list <- list(rw, att)
+    tbdr <- out.list[which(sapply(out.list, class) %in% "data.frame")] |>
+      do.call(what = "rbind")
 
-    names(new.out.list) <- c("Ring widths", "Attributes")
+    new.out.list <- list(rw, att, tbdr)
 
+    names(new.out.list) <- c("Ring widths", "Attributes", "Not read")
+
+    if (length(tbdr) >= 1) {
+      warning("Some files not read. See 'Not read' list for details.")
+    }
     new.out.list
   }
 } ## End of function
