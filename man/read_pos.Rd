@@ -10,46 +10,55 @@ read_pos(path = NULL)
 \item{path}{file path to a single .pos file or a directory that may contain several .pos files.}
 }
 \value{
-A list containing 2-3 data.frames for ring widths, attributes, and the original
-coordinates (for single .pos files only). The ring widths are in "long format", which is the more
-flexible format for most analyses. If you need to export this data as a .rwl, for example, you
-can use \code{\link{longer_rwl}} and dplR's \code{\link[dplR]{write.rwl}}.
+A list containing 4 data.frames for ring widths, attributes, the original coordinates,
+and a 2-column data.frame of the files not read and the associated error message. The ring widths
+are in "long format", which is the more flexible format for most analyses. If you need to export
+this data as a .rwl, for example, you can use \code{\link{longer_rwl}} and dplR's
+\code{\link[dplR]{write.rwl}}. Note that for \code{\link[dplR]{write.rwl}} series name lengths
+are limited.
 }
 \description{
-This function reads in .pos files from CooRecorder (Cybis Elektronik & Data AB, Larsson &
-Larsson). \code{read_pos} can handle a single file or a directory containing multiple .pos files.
-
-Note that in the current implementation, the multiple .pos files mode can be slow if there are
-1000s of files.
+\code{\link{read_pos}} reads in .pos files from CooRecorder (Cybis Elektronik & Data AB, Larsson
+& Larsson). \code{\link{read_pos}} can handle a single file or a directory containing multiple
+.pos files. Note that reading in multiple .pos files can be slow if there are 1000s of files.
 
 The motivation of this function is to replicate some of the basic operations of CDendro in R.
 This allows the user to avoid saving tree-ring collections using some of the arcane tree-ring
 file formats which don't allow users to take full advantage of the great features of CooRecorder,
 such as point labels, comments, etc. It also calculates the ring widths with greater precision
 (they are not rounded by default) than what CDendro exports.
-
-A possible error in CooRecorder is that points can be saved out of order. Usually CooRecorder
-will give you an "Erroneous point order" message, but it will save the file anyhow. This can
-wreak havoc on determining ring widths. read_pos has a simple way of determining if there are
-out of order points and it will warn you if it finds something but will read in the file anyway.
-Go check those files in CooRecorder - some will be false positives, others will truly be messed
-up.
-
-For the forseeable future, \code{read_pos} will only work with .pos files from CooRecorder 7.8 or
-greater - which is the earliest version (I think!) to include the actual pith coordinates in the
-.pos files. There is also the stipulation that the file \emph{must} contain the outer year of the ring
-width measurements. I'm not sure which version of CooRecorder started including this.
 }
 \details{
 If path is a directory the function will search all sub-directories for .pos files, thus
-accomodating a range of directory structures. The main outputs are a "Ring widths" data.frame
+accommodating a range of directory structures. The main outputs are 1) a "Ring widths" data.frame
 containing the ring widths (whole ring, late wood, and early wood, as applicable) and any
-year-specific point labels and an "Attributes" data.frame containing the distance to pith, the
+year-specific point labels 2) an "Attributes" data.frame containing the distance to pith, the
 outer data, the inner-most date, the radius (sum of all ring widths plus the distance to pith),
-and the comment for whole series. The raw coordinates are also part of the output list. Plotting
-the coordinates can be a helpful quick diagnostic for errors without having to open CooRecorder.
-The last item in the output list contains a data.frame that lists all the series not read in and
-the reason for this.
+and the comment for whole series, 3) a "Raw coordinates" data.frame containing the orignal
+coordinates from the .pos file after they have been converted to numeric values, and 4) a
+"Not read" data.frame which lists the files that were not read in and gives an error message
+describing a likely reason.
+
+\code{\link{read_pos}} contains several error catching heuristics that try to minimize direct
+interventions from the user or at least clearly guide the user to a fix they can make in
+CooRecorder.
+
+A possible error in CooRecorder is that points can be saved out of order. Usually CooRecorder
+will give you an "Erroneous point order" message, but it will save the file anyhow. This can
+wreak havoc on determining ring widths. \code{\link{read_pos}} has a simple way of determining
+if there are out of order points and it will warn you if it finds something. Since false
+positives are possible (and likely) with this approach, read_pos() will read in the files anyway.
+Go check those files in CooRecorder - some will be false positives, others will truly be messed
+up.
+
+For the forseeable future, \code{\link{read_pos}} will only work with .pos files from CooRecorder
+7.8 or greater - which is the earliest version (I think!) to include the actual pith coordinates
+in the .pos files. There is also the stipulation that the file \emph{must} contain the outer year of
+the ring width measurements. I'm not sure which version of CooRecorder started including this.
+
+In CooRecorder, it is possible to have a seasonwood ("W") point or a gap point at the very end of
+a measurement series. Since these are nonsensical for determining distances between points, these
+points are removed by read_pos automatically.
 }
 \examples{
 # example code
