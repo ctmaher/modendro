@@ -13,6 +13,9 @@
 #'
 #' @param path file path to a single .pos file or a directory that may contain several .pos files.
 #'
+#' @param default.OD optional - a numeric vector of length 1 to give an outer date (OD) year for
+#' files that did not have a date assigned in CooRecorder.
+#'
 #' @details If path is a directory the function will search all sub-directories for .pos files, thus
 #' accommodating a range of directory structures. The main outputs are 1) a "Ring widths" data.frame
 #' containing the ring widths (whole ring, late wood, and early wood, as applicable) and any
@@ -65,7 +68,8 @@
 #' # example code
 #'
 
-read_pos <- function(path = NULL) {
+read_pos <- function(path = NULL,
+                     default.OD = NULL) {
   ## Error checking
   # Is path a character?
   stopifnot(
@@ -73,6 +77,14 @@ read_pos <- function(path = NULL) {
       is.character(path) |
       length(path) >= 1
   )
+
+  if (!is.null(default.OD)) {
+    stopifnot(
+      "default.OD argument must be a numeric vector (a year)" =
+        is.numeric(default.OD) |
+        length(default.OD) == 1
+    )
+  }
 
   # Determine if path is a directory or not using list.files, then slim down to a list of .pos
   # files
@@ -121,12 +133,30 @@ read_pos <- function(path = NULL) {
     )
     CR.ver <- ifelse(nchar(CR.ver) < 3, paste0(CR.ver, "0"), CR.ver) |> as.numeric()
 
+    ## Get the outer date, if it exists. If not replace with default.OD
+    if (length(grep("DATED", raw.input)) >= 1) {
+      date.line <- raw.input[grep("DATED", raw.input)] |>
+        strsplit(split = " ")
+
+      OD.which <- which(!is.na(suppressWarnings(sapply(
+        date.line[[1]], as.numeric
+      ))))
+      OD <- date.line[[1]][OD.which] |> as.numeric()
+    } else {
+      if (is.null(default.OD)) {
+        OD <- NULL
+      } else {
+        OD <- default.OD
+      }
+    }
+
+
     # File has to be a DENDRO flavored .pos file - top line has this info
     # has to be CooRecorder version 7.8 or higher,
     # and must have a DATED line
     if (length(grep("DENDRO", raw.input[1])) == 1 &&
         CR.ver >= 780 &&
-        length(grep("DATED", raw.input)) >= 1) {
+        !is.null(OD)) {
       # The crucial data are the seriesID, the outer date, the PithCoordinates,
       # comments if they exist,
       # & the ring boundary coordinates
@@ -137,14 +167,10 @@ read_pos <- function(path = NULL) {
       # The path may be complex, but the file name always ends in .pos
       seriesID <- strsplit(top.line[[1]][length(top.line[[1]])], split = ".pos")[[1]][1]
 
-      ## Get the outer date
-      date.line <- raw.input[grep("DATED", raw.input)] |>
-        strsplit(split = " ")
-
-      OD.which <- which(!is.na(suppressWarnings(sapply(
-        date.line[[1]], as.numeric
-      ))))
-      OD <- date.line[[1]][OD.which] |> as.numeric()
+      ## Get the DPI - this is used by CooRecorder to get the numeric x and y scales in mm
+      DPI <- raw.input[grep("DPI", raw.input)] |>
+        gsub(pattern = "#DPI ", replacement = "") |>
+        as.numeric()
 
       ## Get the pith coordinates
       # If there are pith coords...
@@ -173,28 +199,51 @@ read_pos <- function(path = NULL) {
       # This needs to be the line after DATED and before Pith Coords or "Written"
       # Written will always exist, but pith coords may not
       # Sometimes these elements are in other places, so we have to control for that too.
-      if (is.null(pith.coords.df)) {
-        if ((grep("Written", raw.input) - grep("DATED", raw.input)) > 1) {
-          comment.lines <- raw.input[(grep("DATED", raw.input) + 1):(grep("Written",
-                                                                          raw.input) - 1)]
-          comment <- gsub(pattern = "#C ",
-                          replacement = "",
-                          comment.lines)
+      if (length(grep("DATED", raw.input)) >= 1) {
+        if (is.null(pith.coords.df)) {
+          if ((grep("Written", raw.input) - grep("DATED", raw.input)) > 1) {
+            comment.lines <- raw.input[(grep("DATED", raw.input) + 1):(grep("Written",
+                                                                            raw.input) - 1)]
+            comment <- gsub(pattern = "#C ",
+                            replacement = "",
+                            comment.lines)
+          } else {
+            comment <- NA
+          }
         } else {
-          comment <- NA
+          if ((grep("PithCoordinates", raw.input) - grep("DATED", raw.input)) > 1) {
+            comment.lines <- raw.input[(grep("DATED", raw.input) + 1):(grep("PithCoordinates",
+                                                                            raw.input) - 1)]
+            comment <- gsub(pattern = "#C ",
+                            replacement = "",
+                            comment.lines)
+          } else {
+            comment <- NA
+          }
         }
-      } else {
-        if ((grep("PithCoordinates", raw.input) - grep("DATED", raw.input)) > 1) {
-          comment.lines <- raw.input[(grep("DATED", raw.input) + 1):(grep("PithCoordinates",
-                                                                          raw.input) - 1)]
-          comment <- gsub(pattern = "#C ",
-                          replacement = "",
-                          comment.lines)
+      } else { # Rely on the SCALE 1 line instead
+        if (is.null(pith.coords.df)) {
+          if ((grep("Written", raw.input) - grep("SCALE", raw.input)) > 1) {
+            comment.lines <- raw.input[(grep("SCALE", raw.input) + 1):(grep("Written",
+                                                                            raw.input) - 1)]
+            comment <- gsub(pattern = "#C ",
+                            replacement = "",
+                            comment.lines)
+          } else {
+            comment <- NA
+          }
         } else {
-          comment <- NA
+          if ((grep("PithCoordinates", raw.input) - grep("SCALE", raw.input)) > 1) {
+            comment.lines <- raw.input[(grep("SCALE", raw.input) + 1):(grep("PithCoordinates",
+                                                                            raw.input) - 1)]
+            comment <- gsub(pattern = "#C ",
+                            replacement = "",
+                            comment.lines)
+          } else {
+            comment <- NA
+          }
         }
       }
-
       comment <- ifelse(length(comment) > 1, NA, comment)
 
       ## Get the point coordinates
@@ -383,11 +432,12 @@ read_pos <- function(path = NULL) {
 
       if (any(check.diffs$x.head %in% "div" & check.diffs$y.head %in% "div")) {
 
-        warning(paste0("Check ", unique(check.diffs$series), ".pos"," in CooRecorder - ",
-                       "possible erroneous point order"))
+        warning(paste0("Check coordinates for ", unique(check.diffs$series), ".pos - ",
+                       "possible erroneous point order"),
+                call. = FALSE)
 
         error.df <- data.frame(file = f,
-                               message = paste0("Check this file in CooRecorder - ",
+                               message = paste0("Check coordinates - ",
                                                 "possible erroneous point order"))
 
       }
@@ -496,7 +546,9 @@ read_pos <- function(path = NULL) {
                                      data = all.coords[!(all.coords$new.type %in%
                                                            c("multi2", "gap2", "pith")) &
                                                          !substr(all.coords$new.type, 1, 4) %in%
-                                                         "gap.", ], sum)
+                                                         "gap.", ],
+                                     FUN = sum,
+                                     drop = FALSE)
 
       colnames(whole.ring.widths)[colnames(whole.ring.widths) %in% "dist.mm"] <- "rw.mm"
 
@@ -515,7 +567,10 @@ read_pos <- function(path = NULL) {
                                             c("multi2", "gap2", "pith")), ]
         # Do some error catching here - check for multiple W points per year. If this happens,
         # skip the EW/LW points and give the user a message about potential errors
-        per.year.check <- aggregate(type ~ year, data = seas.wood.widths1, length)
+        per.year.check <- aggregate(type ~ year,
+                                    data = seas.wood.widths1,
+                                    FUN = length,
+                                    drop = FALSE)
         if (any(per.year.check[,"type"] > 2)) {
           paste0("Possibly multiple seasonwood boundaries detected in ",
                  per.year.check[per.year.check$type > 2, "year"],".",
@@ -524,7 +579,7 @@ read_pos <- function(path = NULL) {
           whole.ring.widths$ew.mm <- NA
         } else {
 
-          #
+          # Split by year
           seas.wood.widths <- lapply(split(seas.wood.widths1, f = seas.wood.widths1$year),
                                      FUN = \(this.year) {
                                        if (any(this.year$type %in% "W")) {
@@ -556,7 +611,8 @@ read_pos <- function(path = NULL) {
           ew <- seas.wood.widths[seas.wood.widths$wood.portion %in% "EW", c("year", "dist.mm")]
           colnames(ew)[colnames(ew) %in% "dist.mm"] <- "ew.mm"
 
-          whole.ring.widths <- Reduce(f = \(x, y) base::merge(x, y, by = "year"),
+          # Merge together and account for years that don't have seas wood with all = TRUE
+          whole.ring.widths <- Reduce(f = \(x, y) base::merge(x, y, by = "year", all = TRUE),
                                       list(whole.ring.widths, lw, ew))
 
         }
@@ -601,6 +657,7 @@ read_pos <- function(path = NULL) {
 
       attributes <- data.frame(
         series = seriesID,
+        img.DPI = NA,
         d2pith.mm = ifelse(is.null(pith.coords.df),
                            NA,
                            all.coords$dist.mm[all.coords$type %in% "pith"]),
@@ -609,11 +666,29 @@ read_pos <- function(path = NULL) {
         total.rw.mm = sum(all.coords$dist.mm[!(all.coords$type %in% "multi2")], na.rm = TRUE)
       )
 
+
+      error.message <- error.df$message
+
+      if (!is.na(DPI)) {
+        attributes$img.DPI <- DPI
+        DPI.message <- NA
+        if (DPI < 600) {
+          DPI.message <- "DPI is suspiciously low!"
+          warning(paste0("DPI is low for ",
+                         attributes$series,
+                         ".pos. Ring width measurements will ",
+                         "be incorrect if DPI is wrong."),
+                  call. = FALSE)
+        }
+        error.message <- paste(error.df$message, DPI.message, sep = "; ")
+      }
+
       attributes$radius.mm <- ifelse(is.null(pith.coords.df),
                                      NA,
                                      attributes$total.rw.mm + attributes$d2pith.mm)
       attributes$comment <- comment
-      attributes$error.message <- error.df$message
+
+      attributes$error.message <- error.message
 
 
       # also include automatic rwl-format conversion as well?
@@ -643,7 +718,7 @@ read_pos <- function(path = NULL) {
                               message = "This file was not made with CooRecorder ≥7.8 (do an update & resave file)")
       } else {
 
-        if (length(grep("DATED", raw.input)) < 1) {
+        if (is.null(OD)) {
           tbdr.df <- data.frame(file = f,
                                 message = "This file was not dated (no outer year assigned in CooRecorder)")
         }}
@@ -688,7 +763,8 @@ read_pos <- function(path = NULL) {
     names(new.out.list) <- c("Ring widths", "Attributes", "Raw coordinates", "Not read")
 
     if (length(tbdr) >= 1) {
-      warning("Some files not read. See 'Not read' list for details.")
+      warning("Some files not read. See 'Not read' list for details.",
+              call. = FALSE)
     }
     new.out.list
   }

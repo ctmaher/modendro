@@ -4,10 +4,13 @@
 \alias{read_pos}
 \title{Read in CooRecorder .pos files}
 \usage{
-read_pos(path = NULL)
+read_pos(path = NULL, default.OD = NULL)
 }
 \arguments{
 \item{path}{file path to a single .pos file or a directory that may contain several .pos files.}
+
+\item{default.OD}{optional - a numeric vector of length 1 to give an outer date (OD) year for
+files that did not have a date assigned in CooRecorder.}
 }
 \value{
 A list containing 4 data.frames for ring widths, attributes, the original coordinates,
