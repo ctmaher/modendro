@@ -688,12 +688,10 @@ read_pos <- function(path = NULL,
                                      attributes$total.rw.mm + attributes$d2pith.mm)
       attributes$comment <- comment
 
-      attributes$error.message <- error.message
+      # Clean up the error message and attach it to attributes
+      attributes$error.message <- ifelse(error.message %in% "NA; NA", NA, error.message)
 
-
-      # also include automatic rwl-format conversion as well?
-      # This dosn't make sense because this is just one series.
-
+      # Assemble the output list
       this.series.list <- list(
         "Ring widths" = whole.ring.widths1[, c("series", "year", "rw.mm",
                                                "ew.mm", "lw.mm", "label")],
