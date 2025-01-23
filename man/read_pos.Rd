@@ -9,16 +9,12 @@ read_pos(path = NULL, default.OD = NULL)
 \arguments{
 \item{path}{file path to a single .pos file or a directory that may contain several .pos files.}
 
-\item{default.OD}{optional - a numeric vector of length 1 to give an outer date (OD) year for
+\item{default.OD}{optional - a numeric vector of length = 1 to give an outer date (OD) year for
 files that did not have a date assigned in CooRecorder.}
 }
 \value{
 A list containing 4 data.frames for ring widths, attributes, the original coordinates,
-and a 2-column data.frame of the files not read and the associated error message. The ring widths
-are in "long format", which is the more flexible format for most analyses. If you need to export
-this data as a .rwl, for example, you can use \code{\link{longer_rwl}} and dplR's
-\code{\link[dplR]{write.rwl}}. Note that for \code{\link[dplR]{write.rwl}} series name lengths
-are limited.
+and a 2-column data.frame of the files not read and the associated error message.
 }
 \description{
 \code{\link{read_pos}} reads in .pos files from CooRecorder (Cybis Elektronik & Data AB, Larsson
@@ -29,7 +25,11 @@ The motivation of this function is to replicate some of the basic operations of 
 This allows the user to avoid saving tree-ring collections using some of the arcane tree-ring
 file formats which don't allow users to take full advantage of the great features of CooRecorder,
 such as point labels, comments, etc. It also calculates the ring widths with greater precision
-(they are not rounded by default) than what CDendro exports.
+(they are not rounded by default) than what CDendro exports. The outputs of
+\code{\link{read_pos}} are long-format data.frames, which are much more versatile than the old
+rwl-format. If you need to export this data as a .rwl, for example, you can use
+\code{\link{longer_rwl}} and dplR's \code{\link[dplR]{write.rwl}}. Note that for
+\code{\link[dplR]{write.rwl}} series name lengths are limited.
 }
 \details{
 If path is a directory the function will search all sub-directories for .pos files, thus
@@ -42,16 +42,19 @@ coordinates from the .pos file after they have been converted to numeric values,
 "Not read" data.frame which lists the files that were not read in and gives an error message
 describing a likely reason.
 
+The \code{default.OD} argument is for circumventing a common "Not read" situation in which the user
+did not assign a
+
 \code{\link{read_pos}} contains several error catching heuristics that try to minimize direct
-interventions from the user or at least clearly guide the user to a fix they can make in
+interventions from the user or try to clearly guide the user to a fix they can make in
 CooRecorder.
 
 A possible error in CooRecorder is that points can be saved out of order. Usually CooRecorder
 will give you an "Erroneous point order" message, but it will save the file anyhow. This can
 wreak havoc on determining ring widths. \code{\link{read_pos}} has a simple way of determining
 if there are out of order points and it will warn you if it finds something. Since false
-positives are possible (and likely) with this approach, read_pos() will read in the files anyway.
-Go check those files in CooRecorder - some will be false positives, others will truly be messed
+positives are likely with this approach, read_pos() will read in the files anyway with warnings.
+Go check the files in CooRecorder - some will be false positives, others will truly be messed
 up.
 
 For the forseeable future, \code{\link{read_pos}} will only work with .pos files from CooRecorder
@@ -72,5 +75,5 @@ Larsson & Larsson (2023) \emph{CDendro and CooRecorder programs of the CDendro p
 Cybis Elektronik & Data AB. https://www.cybis.se/forfun/dendro/index.htm
 }
 \seealso{
-\code{\link{longer_rwl}}, \code{\link{rwl_longer}}, \code{\link{p2yrsL}}
+\code{\link{longer_rwl}}, \code{\link{rwl_longer}}
 }
