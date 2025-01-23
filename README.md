@@ -136,7 +136,7 @@ head(comb.rwl)[,1:5]
 #> 631    NA    NA    NA    NA    NA
 ```
 
-## Example: find ITRDB collections for a region and species you are interested in
+## Example: find ITRDB collections for a specified region and species
 
 A valuable step in checking your cross-dating work is finding
 pre-existing tree-ring datasets that have been (we assume) properly

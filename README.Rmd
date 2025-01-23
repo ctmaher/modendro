@@ -101,7 +101,7 @@ head(comb.rwl)[,1:5]
 
 ```
 
-## Example: find ITRDB collections for a region and species you are interested in
+## Example: find ITRDB collections for a specified region and species
 
 A valuable step in checking your cross-dating work is finding pre-existing tree-ring datasets that have been (we assume) properly cross-dated for your study species in your study region. modendro's `ITRDB_search()` does a species- and geographically-defined search of the International Tree-Ring Data Bank and returns basic info on each collection, including links to the resource so that you can download the files from the NCEI website. See the `ITRDB_search()` help file for more info.
 
