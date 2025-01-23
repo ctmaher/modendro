@@ -179,6 +179,89 @@ colnames(AK.spruce)
 #> [10] "lat"
 ```
 
+## Example: read in files from CooRecorder directly into R
+
+`read_pos()` reads files created by the excellent and popular tree-ring
+measurement software, CooRecorder
+(<https://cybis.se/forfun/dendro/index.htm>). This allows the user more
+flexibility in data format than what CDendro (CooRecorder’s sister
+software) offers. There are other advantages too - like recording of
+point labels and exports of attributes like distance to pith, outer and
+inner dates, and comments.
+
+``` r
+library(ggplot2)
+# Read in some example .pos files that show normal files and behavior on files with errors.
+ex.pos <- read_pos(system.file("extdata", package = "modendro"))
+#> Warning: Check coordinates for erroneous_order.pos - possible erroneous point
+#> order
+#> Warning: Some files not read. See 'Not read' list for details.
+# We get two erroneous point order warnings - one is real the other is a false positive. Below we can see the difference between the two.
+
+# Check the contents of the output list
+names(ex.pos)
+#> [1] "Ring widths"     "Attributes"      "Raw coordinates" "Not read"
+
+# Take a look at the ring widths
+ex.pos[["Ring widths"]] |> head()
+#>         series year     rw.mm ew.mm lw.mm label
+#> 1 complex_test 1849 0.3031887    NA    NA  <NA>
+#> 2 complex_test 1850 0.3682015    NA    NA  <NA>
+#> 3 complex_test 1851 0.3033204    NA    NA  <NA>
+#> 4 complex_test 1852 0.6249783    NA    NA  <NA>
+#> 5 complex_test 1853 0.5236857    NA    NA  <NA>
+#> 6 complex_test 1854 0.3824433    NA    NA  <NA>
+
+# Take a look at the attributes
+ex.pos[["Attributes"]]
+#>                      series img.DPI d2pith.mm out.date in.date total.rw.mm
+#> 1              complex_test    2400 0.5166978     2021    1849    50.88381
+#> 2           erroneous_order    2400 5.8135276     2022    1959   207.58043
+#> 3             muchos_multis    2400        NA     2022    1999    36.10435
+#> 4         multi point error    2400 4.3402464     2022    1981    47.54844
+#> 5               simple_test    2400 2.2846410     2022    1968    29.65563
+#> 6 very_simple_seaswood_test    2400 0.4987281     2022    1964    27.75459
+#>   radius.mm comment                                          error.message
+#> 1  51.40050    <NA>                                                   <NA>
+#> 2 213.39396    <NA> Check coordinates - possible erroneous point order; NA
+#> 3        NA    <NA>                                                   <NA>
+#> 4  51.88869    <NA>                                                   <NA>
+#> 5  31.94027 1980 LA                                                   <NA>
+#> 6  28.25332    <NA>                                                   <NA>
+
+# "Not read" gives you a data.frame of files that were not read in and potentially why
+ex.pos[["Not read"]]
+#>                                                                                                                         file
+#> 1   /private/var/folders/z3/8vzzgsxs5z77l16gk9l71k4m0000gn/T/RtmpBGXBoc/temp_libpathfcae2e82e433/modendro/extdata/broken.pos
+#> 2 /private/var/folders/z3/8vzzgsxs5z77l16gk9l71k4m0000gn/T/RtmpBGXBoc/temp_libpathfcae2e82e433/modendro/extdata/old_file.pos
+#>                                                                     message
+#> 1                     Unknown problem with .pos file. Check in CooRecorder.
+#> 2 This file was not made with CooRecorder ≥7.8 (do an update & resave file)
+
+# you can see the coordinates
+ggplot(ex.pos[["Raw coordinates"]], aes(x, y)) +
+geom_path() +
+geom_point(aes(color = type)) +
+facet_wrap(~series, ncol = 1, scales = "free")
+```
+
+<img src="man/figures/README-unnamed-chunk-3-1.png" width="100%" />
+
+``` r
+# Note that one file truly had erroneous point order - signified by the jagged black line from geom_path (which plots points in the order it receives them). This file you would want to fix in CooRecorder
+
+# take a look at the ring widths - what you came here for
+ggplot(ex.pos[["Ring widths"]], aes(year, rw.mm)) +
+geom_line() +
+facet_wrap(~series, ncol = 1, scales = "free")
+```
+
+<img src="man/figures/README-unnamed-chunk-3-2.png" width="100%" />
+
+``` r
+# The true erroneous order point has invalid ring widths.
+```
+
 ## Example: power transformation & detrending ala Cook & Peters (1997)
 
 Cook & Peters describe a method in their 1997 paper in The Holocene for
@@ -438,16 +521,16 @@ PS.cid.plots[["Disturbance detection & removal plots"]][["RRR27"]]
 #> $`1`
 ```
 
-<img src="man/figures/README-unnamed-chunk-3-1.png" width="100%" />
+<img src="man/figures/README-unnamed-chunk-4-1.png" width="100%" />
 
     #> 
     #> $`2`
 
-<img src="man/figures/README-unnamed-chunk-3-2.png" width="100%" />
+<img src="man/figures/README-unnamed-chunk-4-2.png" width="100%" />
 
 ``` r
 
 PS.cid.plots[["Final disturbance-free series plots"]][["RRR27"]]
 ```
 
-<img src="man/figures/README-unnamed-chunk-3-3.png" width="100%" />
+<img src="man/figures/README-unnamed-chunk-4-3.png" width="100%" />

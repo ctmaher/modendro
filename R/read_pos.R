@@ -68,8 +68,39 @@
 #' @export
 #'
 #' @examples
-#' # example code
 #'
+#' library(ggplot2)
+#' # Read in some example .pos files that show normal files and behavior on files with errors.
+#' ex.pos <- read_pos(system.file("extdata", package = "modendro"))
+#' # We get two erroneous point order warnings - one is real the other is a false positive.
+#' # Below we can see the difference between the two.
+#'
+# Check the contents of the output list
+#' names(ex.pos)
+#'
+#' # Take a look at the ring widths
+#' ex.pos[["Ring widths"]] |> head()
+#'
+#' # Take a look at the attributes
+#' ex.pos[["Attributes"]]
+#'
+#' # "Not read" gives you a data.frame of files that were not read in and potentially why
+#' ex.pos[["Not read"]]
+#'
+#' # you can see the coordinates
+#' ggplot(ex.pos[["Raw coordinates"]], aes(x, y)) +
+#'   geom_path() +
+#'   geom_point(aes(color = type)) +
+#'   facet_wrap(~series, ncol = 1, scales = "free")
+#' # Note that one file truly had erroneous point order - signified by the jagged black line from
+#' # geom_path (which plots points in the order it receives them).
+#' # This file you would want to fix in CooRecorder
+#'
+#' # take a look at the ring widths - what you came here for
+#' ggplot(ex.pos[["Ring widths"]], aes(year, rw.mm)) +
+#'   geom_line() +
+#'   facet_wrap(~series, ncol = 1, scales = "free")
+#' # The true erroneous order point has invalid ring widths.
 
 read_pos <- function(path = NULL,
                      default.OD = NULL) {

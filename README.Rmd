@@ -119,6 +119,46 @@ head(AK.spruce[,c("studyName","onlineResourceLink")])
 colnames(AK.spruce)
 ```
 
+## Example: read in files from CooRecorder directly into R
+
+`read_pos()` reads files created by the excellent and popular tree-ring measurement software, CooRecorder (https://cybis.se/forfun/dendro/index.htm). This allows the user more flexibility in data format than what CDendro (CooRecorder's sister software) offers. There are other advantages too - like recording of point labels and exports of attributes like distance to pith, outer and inner dates, and comments.
+
+```{r,fig.height=6}
+library(ggplot2)
+# Read in some example .pos files that show normal files and behavior on files with errors.
+ex.pos <- read_pos(system.file("extdata", package = "modendro"))
+# We get two erroneous point order warnings - one is real the other is a false positive. Below we can see the difference between the two.
+
+# Check the contents of the output list
+names(ex.pos)
+
+# Take a look at the ring widths
+ex.pos[["Ring widths"]] |> head()
+
+# Take a look at the attributes
+ex.pos[["Attributes"]]
+
+# "Not read" gives you a data.frame of files that were not read in and potentially why
+ex.pos[["Not read"]]
+
+# you can see the coordinates
+ggplot(ex.pos[["Raw coordinates"]], aes(x, y)) +
+geom_path() +
+geom_point(aes(color = type)) +
+facet_wrap(~series, ncol = 1, scales = "free")
+# Note that one file truly had erroneous point order - signified by the jagged black line from geom_path (which plots points in the order it receives them). This file you would want to fix in CooRecorder
+
+# take a look at the ring widths - what you came here for
+ggplot(ex.pos[["Ring widths"]], aes(year, rw.mm)) +
+geom_line() +
+facet_wrap(~series, ncol = 1, scales = "free")
+# The true erroneous order point has invalid ring widths.
+
+
+```
+
+
+
 ## Example: power transformation & detrending ala Cook & Peters (1997)
 
 Cook & Peters describe a method in their 1997 paper in The Holocene for removing age/size trends from tree-ring series in a way that minimizes bias that can result from using more traditional methods. Specifically, C&P's method involves power transforming raw ring widths to homogenize variance, fitting a trend, and then *subtracting* the trend line to get power transformed detrended residual series.
