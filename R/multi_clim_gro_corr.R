@@ -42,6 +42,9 @@
 #' `corr.method = "pearson"` doesn't make any adjustments for autocorrelation. See Details below.
 #' @param group.var a character vector specifying a grouping variable (e.g., site, plot).
 #' Must match a column in clim.
+#'
+#' @importFrom forecast auto.arima
+#' @importFrom corTESTsrd corTESTsrd
 
 
 multi_clim_gro_corr <- function(rwl.group = NULL,

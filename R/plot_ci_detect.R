@@ -39,7 +39,7 @@
 #'
 #' @import ggplot2
 #' @importFrom cowplot plot_grid
-#' @import labeling
+#' @importFrom labeling extended
 #' @export
 #'
 #' @examples

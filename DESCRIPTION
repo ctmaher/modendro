@@ -20,9 +20,9 @@ Imports:
     stats,
     DescTools,
     corTESTsrd,
-    forecast (>= 8.0.0),
     labeling,
-    jsonlite
+    jsonlite,
+    forecast (>= 8.0.0)
 Suggests:
     testthat
 URL: https://github.com/ctmaher/modendro

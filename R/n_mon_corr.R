@@ -106,7 +106,7 @@
 #'  \emph{Journal of Applied Statistics}:1–17.
 #'
 #' @import ggplot2
-#' @import corTESTsrd
+#' @importFrom corTESTsrd corTESTsrd
 #' @importFrom forecast auto.arima
 #' @importFrom grDevices hcl.colors
 #'
