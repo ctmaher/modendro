@@ -74,6 +74,7 @@
 read_pos <- function(path = NULL,
                      default.OD = NULL) {
   current.opciones <- options()
+  on.exit(options(current.opciones), add = TRUE)
   options(digits = 8)
 
   ## Error checking
@@ -782,5 +783,4 @@ read_pos <- function(path = NULL,
     }
     new.out.list
   }
-  options(current.opciones)
 } ## End of function
