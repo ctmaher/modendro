@@ -1,7 +1,7 @@
 
 <!-- README.md is generated from README.Rmd. Please edit that file -->
 
-# modendro: more dendro (tree-ring) functions
+# modendro: more dendro (tree-ring) functions <img src="./man/figures/modendro_hex_logo_skyonly_small.png" width="160" align="right" />
 
 <!-- badges: start -->
 <!-- badges: end -->
