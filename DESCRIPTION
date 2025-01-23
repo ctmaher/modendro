@@ -22,6 +22,7 @@ Imports:
     corTESTsrd,
     labeling,
     jsonlite,
+    grDevices,
     forecast (>= 8.0.0)
 Suggests:
     testthat
