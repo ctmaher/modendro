@@ -101,6 +101,24 @@ head(comb.rwl)[,1:5]
 
 ```
 
+## Example: find ITRDB collections for a region and species you are interested in
+
+A valuable step in checking your cross-dating work is finding pre-existing tree-ring datasets that have been (we assume) properly cross-dated for your study species in your study region. modendro's `ITRDB_search()` does a species- and geographically-defined search of the International Tree-Ring Data Bank and returns basic info on each collection, including links to the resource so that you can download the files from the NCEI website. See the `ITRDB_search()` help file for more info.
+
+```{r}
+# Find some spruce collections in northern Alaska
+AK.spruce <- ITRDB_search(species = c("PCGL","PCMA"), # Picea glauca & Picea mariana
+lon.range = c(-165, -140), # the longitude component of the bounding box
+lat.range = c(64.5, 70), # the latitude component of the bounding box
+limit = 10) # how many records you want to see - choose higher if you want an exhaustive list
+
+# A truncated view of the output
+head(AK.spruce[,c("studyName","onlineResourceLink")])
+
+# The full output contains the following information:
+colnames(AK.spruce)
+```
+
 ## Example: power transformation & detrending ala Cook & Peters (1997)
 
 Cook & Peters describe a method in their 1997 paper in The Holocene for removing age/size trends from tree-ring series in a way that minimizes bias that can result from using more traditional methods. Specifically, C&P's method involves power transforming raw ring widths to homogenize variance, fitting a trend, and then *subtracting* the trend line to get power transformed detrended residual series.

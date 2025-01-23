@@ -136,6 +136,49 @@ head(comb.rwl)[,1:5]
 #> 631    NA    NA    NA    NA    NA
 ```
 
+## Example: find ITRDB collections for a region and species you are interested in
+
+A valuable step in checking your cross-dating work is finding
+pre-existing tree-ring datasets that have been (we assume) properly
+cross-dated for your study species in your study region. modendro’s
+`ITRDB_search()` does a species- and geographically-defined search of
+the International Tree-Ring Data Bank and returns basic info on each
+collection, including links to the resource so that you can download the
+files from the NCEI website. See the `ITRDB_search()` help file for more
+info.
+
+``` r
+# Find some spruce collections in northern Alaska
+AK.spruce <- ITRDB_search(species = c("PCGL","PCMA"), # Picea glauca & Picea mariana
+lon.range = c(-165, -140), # the longitude component of the bounding box
+lat.range = c(64.5, 70), # the latitude component of the bounding box
+limit = 10) # how many records you want to see - choose higher if you want an exhaustive list
+
+# A truncated view of the output
+head(AK.spruce[,c("studyName","onlineResourceLink")])
+#>                                             studyName
+#> 1 Anchukaitis - Firth River 1236 - PCGL - ITRDB AK132
+#> 2 D'Arrigo - Almond Butter Lower - PCGL - ITRDB AK057
+#> 3 D'Arrigo - Almond Butter Upper - PCGL - ITRDB AK058
+#> 4         D'Arrigo - Alpine View - PCGL - ITRDB AK059
+#> 5          D'Arrigo - Burnt Over - PCGL - ITRDB AK060
+#> 6         D'Arrigo - Bye Rosanne - PCGL - ITRDB AK061
+#>                                          onlineResourceLink
+#> 1 https://www.ncei.noaa.gov/access/paleo-search/study/14790
+#> 2  https://www.ncei.noaa.gov/access/paleo-search/study/3043
+#> 3  https://www.ncei.noaa.gov/access/paleo-search/study/3044
+#> 4  https://www.ncei.noaa.gov/access/paleo-search/study/3045
+#> 5  https://www.ncei.noaa.gov/access/paleo-search/study/3047
+#> 6  https://www.ncei.noaa.gov/access/paleo-search/study/3048
+
+# The full output contains the following information:
+colnames(AK.spruce)
+#>  [1] "xmlId"              "NOAAStudyId"        "studyName"         
+#>  [4] "studyCode"          "earliestYearCE"     "mostRecentYearCE"  
+#>  [7] "doi"                "onlineResourceLink" "lon"               
+#> [10] "lat"
+```
+
 ## Example: power transformation & detrending ala Cook & Peters (1997)
 
 Cook & Peters describe a method in their 1997 paper in The Holocene for
@@ -395,16 +438,16 @@ PS.cid.plots[["Disturbance detection & removal plots"]][["RRR27"]]
 #> $`1`
 ```
 
-<img src="man/figures/README-unnamed-chunk-2-1.png" width="100%" />
+<img src="man/figures/README-unnamed-chunk-3-1.png" width="100%" />
 
     #> 
     #> $`2`
 
-<img src="man/figures/README-unnamed-chunk-2-2.png" width="100%" />
+<img src="man/figures/README-unnamed-chunk-3-2.png" width="100%" />
 
 ``` r
 
 PS.cid.plots[["Final disturbance-free series plots"]][["RRR27"]]
 ```
 
-<img src="man/figures/README-unnamed-chunk-2-3.png" width="100%" />
+<img src="man/figures/README-unnamed-chunk-3-3.png" width="100%" />
