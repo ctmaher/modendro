@@ -100,7 +100,7 @@
 #' ggplot(ex.pos[["Ring widths"]], aes(year, rw.mm)) +
 #'   geom_line() +
 #'   facet_wrap(~series, ncol = 1, scales = "free")
-#' # The true erroneous order point has invalid ring widths.
+#' # The true erroneous order file has invalid ring widths.
 
 read_pos <- function(path = NULL,
                      default.OD = NULL) {

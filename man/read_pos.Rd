@@ -98,7 +98,7 @@ ggplot(ex.pos[["Raw coordinates"]], aes(x, y)) +
 ggplot(ex.pos[["Ring widths"]], aes(year, rw.mm)) +
   geom_line() +
   facet_wrap(~series, ncol = 1, scales = "free")
-# The true erroneous order point has invalid ring widths.
+# The true erroneous order file has invalid ring widths.
 }
 \references{
 Larsson & Larsson (2023) \emph{CDendro and CooRecorder programs of the CDendro package},

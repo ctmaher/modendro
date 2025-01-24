@@ -232,8 +232,8 @@ ex.pos[["Attributes"]]
 # "Not read" gives you a data.frame of files that were not read in and potentially why
 ex.pos[["Not read"]]
 #>                                                                                                                         file
-#> 1   /private/var/folders/z3/8vzzgsxs5z77l16gk9l71k4m0000gn/T/RtmpBGXBoc/temp_libpathfcae2e82e433/modendro/extdata/broken.pos
-#> 2 /private/var/folders/z3/8vzzgsxs5z77l16gk9l71k4m0000gn/T/RtmpBGXBoc/temp_libpathfcae2e82e433/modendro/extdata/old_file.pos
+#> 1   /private/var/folders/z3/8vzzgsxs5z77l16gk9l71k4m0000gn/T/RtmpBGXBoc/temp_libpathfcae2ad5e07b/modendro/extdata/broken.pos
+#> 2 /private/var/folders/z3/8vzzgsxs5z77l16gk9l71k4m0000gn/T/RtmpBGXBoc/temp_libpathfcae2ad5e07b/modendro/extdata/old_file.pos
 #>                                                                     message
 #> 1                     Unknown problem with .pos file. Check in CooRecorder.
 #> 2 This file was not made with CooRecorder ≥7.8 (do an update & resave file)
@@ -259,7 +259,7 @@ facet_wrap(~series, ncol = 1, scales = "free")
 <img src="man/figures/README-unnamed-chunk-3-2.png" width="100%" />
 
 ``` r
-# The true erroneous order point has invalid ring widths.
+# The true erroneous order file has invalid ring widths.
 ```
 
 ## Example: power transformation & detrending ala Cook & Peters (1997)
