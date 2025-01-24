@@ -116,13 +116,12 @@ read_pos <- function(path = NULL,
       length(path) >= 1
   )
 
-  if (!is.null(default.OD)) {
-    stopifnot(
-      "default.OD argument must be a numeric vector (a year)" =
-        is.numeric(default.OD) |
-        length(default.OD) == 1
-    )
-  }
+  stopifnot(
+    "default.OD argument must be a numeric vector (a year)" =
+       is.null(default.OD) |
+       is.numeric(default.OD) &
+       length(default.OD) == 1
+  )
 
   # Determine if path is a directory or not using list.files, then slim down to a list of .pos
   # files
@@ -754,7 +753,7 @@ read_pos <- function(path = NULL,
 
         if (CR.ver < 780) {
           tbdr.df <- data.frame(file = f,
-                                message = "This file was not made with CooRecorder ≥7.8 (do an update & resave file)")
+                                message = "This file was not made with CooRecorder >7.7 (do an update & resave file)")
         } else {
 
           if (is.null(OD)) {

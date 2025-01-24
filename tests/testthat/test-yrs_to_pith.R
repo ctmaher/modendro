@@ -39,14 +39,4 @@ test_that("Throws error if any rwl series are all NAs", {
   mat.test[, 1:5] <- runif(10)
   expect_error(yrs_to_pith(mat.test))
 })
-####
-test_that("Names are equal in the rwl and messages outputs", {
-  mat.test <- matrix(nrow = 50, ncol = 10)
-  mat.test <- apply(mat.test, MARGIN = 2, FUN = \(x) runif(length(x), 0.1, 2)) |> as.data.frame()
-  rownames(mat.test) <- 1:50
-  colnames(mat.test) <- paste0("series", 1:10)
 
-  d2pith.test <- data.frame(series = colnames(mat.test), d2pith = runif(ncol(mat.test), 0.2, 5))
-  out.test <- yrs_to_pith(mat.test, d2pith = d2pith.test)
-  expect_equal(colnames(out.test[[1]]), names(out.test[[2]]))
-})

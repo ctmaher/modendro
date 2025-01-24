@@ -38,8 +38,6 @@ test_that("Throws error if rwl is not an rwl or data.frame", {
       hemisphere = "N",
       prewhiten = TRUE,
       corr.method = "spearman",
-      gro.period.end = 9,
-      make.plot = TRUE,
       group.IDs.df = NULL,
       group.var = NULL
     )
@@ -57,8 +55,6 @@ test_that("Throws error if rwl is not an rwl or data.frame", {
       hemisphere = "N",
       prewhiten = TRUE,
       corr.method = "spearman",
-      gro.period.end = 9,
-      make.plot = TRUE,
       group.IDs.df = NULL,
       group.var = NULL
     )
@@ -80,8 +76,6 @@ test_that("Throws error if clim is not a data.frame or matrix", {
       hemisphere = "N",
       prewhiten = TRUE,
       corr.method = "spearman",
-      gro.period.end = 9,
-      make.plot = TRUE,
       group.IDs.df = NULL,
       group.var = NULL
     )
@@ -99,8 +93,6 @@ test_that("Throws error if clim is not a data.frame or matrix", {
       hemisphere = "N",
       prewhiten = TRUE,
       corr.method = "spearman",
-      gro.period.end = 9,
-      make.plot = TRUE,
       group.IDs.df = NULL,
       group.var = NULL
     )
@@ -122,8 +114,6 @@ test_that("Throws errors if clim.var isn't a character or doesn't match a column
       hemisphere = "N",
       prewhiten = TRUE,
       corr.method = "spearman",
-      gro.period.end = 9,
-      make.plot = TRUE,
       group.IDs.df = NULL,
       group.var = NULL
     )
@@ -141,8 +131,6 @@ test_that("Throws errors if clim.var isn't a character or doesn't match a column
       hemisphere = "N",
       prewhiten = TRUE,
       corr.method = "spearman",
-      gro.period.end = 9,
-      make.plot = TRUE,
       group.IDs.df = NULL,
       group.var = NULL
     )
@@ -166,8 +154,6 @@ test_that("Throws errors if common.years isn't a numeric vector of sufficent len
       hemisphere = "N",
       prewhiten = TRUE,
       corr.method = "spearman",
-      gro.period.end = 9,
-      make.plot = TRUE,
       group.IDs.df = NULL,
       group.var = NULL
     )
@@ -185,8 +171,6 @@ test_that("Throws errors if common.years isn't a numeric vector of sufficent len
       hemisphere = "N",
       prewhiten = TRUE,
       corr.method = "spearman",
-      gro.period.end = 9,
-      make.plot = TRUE,
       group.IDs.df = NULL,
       group.var = NULL
     )
@@ -204,8 +188,6 @@ test_that("Throws errors if common.years isn't a numeric vector of sufficent len
       hemisphere = "N",
       prewhiten = TRUE,
       corr.method = "spearman",
-      gro.period.end = 9,
-      make.plot = TRUE,
       group.IDs.df = NULL,
       group.var = NULL
     )
@@ -228,8 +210,6 @@ test_that("Throws error if not fed a valid agg.fun", {
       hemisphere = "N",
       prewhiten = TRUE,
       corr.method = "spearman",
-      gro.period.end = 9,
-      make.plot = TRUE,
       group.IDs.df = NULL,
       group.var = NULL
     )
@@ -247,8 +227,6 @@ test_that("Throws error if not fed a valid agg.fun", {
       hemisphere = "N",
       prewhiten = TRUE,
       corr.method = "spearman",
-      gro.period.end = 9,
-      make.plot = TRUE,
       group.IDs.df = NULL,
       group.var = NULL
     )
@@ -270,8 +248,6 @@ test_that("Throws error if not fed a valid max.win", {
       hemisphere = "N",
       prewhiten = TRUE,
       corr.method = "spearman",
-      gro.period.end = 9,
-      make.plot = TRUE,
       group.IDs.df = NULL,
       group.var = NULL
     )
@@ -288,9 +264,6 @@ test_that("Throws error if not fed a valid max.win", {
       max.lag = 1,
       hemisphere = "N",
       prewhiten = TRUE,
-      corr.method = "spearman",
-      gro.period.end = 9,
-      make.plot = TRUE,
       group.IDs.df = NULL,
       group.var = NULL
     )
@@ -313,8 +286,6 @@ test_that("Throws error if not fed a valid win.align", {
       hemisphere = "N",
       prewhiten = TRUE,
       corr.method = "spearman",
-      gro.period.end = 9,
-      make.plot = TRUE,
       group.IDs.df = NULL,
       group.var = NULL
     )
@@ -332,8 +303,6 @@ test_that("Throws error if not fed a valid win.align", {
       hemisphere = "N",
       prewhiten = TRUE,
       corr.method = "spearman",
-      gro.period.end = 9,
-      make.plot = TRUE,
       group.IDs.df = NULL,
       group.var = NULL
     )
@@ -356,8 +325,6 @@ test_that("Throws error if not fed a valid max.lag", {
       hemisphere = "N",
       prewhiten = TRUE,
       corr.method = "spearman",
-      gro.period.end = 9,
-      make.plot = TRUE,
       group.IDs.df = NULL,
       group.var = NULL
     )
@@ -375,8 +342,6 @@ test_that("Throws error if not fed a valid max.lag", {
       hemisphere = "N",
       prewhiten = TRUE,
       corr.method = "spearman",
-      gro.period.end = 9,
-      make.plot = TRUE,
       group.IDs.df = NULL,
       group.var = NULL
     )
@@ -398,8 +363,6 @@ test_that("Throws error if not fed a valid hemisphere", {
       hemisphere = 19, #
       prewhiten = TRUE,
       corr.method = "spearman",
-      gro.period.end = 9,
-      make.plot = TRUE,
       group.IDs.df = NULL,
       group.var = NULL
     )
@@ -417,8 +380,6 @@ test_that("Throws error if not fed a valid hemisphere", {
       hemisphere = "the earth is flat", #
       prewhiten = TRUE,
       corr.method = "spearman",
-      gro.period.end = 9,
-      make.plot = TRUE,
       group.IDs.df = NULL,
       group.var = NULL
     )
@@ -440,8 +401,6 @@ test_that("Throws error if not fed a valid prewhiten arg", {
       hemisphere = "S",
       prewhiten = 27, #
       corr.method = "spearman",
-      gro.period.end = 9,
-      make.plot = TRUE,
       group.IDs.df = NULL,
       group.var = NULL
     )
@@ -459,8 +418,6 @@ test_that("Throws error if not fed a valid prewhiten arg", {
       hemisphere = "S",
       prewhiten = "Nope", #
       corr.method = "spearman",
-      gro.period.end = 9,
-      make.plot = TRUE,
       group.IDs.df = NULL,
       group.var = NULL
     )
@@ -482,8 +439,6 @@ test_that("Throws error if not fed a valid correlation method", {
       hemisphere = "N",
       prewhiten = TRUE,
       corr.method = 5, #
-      gro.period.end = 9,
-      make.plot = TRUE,
       group.IDs.df = NULL,
       group.var = NULL
     )
@@ -501,135 +456,12 @@ test_that("Throws error if not fed a valid correlation method", {
       hemisphere = "N",
       prewhiten = TRUE,
       corr.method = "Daryl", #
-      gro.period.end = 9,
-      make.plot = TRUE,
       group.IDs.df = NULL,
       group.var = NULL
     )
   )
 })
 
-####
-test_that("Throws error if not fed a valid gro.period.end", {
-  expect_error(
-    n_mon_corr(
-      rwl = rwl,
-      clim = clim,
-      clim.var = "clim.var",
-      common.years = 1951:2000,
-      agg.fun = "sum",
-      max.win = 6,
-      win.align = "left",
-      max.lag = 1,
-      hemisphere = "N",
-      prewhiten = TRUE,
-      corr.method = "spearman",
-      gro.period.end = 13, #
-      make.plot = TRUE,
-      group.IDs.df = NULL,
-      group.var = NULL
-    )
-  )
-  expect_error(
-    n_mon_corr(
-      rwl = rwl,
-      clim = clim,
-      clim.var = "clim.var",
-      common.years = 1951:2000,
-      agg.fun = "sum",
-      max.win = 6,
-      win.align = "left",
-      max.lag = 1,
-      hemisphere = "N",
-      prewhiten = TRUE,
-      corr.method = "spearman",
-      gro.period.end = c(1:2), #
-      make.plot = TRUE,
-      group.IDs.df = NULL,
-      group.var = NULL
-    )
-  )
-  expect_error(
-    n_mon_corr(
-      rwl = rwl,
-      clim = clim,
-      clim.var = "clim.var",
-      common.years = 1951:2000,
-      agg.fun = "sum",
-      max.win = 6,
-      win.align = "left",
-      max.lag = 1,
-      hemisphere = "N",
-      prewhiten = TRUE,
-      corr.method = "spearman",
-      gro.period.end = "March", #
-      make.plot = TRUE,
-      group.IDs.df = NULL,
-      group.var = NULL
-    )
-  )
-  expect_error(
-    n_mon_corr(
-      rwl = rwl,
-      clim = clim,
-      clim.var = "clim.var",
-      common.years = 1951:2000,
-      agg.fun = "sum",
-      max.win = 6,
-      win.align = "left",
-      max.lag = 1,
-      hemisphere = "N",
-      prewhiten = TRUE,
-      corr.method = "spearman",
-      gro.period.end = 4.5, #
-      make.plot = TRUE,
-      group.IDs.df = NULL,
-      group.var = NULL
-    )
-  )
-})
-
-####
-test_that("Throws error if not fed a valid make.plot arg", {
-  expect_error(
-    n_mon_corr(
-      rwl = rwl,
-      clim = clim,
-      clim.var = "clim.var",
-      common.years = 1951:2000,
-      agg.fun = "sum",
-      max.win = 6,
-      win.align = "left",
-      max.lag = 1,
-      hemisphere = "N",
-      prewhiten = TRUE,
-      corr.method = "spearman",
-      gro.period.end = 9,
-      make.plot = 5,
-      group.IDs.df = NULL,
-      group.var = NULL
-    )
-  )
-  expect_error(
-    n_mon_corr(
-      rwl = rwl,
-      clim = clim,
-      clim.var = "clim.var",
-      common.years = 1951:2000,
-      agg.fun = "sum",
-      max.win = 6,
-      win.align = "left",
-      max.lag = 1,
-      hemisphere = "N",
-      prewhiten = TRUE,
-      corr.method = "spearman",
-      gro.period.end = 9,
-      make.plot = "yessiree",
-      group.IDs.df = NULL,
-      group.var = NULL
-    )
-  )
-})
 
 ####
 test_that("Throws error if not fed a valid group.IDs.df arg", {
@@ -646,8 +478,6 @@ test_that("Throws error if not fed a valid group.IDs.df arg", {
       hemisphere = "N",
       prewhiten = TRUE,
       corr.method = "spearman",
-      gro.period.end = 9,
-      make.plot = FALSE,
       group.IDs.df = 2,
       group.var = NULL
     )
@@ -665,8 +495,6 @@ test_that("Throws error if not fed a valid group.IDs.df arg", {
       hemisphere = "N",
       prewhiten = TRUE,
       corr.method = "spearman",
-      gro.period.end = 9,
-      make.plot = FALSE,
       group.IDs.df = "guess what?",
       group.var = NULL
     )
@@ -688,8 +516,6 @@ test_that("Throws error if not fed a valid group.var arg", {
       hemisphere = "N",
       prewhiten = TRUE,
       corr.method = "spearman",
-      gro.period.end = 9,
-      make.plot = FALSE,
       group.IDs.df = NULL,
       group.var = 7
     )
@@ -707,8 +533,6 @@ test_that("Throws error if not fed a valid group.var arg", {
       hemisphere = "N",
       prewhiten = TRUE,
       corr.method = "spearman",
-      gro.period.end = 9,
-      make.plot = FALSE,
       group.IDs.df = NULL,
       group.var = "chicken gut"
     )
@@ -731,8 +555,6 @@ test_that("Essential function works - and returns a vector under all basic varia
       hemisphere = "N",
       prewhiten = TRUE,
       corr.method = "spearman",
-      gro.period.end = 9,
-      make.plot = TRUE,
       group.IDs.df = NULL,
       group.var = NULL
     )
@@ -751,8 +573,6 @@ test_that("Essential function works - and returns a vector under all basic varia
       hemisphere = "N",
       prewhiten = TRUE,
       corr.method = "spearman",
-      gro.period.end = 9,
-      make.plot = TRUE,
       group.IDs.df = NULL,
       group.var = NULL
     )
@@ -771,8 +591,6 @@ test_that("Essential function works - and returns a vector under all basic varia
       hemisphere = "N",
       prewhiten = TRUE,
       corr.method = "spearman",
-      gro.period.end = 9,
-      make.plot = TRUE,
       group.IDs.df = NULL,
       group.var = NULL
     )
@@ -792,8 +610,6 @@ test_that("Essential function works - and returns a vector under all basic varia
       hemisphere = "N",
       prewhiten = TRUE,
       corr.method = "spearman",
-      gro.period.end = 9,
-      make.plot = TRUE,
       group.IDs.df = NULL,
       group.var = NULL
     )
@@ -812,8 +628,6 @@ test_that("Essential function works - and returns a vector under all basic varia
       hemisphere = "N",
       prewhiten = TRUE,
       corr.method = "spearman",
-      gro.period.end = 9,
-      make.plot = TRUE,
       group.IDs.df = NULL,
       group.var = NULL
     )
@@ -832,8 +646,6 @@ test_that("Essential function works - and returns a vector under all basic varia
       hemisphere = "N",
       prewhiten = TRUE,
       corr.method = "spearman",
-      gro.period.end = 9,
-      make.plot = TRUE,
       group.IDs.df = NULL,
       group.var = NULL
     )
@@ -852,8 +664,6 @@ test_that("Essential function works - and returns a vector under all basic varia
       hemisphere = "S", #
       prewhiten = TRUE,
       corr.method = "spearman",
-      gro.period.end = 9,
-      make.plot = TRUE,
       group.IDs.df = NULL,
       group.var = NULL
     )
@@ -872,8 +682,6 @@ test_that("Essential function works - and returns a vector under all basic varia
       hemisphere = "S",
       prewhiten = FALSE, #
       corr.method = "spearman",
-      gro.period.end = 9,
-      make.plot = TRUE,
       group.IDs.df = NULL,
       group.var = NULL
     )
@@ -892,8 +700,6 @@ test_that("Essential function works - and returns a vector under all basic varia
       hemisphere = "S",
       prewhiten = FALSE,
       corr.method = "pearson", #
-      gro.period.end = 9,
-      make.plot = TRUE,
       group.IDs.df = NULL,
       group.var = NULL
     )
@@ -912,52 +718,11 @@ test_that("Essential function works - and returns a vector under all basic varia
       hemisphere = "S",
       prewhiten = FALSE,
       corr.method = "kendall", #
-      gro.period.end = 9,
-      make.plot = TRUE,
       group.IDs.df = NULL,
       group.var = NULL
     )
   )
 
-  expect_vector(
-    n_mon_corr(
-      rwl = rwl,
-      clim = clim,
-      clim.var = "clim.var",
-      common.years = 1951:2000,
-      agg.fun = "mean",
-      max.win = 6,
-      win.align = "left",
-      max.lag = 3,
-      hemisphere = "S",
-      prewhiten = FALSE,
-      corr.method = "kendall",
-      gro.period.end = 4, #
-      make.plot = TRUE,
-      group.IDs.df = NULL,
-      group.var = NULL
-    )
-  )
-
-  expect_vector(
-    n_mon_corr(
-      rwl = rwl,
-      clim = clim,
-      clim.var = "clim.var",
-      common.years = 1951:2000,
-      agg.fun = "mean",
-      max.win = 6,
-      win.align = "left",
-      max.lag = 3,
-      hemisphere = "S",
-      prewhiten = FALSE,
-      corr.method = "kendall",
-      gro.period.end = 4,
-      make.plot = FALSE, #
-      group.IDs.df = NULL,
-      group.var = NULL
-    )
-  )
 
 })
 
@@ -1019,8 +784,6 @@ for (i in 1:length(test.list)) {
     hemisphere = "N",
     prewhiten = FALSE,
     corr.method = "spearman",
-    gro.period.end = 9,
-    make.plot = TRUE,
     group.IDs.df = NULL,
     group.var = NULL
   )
@@ -1104,8 +867,6 @@ of the output (grouped data)", {
       hemisphere = "N",
       prewhiten = FALSE,
       corr.method = "spearman",
-      gro.period.end = 9,
-      make.plot = TRUE,
       group.IDs.df = group.IDs.df,
       group.var = "group"
     )
@@ -1142,8 +903,6 @@ expect_error(
     hemisphere = "N",
     prewhiten = TRUE,
     corr.method = "spearman",
-    gro.period.end = 9,
-    make.plot = FALSE,
     group.IDs.df = NULL,
     group.var = NULL
   )
@@ -1166,8 +925,6 @@ test_that("Throws an error when clim.var is missing observations",{
       hemisphere = "N",
       prewhiten = TRUE,
       corr.method = "spearman",
-      gro.period.end = 9,
-      make.plot = FALSE,
       group.IDs.df = NULL,
       group.var = NULL
     )
@@ -1221,9 +978,7 @@ test_that("Correlation coefficients are equal with an independent check", {
                          max.lag = 1,
                          hemisphere = "N",
                          prewhiten = FALSE,
-                         corr.method = "spearman",
-                         gro.period.end = 9,
-                         make.plots = FALSE)
+                         corr.method = "spearman")
   fun.test.res <- fun.test[["Correlation results"]]
   # Subset to match the 2-month moving window and current year
   fun.test.res <- fun.test.res[fun.test.res$win.len == 2 & fun.test.res$lag %in% "0",]

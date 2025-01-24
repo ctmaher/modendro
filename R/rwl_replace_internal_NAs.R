@@ -30,12 +30,15 @@
 #'
 #' # Try to run a common dplR function that will throw an error if there are missing values in the
 #' # middle of series
-#' detrend(PS.NAs, method = "Spline")
+#' tryCatch(
+#' dplR::detrend(PS.NAs, method = "Spline"),
+#' error = \(e) e$message
+#' )
 #'
-#' PS.noNAs <- rwl_replace_internal_NAs(x = a.series, new.val = 0)
+#' PS.noNAs <- rwl_replace_internal_NAs(rwl = a.series, new.val = 0)
 #'
 #' # No more error
-#' detrend(PS.NAs, method = "Spline")
+#' dplR::detrend(PS.NAs, method = "Spline")
 
 rwl_replace_internal_NAs <- function(rwl = NULL,
                                      new.val = NULL) {

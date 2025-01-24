@@ -71,12 +71,6 @@ wrong. Series with strong age/size trends, for example, are characterized by cha
 width, often most strongly near the pith. The accuracy of either method might ultimately
 depend on have a large sample size - either multiple radii per tree, many trees, or both.
 }
-\examples{
-# Examples to come
-
-
-
-}
 \references{
 Applequist, M. B. (1958). A simple pith locator for use with off-center increment cores.
 \emph{Journal of Forestry} \strong{56(2)}, 141.

@@ -90,7 +90,7 @@ ggplot(PS.long.sites, aes(year, rw.mm, group = series)) +
   facet_wrap( ~ site, ncol = 1)
 ```
 
-<img src="man/figures/README-example 1.2-1.png" width="100%" />
+<img src="man/figures/README-example_1.2-1.png" width="100%" />
 
 Another useful application of `rwl_longer()` is when we have several
 rwl-format files that we want to bind together. This is not intuitive
@@ -195,6 +195,8 @@ library(ggplot2)
 ex.pos <- read_pos(system.file("extdata", package = "modendro"))
 #> Warning: Check coordinates for erroneous_order.pos - possible erroneous point
 #> order
+#> Warning: Check coordinates for false_erroneous_order.pos - possible erroneous
+#> point order
 #> Warning: Some files not read. See 'Not read' list for details.
 # We get two erroneous point order warnings - one is real the other is a false positive. Below we can see the difference between the two.
 
@@ -214,29 +216,29 @@ ex.pos[["Ring widths"]] |> head()
 
 # Take a look at the attributes
 ex.pos[["Attributes"]]
-#>                      series img.DPI d2pith.mm out.date in.date total.rw.mm
-#> 1              complex_test    2400 0.5166978     2021    1849    50.88381
-#> 2           erroneous_order    2400 5.8135276     2022    1959   207.58043
-#> 3             muchos_multis    2400        NA     2022    1999    36.10435
-#> 4         multi point error    2400 4.3402464     2022    1981    47.54844
-#> 5               simple_test    2400 2.2846410     2022    1968    29.65563
-#> 6 very_simple_seaswood_test    2400 0.4987281     2022    1964    27.75459
+#>                      series img.DPI  d2pith.mm out.date in.date total.rw.mm
+#> 1              complex_test    2400  0.5166978     2021    1849    50.88381
+#> 2           erroneous_order    2400  5.8135276     2022    1959   207.58043
+#> 3     false_erroneous_order    2400 15.0178000     2022    1903    79.33478
+#> 4             muchos_multis    2400         NA     2022    1999    36.10435
+#> 5               simple_test    2400  2.2846410     2022    1968    29.65563
+#> 6 very_simple_seaswood_test    2400  0.4987281     2022    1964    27.75459
 #>   radius.mm comment                                          error.message
 #> 1  51.40050    <NA>                                                   <NA>
 #> 2 213.39396    <NA> Check coordinates - possible erroneous point order; NA
-#> 3        NA    <NA>                                                   <NA>
-#> 4  51.88869    <NA>                                                   <NA>
+#> 3  94.35258    <NA> Check coordinates - possible erroneous point order; NA
+#> 4        NA    <NA>                                                   <NA>
 #> 5  31.94027 1980 LA                                                   <NA>
 #> 6  28.25332    <NA>                                                   <NA>
 
 # "Not read" gives you a data.frame of files that were not read in and potentially why
 ex.pos[["Not read"]]
 #>                                                                                                                         file
-#> 1   /private/var/folders/z3/8vzzgsxs5z77l16gk9l71k4m0000gn/T/RtmpBGXBoc/temp_libpathfcae2ad5e07b/modendro/extdata/broken.pos
-#> 2 /private/var/folders/z3/8vzzgsxs5z77l16gk9l71k4m0000gn/T/RtmpBGXBoc/temp_libpathfcae2ad5e07b/modendro/extdata/old_file.pos
+#> 1   /private/var/folders/z3/8vzzgsxs5z77l16gk9l71k4m0000gn/T/RtmpBGXBoc/temp_libpathfcae43e3c3f0/modendro/extdata/broken.pos
+#> 2 /private/var/folders/z3/8vzzgsxs5z77l16gk9l71k4m0000gn/T/RtmpBGXBoc/temp_libpathfcae43e3c3f0/modendro/extdata/old_file.pos
 #>                                                                     message
 #> 1                     Unknown problem with .pos file. Check in CooRecorder.
-#> 2 This file was not made with CooRecorder ≥7.8 (do an update & resave file)
+#> 2 This file was not made with CooRecorder >7.7 (do an update & resave file)
 
 # you can see the coordinates
 ggplot(ex.pos[["Raw coordinates"]], aes(x, y)) +
@@ -245,7 +247,7 @@ geom_point(aes(color = type)) +
 facet_wrap(~series, ncol = 1, scales = "free")
 ```
 
-<img src="man/figures/README-unnamed-chunk-3-1.png" width="100%" />
+<img src="man/figures/README-example_1.5-1.png" width="100%" />
 
 ``` r
 # Note that one file truly had erroneous point order - signified by the jagged black line from geom_path (which plots points in the order it receives them). This file you would want to fix in CooRecorder
@@ -256,7 +258,7 @@ geom_line() +
 facet_wrap(~series, ncol = 1, scales = "free")
 ```
 
-<img src="man/figures/README-unnamed-chunk-3-2.png" width="100%" />
+<img src="man/figures/README-example_1.5-2.png" width="100%" />
 
 ``` r
 # The true erroneous order file has invalid ring widths.
@@ -299,7 +301,7 @@ PS.cp.plots <- plot_cp_detrend(PS.cp)
 PS.cp.plots[["RRR27"]]
 ```
 
-<img src="man/figures/README-example 2.1-1.png" width="100%" />
+<img src="man/figures/README-example_2.1-1.png" width="100%" />
 
 ## Example: flexible growth-climate relationships
 
@@ -436,13 +438,13 @@ names(PS.corr.plots)
 PS.corr.plots[["Percent sig. corr. plot"]]
 ```
 
-<img src="man/figures/README-example 3.2-1.png" width="100%" />
+<img src="man/figures/README-example_3.2-1.png" width="100%" />
 
 ``` r
 PS.corr.plots[["Mean corr. coef. plot"]]
 ```
 
-<img src="man/figures/README-example 3.2-2.png" width="100%" />
+<img src="man/figures/README-example_3.2-2.png" width="100%" />
 
 ``` r
 PS.corr.plots[["Aggregated data"]] |> head()
@@ -521,16 +523,16 @@ PS.cid.plots[["Disturbance detection & removal plots"]][["RRR27"]]
 #> $`1`
 ```
 
-<img src="man/figures/README-unnamed-chunk-4-1.png" width="100%" />
+<img src="man/figures/README-example_3.3-1.png" width="100%" />
 
     #> 
     #> $`2`
 
-<img src="man/figures/README-unnamed-chunk-4-2.png" width="100%" />
+<img src="man/figures/README-example_3.3-2.png" width="100%" />
 
 ``` r
 
 PS.cid.plots[["Final disturbance-free series plots"]][["RRR27"]]
 ```
 
-<img src="man/figures/README-unnamed-chunk-4-3.png" width="100%" />
+<img src="man/figures/README-example_3.3-3.png" width="100%" />

@@ -71,11 +71,6 @@
 #' @import ggplot2
 #' @export
 #'
-#' @examples
-#' # Examples to come
-#'
-#'
-#'
 
 yrs_to_pith <- function(rwl = NULL,
                         d2pith = NULL,

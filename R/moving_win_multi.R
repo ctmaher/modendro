@@ -134,7 +134,7 @@ moving_win_multi <- function(df,
 
   mo.count <- aggregate(month ~ year, data = df, FUN = length, na.action = na.omit)
   stopifnot(
-    "One or more years are missing ≥ 1 months' worth of data in the climate data df" =
+    "One or more years are missing at least 1 months' worth of data in the climate data df" =
       all(mo.count[,"month"] == 12)
   )
 
