@@ -42,7 +42,6 @@ longer_rwl <- function(df = NULL,
   ## Error catching & warnings
   stopifnot(
     "df is not an object of class 'data.frame', or 'matrix'" =
-      data.class(df) %in% "rwl" |
       data.class(df) %in% "data.frame" |
       data.class(df) %in% "matrix"
   )
@@ -95,5 +94,6 @@ longer_rwl <- function(df = NULL,
   wide.rwl <- wide.rwl[order(wide.rwl[, "year"]),]
   wide.rwl <- wide.rwl[,!(colnames(wide.rwl) %in% "year")]
   colnames(wide.rwl) <- series
+  class(wide.rwl) <- c("rwl","data.frame")
   wide.rwl
   }
