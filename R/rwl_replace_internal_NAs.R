@@ -38,7 +38,7 @@
 #' PS.noNAs <- rwl_replace_internal_NAs(rwl = PS.NAs, new.val = 0)
 #'
 #' # No more error
-#' dplR::detrend(PS.NAs, method = "Spline")
+#' dplR::detrend(PS.noNAs, method = "Spline")
 
 rwl_replace_internal_NAs <- function(rwl = NULL,
                                      new.val = NULL) {
