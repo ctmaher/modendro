@@ -25,7 +25,7 @@ n_mon_corr(
 data.frame with columns names as series IDs and years as rownames.}
 
 \item{clim}{a \code{data.frame} with at least 3 columns: year, month (numeric), and a
-climate variable.}
+climate variable. A 4th column (a grouping variable) is required if \code{group.IDs.df} is provided.}
 
 \item{clim.var}{character vector - the colname of the climate variable of interest in the \code{clim}
 data.frame.}
@@ -76,15 +76,21 @@ A 2-4 element list containing data.frames of the correlation results, the moving
 prewhitened tree-ring data (if prewhiten = TRUE), and the default plot.
 }
 \description{
-Exploratory data analysis (EDA) function to compute correlations between tree ring data and a
-monthly climate variable aggregated for every combination (lengths 1:12) of consecutive months
-going back a specified number of years.
+Exploratory data analysis (EDA) function to compute correlations between individual tree ring
+series and a monthly climate variable aggregated for every combination (moving window lengths
+1:12) of consecutive months, lagged by a user-specified number of years. The basic data needed
+are a collection of tree-ring series (rwl) and a climate time series with overlapping years.
 
 Compared to methods that force rigidly-defined seasons of a fixed length, this approach should
 facilitate discovery of potentially more meaningful growth-climate relationships.
 
+\code{\link{n_mon_corr}} can take a simple dataset from 1 region, where one climate series
+applies to all tree ring series, or across regions where there are multiple climate series (1 for
+each region). The latter is specified with a grouping variable (\code{group.var}; e.g., site, plot)
+and a separate data.frame (\code{group.IDs.df}) that links series IDs with the \code{group.var}.
+
 Fair warning: this is a basic function that will accept any tree ring data and climate data in
-the proper format. It is the user's responsibility to make sure that your data is appropriate
+the proper format. It is your responsibility to make sure that your data is appropriate
 to the analyses.
 }
 \details{
@@ -104,7 +110,7 @@ relationships between lower-frequency (which are autocorrelated) elements of tre
 climate series as well as between the more common high-frequency signals (e.g., "prewhitened"
 series). You may use Pearson correlations in \code{\link{n_mon_corr}}, but be forewarned that
 there is no adjustment for autocorrelation in the Pearson correlation tests! Therefore, it
-is general best to use \code{corr.method = "pearson"} for comparison only, rather than actual results.
+is generally best to use \code{corr.method = "pearson"} for comparison only, rather than actual results.
 
 The \code{common.years} argument is a way to subset the climate and tree-ring data after the moving
 windows and lags have been calculated. This results in lagged correlations that cover the same
@@ -123,9 +129,10 @@ Southern hemisphere typically spans two calendar years (e.g., starting in Nov 20
 in Mar of 2001). It was Schulman's (1956) protocol to assign the earlier calendar year to the
 tree rings in the Southern hemisphere, i.e., the calendar year in which growth began.
 \code{\link{n_mon_corr}} assumes your data follows this standard as well. This has implications
-for how the climate data is aligned with the treering data. In this version, the way this is
-handled is that a "lag +1" year is added to suite of correlations so that the moving windows of
-consecutive months can extend through the growing season (and into the next calendar year).
+for how the climate data is aligned with the treering data. The way \code{\link{n_mon_corr}}
+handles this is that a "lag +1" year is added to suite of correlations so that the moving
+windows of consecutive months can extend through the growing season (and into the next calendar
+year).
 }
 \examples{
 ## Bring in some real tree-ring and climate data
