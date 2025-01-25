@@ -534,9 +534,17 @@ n_mon_corr <- function(rwl = NULL,
       common.levels <- all.group.levels[duplicated(all.group.levels)]
       clim <- clim[clim[, group.var] %in% common.levels,]
       group.IDs.df <- group.IDs.df[group.IDs.df[, group.var] %in% common.levels,]
-
     }
 
+    # Have to check that the series IDs in rwl and group.IDs.df match too
+    if (!all(colnames(rwl)) %in% unique(group.IDs.df[, "series"])) {
+      warning("Series names in rwl and group.IDs.df are different -
+      subsetting both data.frames to contain just the common set")
+      all.series.names <- c(colnames(rwl), unique(group.IDs.df[, "series"]))
+      common.names <- all.series.names[duplicated(all.series.names)]
+      rwl <- rwl[, colnames(rwl) %in% common.names]
+      group.IDs.df <- group.IDs.df[group.IDs.df[, "series"] %in% common.names,]
+    }
 
   }
 
