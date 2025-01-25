@@ -6,7 +6,7 @@
 ring series}
 \usage{
 ci_detect(
-  rwl,
+  rwl = NULL,
   detrend.method = "Mean",
   nyrs = NULL,
   min.win = 9,

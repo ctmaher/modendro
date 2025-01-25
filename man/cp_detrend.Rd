@@ -5,7 +5,7 @@
 \title{Detrend raw ring widths using Cook & Peters' (1997) method.}
 \usage{
 cp_detrend(
-  rwl,
+  rwl = NULL,
   universal.pwr.t = FALSE,
   pwr.t.ID.group.substr = NULL,
   detrend.method = "Mean",

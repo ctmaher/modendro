@@ -44,7 +44,7 @@
 #' ca533 |> p2yrsL() |> spag.plot()
 #'
 
-p2yrsL <- function(rwl, limit = 2.6) {
+p2yrsL <- function(rwl = NULL, limit = 2.6) {
 
   # Error catching
   stopifnot("rwl is not an object of class 'rwl', 'data.frame', or 'matrix'" =
@@ -103,6 +103,8 @@ p2yrsL <- function(rwl, limit = 2.6) {
 
   # Transfer the rownames (years)
   rownames(p2yrsL) <- rownames(rwl)
+  # Assign data classes
+  class(p2yrsL) <- c("rwl","data.frame")
   # Return the final rwl-data.frame
   p2yrsL
 }

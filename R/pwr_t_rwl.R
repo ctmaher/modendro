@@ -46,7 +46,7 @@
 #' data("ca533")
 #' pwr_t_rwl(rwl = ca533)
 
-pwr_t_rwl <- function(rwl, universal = FALSE, ID.group.substr = NULL) {
+pwr_t_rwl <- function(rwl = NULL, universal = FALSE, ID.group.substr = NULL) {
 
   # Error catching
   stopifnot("rwl is not an object of class 'rwl', 'data.frame', or 'matrix'" =
@@ -121,8 +121,10 @@ pwr_t_rwl <- function(rwl, universal = FALSE, ID.group.substr = NULL) {
 
   # split back into a list
   pwr.t.list <- split(pwr.t.df, f = pwr.t.df$series)[orig.IDs]
-
-  out.list <- list(as.data.frame(rwl0), pwr.t.list, rwl)
+  rwl0.out <- as.data.frame(rwl0)
+  # Assign data class
+  class(rwl0.out) <- c("rwl","data.frame")
+  out.list <- list(rwl0.out, pwr.t.list, rwl)
   names(out.list) <- c("Transformed ring widths", "Transformation metadata", "Raw ring widths")
   out.list
 

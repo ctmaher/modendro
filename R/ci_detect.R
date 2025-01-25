@@ -122,7 +122,7 @@
 #'
 
 
-ci_detect <- function(rwl,
+ci_detect <- function(rwl = NULL,
                       detrend.method = "Mean",
                       nyrs = NULL,
                       min.win = 9,
@@ -297,10 +297,15 @@ ci_detect <- function(rwl,
 
   }) |> do.call(what = "rbind")
 
+  # Assign data classes
+  class(untransformed_rwl) <- c("rwl", "data.frame")
+  class(dis_index_rwl) <- c("rwl", "data.frame")
+
   ## Last steps are to output the main results (disturbance-free, disturbance index,
   # original series) and all of the iterations of the disturbance removal process, with the
   # trend curves, etc.
   # all of these can then be plotted in the plot_ci_detect() function
+
   ci_output_list <- list(untransformed_rwl, dis_index_rwl, dist_det, dist_iter, cp_out)
   names(ci_output_list) <- c("Disturbance-free series", "Disturbance index",
                              "Detected disturbances", "Disturbance removal iterations",

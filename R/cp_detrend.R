@@ -113,7 +113,7 @@
 
 
 cp_detrend <-
-  function(rwl,
+  function(rwl = NULL,
            universal.pwr.t = FALSE,
            pwr.t.ID.group.substr = NULL,
            detrend.method = "Mean",
@@ -223,6 +223,12 @@ cp_detrend <-
         ((resid.plus.orig.means[resid.plus.orig.means < 0]) * -1)
       detr <- sweep(resid.plus.orig, 2, resid.plus.orig.means, "/")
     }
+
+    # Assign data classes
+    class(detr) <- c("rwl","data.frame")
+    class(curv) <- c("rwl","data.frame")
+    class(trans) <- c("rwl","data.frame")
+
 
     out.list <- list(detr,
                      curv,

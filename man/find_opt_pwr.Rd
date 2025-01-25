@@ -4,7 +4,7 @@
 \alias{find_opt_pwr}
 \title{Find the optimal power for transforming a tree ring series to approximate homoscedasticity}
 \usage{
-find_opt_pwr(rwl, universal = FALSE, ID.group.substr = NULL)
+find_opt_pwr(rwl = NULL, universal = FALSE, ID.group.substr = NULL)
 }
 \arguments{
 \item{rwl}{A rwl object (read in by dplR's  \code{\link[dplR]{read.rwl}}). Essentially a

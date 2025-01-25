@@ -5,7 +5,7 @@
 \title{Highlight interannual variability in tree ring series by computing ring width as the proportion
 of the last 2 years, limited by a variance cut-off}
 \usage{
-p2yrsL(rwl, limit = 2.6)
+p2yrsL(rwl = NULL, limit = 2.6)
 }
 \arguments{
 \item{rwl}{A rwl object (read in by dplR's \code{\link[dplR]{read.rwl}}). Essentially a

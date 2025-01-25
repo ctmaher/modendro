@@ -4,7 +4,7 @@
 \alias{pwr_t_rwl}
 \title{Find optimal power and apply Cook & Peters (1997) transformation on tree ring series}
 \usage{
-pwr_t_rwl(rwl, universal = FALSE, ID.group.substr = NULL)
+pwr_t_rwl(rwl = NULL, universal = FALSE, ID.group.substr = NULL)
 }
 \arguments{
 \item{rwl}{A rwl object (read in by dplR's \code{\link[dplR]{read.rwl}}). Essentially a

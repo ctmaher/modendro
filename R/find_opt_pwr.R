@@ -71,7 +71,7 @@
 #' find_opt_pwr(rwl = ca533, universal = TRUE)
 
 
-find_opt_pwr <- function(rwl, universal = FALSE, ID.group.substr = NULL) {
+find_opt_pwr <- function(rwl = NULL, universal = FALSE, ID.group.substr = NULL) {
   # Error catching
   stopifnot(
     "rwl is not an object of class 'rwl', 'data.frame', or 'matrix'" =
