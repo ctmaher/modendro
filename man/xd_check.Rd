@@ -2,7 +2,7 @@
 % Please edit documentation in R/xd_check.R
 \name{xd_check}
 \alias{xd_check}
-\title{Cross-dating checking using statistical methods inspired by CooRecorder/CDendro and COFECHA.}
+\title{Statistical cross-dating checking using methods inspired by CooRecorder/CDendro and COFECHA.}
 \usage{
 xd_check(
   data = NULL,
@@ -11,7 +11,8 @@ xd_check(
   ref3 = NULL,
   std.method = "p2yrsL",
   max.offset = 10,
-  p.thresh = 0.05
+  p.thresh = 0.05,
+  out.format = "rwl"
 )
 }
 \arguments{
@@ -40,11 +41,15 @@ references must be at least 20 years. Default is 10 years.}
 
 \item{p.thresh}{The p-value threshold to determine if a correlation is significant. Default is
 the common 0.05.}
+
+\item{out.format}{The format of subsets of data based on the dating confidence ranking. Options
+are "rwl" or "long".}
 }
 \value{
 A list containing 1) the partitioned results based on relative confidence (itself a
 4-element list), 2) the raw correlation results in a nested list for easy viewing in RStudio,
-and 3) the raw correlation results in a large data.frame.
+and 3) subsets of the data collection corresponding to the relative confidence (format specified
+with \code{out.format}).
 }
 \description{
 This function implements a custom statistical check on the dating of a collection of tree-ring
@@ -55,9 +60,25 @@ chronologies. You provide collections of raw tree-ring widths (not pre-made chro
 xd_check will standardize/normalize all series and then generate the chronologies internally.
 If you only provide the \code{data} collection, LOO comparisons are all that you'll get. Adding
 external (and properly cross-dated!) reference collections adds a lot to the confidence of your
-checks. The output of the function contains a summary output based on how many references have
-best and significant correlations with the series as dated. The "raw" correlations are also
-provided in the output.
+checks. The main output of the function is a summary based on how many references have
+best and significant correlations with the series as dated and are ranked lowest, medium, and
+highest confidence.
+
+One potential use for this function is to generate "clean" references for subsequent runs of the
+functions. You can do this by supplying the reference collection to the \code{data} argument and not
+supplying any of the reference arguments (i.e., LOO only mode). Set the other arguments as you
+please and then take the "Highest" subset as one of the \code{refn} arguments in the next run. Note
+that this assumes that you have plenty of good series in your collection!
+}
+\details{
+\code{\link{xd_check}} does a standardization/normalization on all individual series within the
+\code{data} and \code{refn} collections, then it computes chronologies using Tukey's Biweight Robust mean
+(via \code{\link[DescTools]{TukeyBiweight}}). The LOO method is common in dendrochronology as
+the method to compute interseries correlations for a tree-ring collection. In LOO, each series
+has its own chronology made up of the remaining series.
+}
+\examples{
+# Examples to come
 }
 \references{
 Larsson & Larsson (2024) \emph{CDendro and CooRecorder programs of the CDendro package},

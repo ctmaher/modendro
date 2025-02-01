@@ -1,4 +1,5 @@
-#' Cross-dating checking using statistical methods inspired by CooRecorder/CDendro and COFECHA.
+#' Statistical cross-dating checking using methods inspired by CooRecorder/CDendro and COFECHA.
+#'
 #'
 #' @description
 #' This function implements a custom statistical check on the dating of a collection of tree-ring
@@ -9,9 +10,15 @@
 #' xd_check will standardize/normalize all series and then generate the chronologies internally.
 #' If you only provide the `data` collection, LOO comparisons are all that you'll get. Adding
 #' external (and properly cross-dated!) reference collections adds a lot to the confidence of your
-#' checks. The output of the function contains a summary output based on how many references have
-#' best and significant correlations with the series as dated. The "raw" correlations are also
-#' provided in the output.
+#' checks. The main output of the function is a summary based on how many references have
+#' best and significant correlations with the series as dated and are ranked lowest, medium, and
+#' highest confidence.
+#'
+#' One potential use for this function is to generate "clean" references for subsequent runs of the
+#' functions. You can do this by supplying the reference collection to the `data` argument and not
+#' supplying any of the reference arguments (i.e., LOO only mode). Set the other arguments as you
+#' please and then take the "Highest" subset as one of the `refn` arguments in the next run. Note
+#' that this assumes that you have plenty of good series in your collection!
 #'
 #'
 #' @param data The collection of raw tree-ring series you wish to check. Can be class "rwl" or
@@ -33,12 +40,20 @@
 #' references must be at least 20 years. Default is 10 years.
 #' @param p.thresh The p-value threshold to determine if a correlation is significant. Default is
 #' the common 0.05.
+#' @param out.format The format of subsets of data based on the dating confidence ranking. Options
+#' are "rwl" or "long".
 #'
 #' @details
+#' \code{\link{xd_check}} does a standardization/normalization on all individual series within the
+#' `data` and `refn` collections, then it computes chronologies using Tukey's Biweight Robust mean
+#'  (via \code{\link[DescTools]{TukeyBiweight}}). The LOO method is common in dendrochronology as
+#'  the method to compute interseries correlations for a tree-ring collection. In LOO, each series
+#'  has its own chronology made up of the remaining series.
 #'
 #' @return A list containing 1) the partitioned results based on relative confidence (itself a
 #' 4-element list), 2) the raw correlation results in a nested list for easy viewing in RStudio,
-#' and 3) the raw correlation results in a large data.frame.
+#' and 3) subsets of the data collection corresponding to the relative confidence (format specified
+#' with `out.format`).
 #'
 #' @references
 #' Larsson & Larsson (2024) \emph{CDendro and CooRecorder programs of the CDendro package},
@@ -49,7 +64,7 @@
 #' @export
 #'
 #' @examples
-#'
+#' # Examples to come
 
 xd_check <- function(data = NULL, # the data you are checking. long format or rwl
                      ref1 = NULL, # a reference. long format or rwl
@@ -57,7 +72,8 @@ xd_check <- function(data = NULL, # the data you are checking. long format or rw
                      ref3 = NULL, # a reference. long format or rwl
                      std.method = "p2yrsL", # standardization method
                      max.offset = 10, # max offset in years to check
-                     p.thresh = 0.05
+                     p.thresh = 0.05,
+                     out.format = "rwl"
 ) {
   ## Error catching
   # The function cannot do anything if data is NULL
@@ -281,7 +297,7 @@ xd_check <- function(data = NULL, # the data you are checking. long format or rw
     )
   }
 
-  ## The other two args
+  ## The other args
   # std.method arg
   stopifnot(
     "std.method must be one of 'p2yrsL', 'AR', or 'ARIMA'" =
@@ -295,6 +311,23 @@ xd_check <- function(data = NULL, # the data you are checking. long format or rw
       is.numeric(max.offset) &
       max.offset > 0
   )
+
+  # p.thresh arg
+  stopifnot(
+    "p.thresh must be a postive number < 1" =
+      is.numeric(p.thresh) &
+      p.thresh > 0 &
+      p.thresh < 1
+  )
+
+  # out.format arg
+  stopifnot(
+    "out.format options are c('rwl', 'long')" =
+      is.character(out.format) &
+      length(out.format) == 1 &
+      out.format %in% c("rwl", "long")
+  )
+
 
   ### Start the process
   # Steps: 1) convert to p2yrsL, AR, or ARIMA. 2) Build chronologies. 3) Run correlations.
@@ -577,9 +610,26 @@ xd_check <- function(data = NULL, # the data you are checking. long format or rw
   cor.summ.list <- list(lo, mi, hi, cor.res.message)
   names(cor.summ.list) <- c("Lowest conf.", "Medium conf.", "Highest conf.", "All")
 
+  # Prep the data subsetting based on the results
+  if (out.format %in% "rwl") {
+    data.rwl <- longer_rwl(data,
+                           series.name = "series",
+                           dat.name = colnames(data)[grep("rw", colnames(data))])
+
+    rw.out.list <- list(data.rwl[, lo$series, drop = FALSE],
+                        data.rwl[, mi$series, drop = FALSE],
+                        data.rwl[, hi$series, drop = FALSE])
+  } else {
+    rw.out.list <- list(data[data$series %in% lo$series,],
+                        data[data$series %in% mi$series,],
+                        data[data$series %in% hi$series,])
+  }
+
+  names(rw.out.list) <- c("Lowest","Medium","Highest")
+
   ## The final output is a named list
-  out.list <- list(cor.summ.list, cor.res, cor.res.raw)
-  names(out.list) <- c("Dating conf.", "Corr. res. list", "Corr. res. data.frame")
+  out.list <- list(cor.summ.list, cor.res, rw.out.list)
+  names(out.list) <- c("Dating conf.", "Corr. res. list", "Subset RW list")
 
   out.list
 
