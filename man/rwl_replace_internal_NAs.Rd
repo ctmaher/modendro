@@ -18,8 +18,10 @@ are common at the beginnings and ends of tree-ring series within rwl files, and 
 conventions missing or locally absent rings are marked with NA. This can cause problems for many
 analyses.
 
-This is a wrapper function for the simpler replace_internal_NAs that works on any single numeric
-vector.
+This is a wrapper function for the simpler \code{\link{replace_internal_NAs}} that works on any
+simple numeric vector. One important difference is that \code{\link{rwl_replace_internal_NAs}}
+will use the rownames (which represent years) to order the rwl before finding and replacing
+internal NAs.
 
 Warning: for the default of new.val = 0, make sure that the NAs do indeed represent missing or
 locally absent rings!

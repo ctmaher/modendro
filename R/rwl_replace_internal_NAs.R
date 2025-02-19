@@ -6,8 +6,10 @@
 #' conventions missing or locally absent rings are marked with NA. This can cause problems for many
 #' analyses.
 #'
-#' This is a wrapper function for the simpler replace_internal_NAs that works on any single numeric
-#' vector.
+#' This is a wrapper function for the simpler \code{\link{replace_internal_NAs}} that works on any
+#' simple numeric vector. One important difference is that \code{\link{rwl_replace_internal_NAs}}
+#' will use the rownames (which represent years) to order the rwl before finding and replacing
+#' internal NAs.
 #'
 #' Warning: for the default of new.val = 0, make sure that the NAs do indeed represent missing or
 #' locally absent rings!
@@ -55,6 +57,10 @@ rwl_replace_internal_NAs <- function(rwl = NULL,
               length(new.val) == 1
   )
 
+  # Sort the RWL by year first
+  rwl <- rwl[order(as.numeric(rownames(rwl)), decreasing = FALSE),]
+
+  # Use apply to run the simple replace_internal_NAs on each series
   rwl.out <- apply(rwl, MARGIN = 2, FUN = \(series) {
     replace_internal_NAs(series, new.val = new.val)
   }, simplify = FALSE) |>
