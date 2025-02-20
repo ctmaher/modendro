@@ -537,7 +537,7 @@ n_mon_corr <- function(rwl = NULL,
     }
 
     # Have to check that the series IDs in rwl and group.IDs.df match too
-    if (!all(colnames(rwl)) %in% unique(group.IDs.df[, "series"])) {
+    if (!all(colnames(rwl) %in% unique(group.IDs.df[, "series"]))) {
       warning("Series names in rwl and group.IDs.df are different -
       subsetting both data.frames to contain just the common set")
       all.series.names <- c(colnames(rwl), unique(group.IDs.df[, "series"]))
