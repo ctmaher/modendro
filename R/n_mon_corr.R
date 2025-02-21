@@ -417,8 +417,8 @@ n_mon_corr <- function(rwl = NULL,
                           na.omit(this.series[this.series$year %in% clim.span,])
                         })
 
-  # Identify and remove the series that have less than 5 overlap
-  zero.series <- sapply(check.series, FUN = \(x) nrow(x) < 5)
+  # Identify and remove the series that have less than 5 overlap with max.lag
+  zero.series <- sapply(check.series, FUN = \(x) nrow(x) < (5 + max.lag))
   if (any(zero.series)) {
     message(paste0("The following tree-ring series have < 5 years overlap with clim data
     and will be removed from rwl:\n", paste0(names(zero.series[zero.series == TRUE]),
@@ -427,7 +427,7 @@ n_mon_corr <- function(rwl = NULL,
   }
 
   # Warn the user about overlaps less than 25 years
-  short.series <- sapply(check.series, FUN = \(x) nrow(x) < 25 & nrow(x) >= 5)
+  short.series <- sapply(check.series, FUN = \(x) nrow(x) < 25 & nrow(x) >= (5 + max.lag))
   if (any(short.series)) {
     message(paste0("The following tree-ring series have < 25 years overlap with clim data.
     Interpret correlations cautiously.\n", paste0(names(short.series[short.series == TRUE]),
@@ -492,7 +492,6 @@ n_mon_corr <- function(rwl = NULL,
       # We will have to reinstate the year column if some trimming happens
       rwl[, "year"] <- rownames(rwl) |> as.numeric() # Assume the rownames contain year
     }
-
 
 
     # Split by group.var, then order by year and month
