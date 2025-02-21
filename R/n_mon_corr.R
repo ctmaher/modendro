@@ -216,13 +216,10 @@ n_mon_corr <- function(rwl = NULL,
 
   # Add a year variable to rwl
   # If there is no column named "Year" or "year" already
-  if (any(substr(colnames(rwl), 1, 1) %in% c("Y", "y")) == FALSE) {
+  if (!any(substr(colnames(rwl), 1, 1) %in% c("Y", "y"))) { # if no year column
     rwl[, "year"] <- rownames(rwl) |> as.numeric() # Assume the rownames contain year
-  } else {
-    colnames(rwl)[which((substr(
-      colnames(rwl), start = 1, stop = 1
-    )
-    %in% c("Y", "y")) == T)] <- "year"
+  } else { # if there is one
+    colnames(rwl)[which(colnames(rwl) %in% c("Year", "year"))] <- "year"
     rwl[, "year"] <- as.numeric(rwl[, "year"])
   }
 
@@ -234,21 +231,15 @@ n_mon_corr <- function(rwl = NULL,
   )
 
   stopifnot(
-    "clim does not have a year column? (colname sould start with 'y' or 'Y')" =
-      any(substr(colnames(clim), 1, 1) %in% c("Y", "y")) == TRUE
+    "clim does not have a year column? (colname can be 'year' or 'Year')" =
+      any(colnames(clim) %in% c("Year", "year")) == TRUE
   )
 
   # make sure that "year" columns are labelled as such
-  colnames(clim)[which((substr(
-    colnames(clim), start = 1, stop = 1
-  )
-  %in% c("Y", "y")) == T)] <- "year"
+  colnames(clim)[which(colnames(clim) %in% c("Year", "year"))] <- "year"
 
   # same for month
-  colnames(clim)[which((substr(
-    colnames(clim), start = 1, stop = 1
-  )
-  %in% c("M", "m")) == T)] <- "month"
+  colnames(clim)[which(colnames(clim) %in% c("Mon", "mon", "Month", "month"))] <- "month"
 
   stopifnot(
     "Month variable in climate data not numeric or integer" =
@@ -269,16 +260,6 @@ n_mon_corr <- function(rwl = NULL,
   match.test <- clim.var %in% colnames(clim)
   stopifnot("Arg clim.var must match one unique column name in clim" =
               length(match.test[match.test == TRUE]) == 1)
-
-  # Check for internal NAs
-  # Get the NAs
-  notNAs <- which(!is.na(clim[, clim.var]))
-  # Get the "body" of clim.var, which may include NAs within
-  body <- clim[, clim.var][min(notNAs):max(notNAs)]
-
-  stopifnot("clim.var has internal NAs. Missing months or years?" =
-              length(which(is.na(body))) == 0
-  )
 
 
   ###### common.years
@@ -362,31 +343,6 @@ n_mon_corr <- function(rwl = NULL,
       corr.method %in% c("pearson", "kendall", "spearman")
   )
 
-  ###### gro.period.end
-  # stopifnot(
-  #   "Invalid gro.period.end provided (must be a single integer month)" =
-  #     is.integer(gro.period.end) &
-  #     length(gro.period.end) == 1 |
-  #     any(gro.period.end %in% 1:12) &
-  #     length(gro.period.end) == 1
-  # )
-  #
-  # if (is.null(gro.period.end)) {
-  #   cat(
-  #     "You haven't specified the gro.period.end - the last month you expect growth is possible -\n",
-  #     "You should have an approximate idea of what month works for your study system.\n"
-  #   )
-  #   gro.period.end <-
-  #     readline(prompt = "Last month of radial growth = ") |> as.integer()
-  # }
-
-  ###### make.plots
-  # stopifnot("Arg make.plot must be a logical vector" =
-  #             is.logical(make.plots))
-
-  # make.plots text:
-  # logical vector indicating whether or not to produce plots. Default is TRUE.
-  # You will get a warning if you have < 10 tree-ring series. Ideally you have > 50.
   ###### group.IDs.df
 
   # Checks for multiple climate datasets when group.IDs.df is not specified,
@@ -498,7 +454,66 @@ n_mon_corr <- function(rwl = NULL,
       & continuous)" =
         all(mo.count[, "month"] == 12)
     )
-  } else {
+
+    # Look for internal NAs in clim.var
+    # Get the NAs
+    notNAs <- which(!is.na(clim[, clim.var]))
+    # Get the "body" of clim.var, which may include NAs within
+    body <- clim[, clim.var][min(notNAs):max(notNAs)]
+
+    stopifnot("clim.var has internal NAs. Missing months or years?" =
+                length(which(is.na(body))) == 0
+    )
+
+  } else { # If there is a grouping factor
+
+    # We have to check that the same groups exist in the group.IDs.df and in clim
+    if (!all(suppressWarnings((unique(clim[, group.var]) %in% unique(group.IDs.df[, group.var])) &
+                              (unique(group.IDs.df[, group.var]) %in% unique(clim[, group.var]))
+    )
+    )) {
+      warning("Levels of group.var in clim and group.IDs.df are different -
+      subsetting both data.frames to contain just the common set")
+      all.group.levels <- c(unique(clim[, group.var]), unique(group.IDs.df[, group.var]))
+      common.levels <- all.group.levels[duplicated(all.group.levels)]
+      clim <- clim[clim[, group.var] %in% common.levels,]
+      group.IDs.df <- group.IDs.df[group.IDs.df[, group.var] %in% common.levels,]
+    }
+
+    # Have to check that the series IDs in rwl and group.IDs.df match too
+    if (!all(suppressWarnings(colnames(rwl) %in% unique(group.IDs.df[, "series"]) &
+                              unique(group.IDs.df[, "series"]) %in% colnames(rwl)))) {
+      warning("Series names in rwl and group.IDs.df are different -
+      subsetting both data.frames to contain just the common set")
+      all.series.names <- c(colnames(rwl), unique(group.IDs.df[, "series"]))
+      common.names <- all.series.names[duplicated(all.series.names)]
+      rwl <- rwl[, colnames(rwl) %in% common.names]
+      group.IDs.df <- group.IDs.df[group.IDs.df[, "series"] %in% common.names,]
+      # We will have to reinstate the year column if some trimming happens
+      rwl[, "year"] <- rownames(rwl) |> as.numeric() # Assume the rownames contain year
+    }
+
+
+
+    # Split by group.var, then order by year and month
+    clim <- lapply(split(clim, f = clim[, group.var]), FUN = \(x) {
+      x[order(x[,"year"], x[,"month"]),]
+    }) |> do.call(what = "rbind")
+
+    # Check for internal NAs in each group.var level
+    # Split by group.var
+    na.check <- lapply(split(clim, f = clim[, group.var]), FUN = \(x) {
+      # Get the NAs
+      notNAs <- which(!is.na(x[, clim.var]))
+      # Get the "body" of clim.var, which may include NAs within
+      body <- x[, clim.var][min(notNAs):max(notNAs)]
+      body
+    })
+
+    stopifnot("clim.var has internal NAs in one or more group.var level. Missing months or years?" =
+                length(which(is.na(na.check))) == 0
+    )
+
     # If we do have group structure, we must check for missing years/months in each group.
     all.yrs <- aggregate(formula(paste("year ~ ", group.var)),
                          data = clim,
@@ -525,26 +540,6 @@ n_mon_corr <- function(rwl = NULL,
       (observations not regular & continuous)" =
         all(mo.count[, "month"] == 12)
     )
-
-    # We also have to check that the same groups exist in the group.IDs.df and in clim
-    if (!all(unique(clim[, group.var]) %in% unique(group.IDs.df[, group.var]))) {
-      warning("Levels of group.var in clim and group.IDs.df are different -
-      subsetting both data.frames to contain just the common set")
-      all.group.levels <- c(unique(clim[, group.var]), unique(group.IDs.df[, group.var]))
-      common.levels <- all.group.levels[duplicated(all.group.levels)]
-      clim <- clim[clim[, group.var] %in% common.levels,]
-      group.IDs.df <- group.IDs.df[group.IDs.df[, group.var] %in% common.levels,]
-    }
-
-    # Have to check that the series IDs in rwl and group.IDs.df match too
-    if (!all(colnames(rwl) %in% unique(group.IDs.df[, "series"]))) {
-      warning("Series names in rwl and group.IDs.df are different -
-      subsetting both data.frames to contain just the common set")
-      all.series.names <- c(colnames(rwl), unique(group.IDs.df[, "series"]))
-      common.names <- all.series.names[duplicated(all.series.names)]
-      rwl <- rwl[, colnames(rwl) %in% common.names]
-      group.IDs.df <- group.IDs.df[group.IDs.df[, "series"] %in% common.names,]
-    }
 
   }
 
