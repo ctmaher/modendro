@@ -200,7 +200,8 @@ multi_clim_gro_corr <- function(rwl.group = NULL,
 
           # The correlations
           # This subset eliminates NA values in either series.
-          # NAs in the middle of the series should be a rare occurrence
+          # NAs in the middle of the series should impossible - these are addressed in
+          # n_mon_corr error checking
           subs.for.corr <- mo[mo[, "win.len"] == win.len, c("year",
                                                             "month",
                                                             "win.len",
@@ -218,21 +219,17 @@ multi_clim_gro_corr <- function(rwl.group = NULL,
           subs.for.corr <-
             subs.for.corr[which(!duplicated(subs.for.corr[, as.character(series.name)])), ]
 
-
-          if (corr.method == "pearson") {
-            cor.res <- cor.test(
-              subs.for.corr[, clim.var],
-              subs.for.corr[, as.character(series.name)],
-              method = "pearson",
-              alternative = "two.sided"
-            )
+          # Check for adequate overlap between climate and rw series
+          # Identify the series that have less than 5 + max.lag overlap with clim
+          # Give NA correlation results for these.
+          if (nrow(subs.for.corr) < (5 + max.lag)) {
             out.df <- data.frame(
               series = as.character(series.name),
               month = unique(subs.for.corr[, "month"]),
               win.len = unique(subs.for.corr[, "win.len"]),
-              coef = cor.res[["estimate"]][[1]],
-              p = cor.res[["p.value"]][[1]],
-              dir = ifelse(cor.res[["estimate"]][[1]] < 0, "Neg.", "Pos."),
+              coef = NA,
+              p = NA,
+              dir = NA,
               min.year = min(na.omit(subs.for.corr[, "year"])),
               max.year = max(na.omit(subs.for.corr[, "year"])),
               overlap = length(min(na.omit(subs.for.corr[, "year"])):
@@ -240,41 +237,70 @@ multi_clim_gro_corr <- function(rwl.group = NULL,
               clim.var = clim.var,
               corr.method = corr.method,
               hemisphere = hemisphere
-
             )
             out.df[, group.var] <- unique(mo[, group.var])
             out.df
 
           } else {
-            # for "spearman" or "kendall" rank methods
-            cor.res <- corTESTsrd::corTESTsrd(
-              subs.for.corr[, clim.var],
-              subs.for.corr[, as.character(series.name)],
-              method = corr.method,
-              # Add a switch in here for prewhitening?
-              # Perhaps it is best to always be safe here.
-              iid = FALSE,
-              alternative = "two.sided"
-            )
-            out.df <- data.frame(
-              series = as.character(series.name),
-              month = unique(mo[, "month"]),
-              win.len = unique(subs.for.corr[, "win.len"]),
-              coef = cor.res[["rho"]],
-              p = cor.res[["pval"]],
-              dir = ifelse(cor.res[["rho"]] < 0, "Neg.", "Pos."),
-              min.year = min(na.omit(subs.for.corr[, "year"])),
-              max.year = max(na.omit(subs.for.corr[, "year"])),
-              overlap = length(min(na.omit(subs.for.corr[, "year"])):
-                                 max(na.omit(subs.for.corr[, "year"]))),
-              clim.var = clim.var,
-              corr.method = corr.method,
-              hemisphere = hemisphere
-            )
-            out.df[, group.var] <- unique(mo[, group.var])
-            out.df
 
+
+            if (corr.method == "pearson") {
+              cor.res <- cor.test(
+                subs.for.corr[, clim.var],
+                subs.for.corr[, as.character(series.name)],
+                method = "pearson",
+                alternative = "two.sided"
+              )
+              out.df <- data.frame(
+                series = as.character(series.name),
+                month = unique(subs.for.corr[, "month"]),
+                win.len = unique(subs.for.corr[, "win.len"]),
+                coef = cor.res[["estimate"]][[1]],
+                p = cor.res[["p.value"]][[1]],
+                dir = ifelse(cor.res[["estimate"]][[1]] < 0, "Neg.", "Pos."),
+                min.year = min(na.omit(subs.for.corr[, "year"])),
+                max.year = max(na.omit(subs.for.corr[, "year"])),
+                overlap = length(min(na.omit(subs.for.corr[, "year"])):
+                                   max(na.omit(subs.for.corr[, "year"]))),
+                clim.var = clim.var,
+                corr.method = corr.method,
+                hemisphere = hemisphere
+              )
+              out.df[, group.var] <- unique(mo[, group.var])
+              out.df
+
+            } else {
+              # for "spearman" or "kendall" rank methods
+              cor.res <- corTESTsrd::corTESTsrd(
+                subs.for.corr[, clim.var],
+                subs.for.corr[, as.character(series.name)],
+                method = corr.method,
+                # Add a switch in here for prewhitening?
+                # Perhaps it is best to always be safe here.
+                iid = FALSE,
+                alternative = "two.sided"
+              )
+              out.df <- data.frame(
+                series = as.character(series.name),
+                month = unique(mo[, "month"]),
+                win.len = unique(subs.for.corr[, "win.len"]),
+                coef = cor.res[["rho"]],
+                p = cor.res[["pval"]],
+                dir = ifelse(cor.res[["rho"]] < 0, "Neg.", "Pos."),
+                min.year = min(na.omit(subs.for.corr[, "year"])),
+                max.year = max(na.omit(subs.for.corr[, "year"])),
+                overlap = length(min(na.omit(subs.for.corr[, "year"])):
+                                   max(na.omit(subs.for.corr[, "year"]))),
+                clim.var = clim.var,
+                corr.method = corr.method,
+                hemisphere = hemisphere
+              )
+              out.df[, group.var] <- unique(mo[, group.var])
+              out.df
+
+            }
           }
+
 
         }) |> do.call(what = "rbind")
       }) |> do.call(what = "rbind")
@@ -306,3 +332,4 @@ multi_clim_gro_corr <- function(rwl.group = NULL,
 
   return(res.list)
 } # End of function
+

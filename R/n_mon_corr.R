@@ -417,7 +417,7 @@ n_mon_corr <- function(rwl = NULL,
                           na.omit(this.series[this.series$year %in% clim.span,])
                         })
 
-  # Identify and remove the series that have less than 5 overlap with max.lag
+  # Identify and remove the series that are less than 5 + max.lag overlap
   zero.series <- sapply(check.series, FUN = \(x) nrow(x) < (5 + max.lag))
   if (any(zero.series)) {
     message(paste0("The following tree-ring series have < 5 years overlap with clim data
