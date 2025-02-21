@@ -417,17 +417,17 @@ n_mon_corr <- function(rwl = NULL,
                           na.omit(this.series[this.series$year %in% clim.span,])
                         })
 
-  # Identify and remove the series that have less than 4 overlap
-  zero.series <- sapply(check.series, FUN = \(x) nrow(x) < 4)
+  # Identify and remove the series that have less than 5 overlap
+  zero.series <- sapply(check.series, FUN = \(x) nrow(x) < 5)
   if (any(zero.series)) {
-    message(paste0("The following tree-ring series have < 4 years overlap with clim data
+    message(paste0("The following tree-ring series have < 5 years overlap with clim data
     and will be removed from rwl:\n", paste0(names(zero.series[zero.series == TRUE]),
                                              collapse = ", ")))
     rwl <- rwl[, !(colnames(rwl) %in% names(zero.series[zero.series == TRUE])), drop = FALSE]
   }
 
   # Warn the user about overlaps less than 25 years
-  short.series <- sapply(check.series, FUN = \(x) nrow(x) < 25 & nrow(x) >= 4)
+  short.series <- sapply(check.series, FUN = \(x) nrow(x) < 25 & nrow(x) >= 5)
   if (any(short.series)) {
     message(paste0("The following tree-ring series have < 25 years overlap with clim data.
     Interpret correlations cautiously.\n", paste0(names(short.series[short.series == TRUE]),
