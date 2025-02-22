@@ -43,7 +43,10 @@ coordinates from the .pos file after they have been converted to numeric values,
 describing a likely reason.
 
 The \code{default.OD} argument is for circumventing a common "Not read" situation in which the user
-did not assign a
+did not assign an OD year to the series in CooRecorder - but be careful!! Sometimes CooRecorder
+will still give a number for the OD, and this will not be caught by \code{default.OD}. Always check
+the outputs by looking at plots (e.g., spag.plot). If you see weird years assigned to the ring
+widths, then go back to CooRecorder and make sure those series have the correct OD year assigned.
 
 \code{\link{read_pos}} contains several error catching heuristics that try to minimize direct
 interventions from the user or try to clearly guide the user to a fix they can make in
@@ -59,8 +62,7 @@ up.
 
 For the forseeable future, \code{\link{read_pos}} will only work with .pos files from CooRecorder
 7.8 or greater - which is the earliest version (I think!) to include the actual pith coordinates
-in the .pos files. There is also the stipulation that the file \emph{must} contain the outer year of
-the ring width measurements. I'm not sure which version of CooRecorder started including this.
+in the .pos files.
 
 In CooRecorder, it is possible to have a seasonwood ("W") point or a gap point at the very end of
 a measurement series. Since these are nonsensical for determining distances between points, these

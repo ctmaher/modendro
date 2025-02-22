@@ -31,7 +31,10 @@
 #' describing a likely reason.
 #'
 #' The `default.OD` argument is for circumventing a common "Not read" situation in which the user
-#' did not assign a
+#' did not assign an OD year to the series in CooRecorder - but be careful!! Sometimes CooRecorder
+#' will still give a number for the OD, and this will not be caught by `default.OD`. Always check
+#' the outputs by looking at plots (e.g., spag.plot). If you see weird years assigned to the ring
+#' widths, then go back to CooRecorder and make sure those series have the correct OD year assigned.
 #'
 #' \code{\link{read_pos}} contains several error catching heuristics that try to minimize direct
 #' interventions from the user or try to clearly guide the user to a fix they can make in
@@ -47,8 +50,7 @@
 #'
 #' For the forseeable future, \code{\link{read_pos}} will only work with .pos files from CooRecorder
 #' 7.8 or greater - which is the earliest version (I think!) to include the actual pith coordinates
-#' in the .pos files. There is also the stipulation that the file *must* contain the outer year of
-#' the ring width measurements. I'm not sure which version of CooRecorder started including this.
+#' in the .pos files.
 #'
 #' In CooRecorder, it is possible to have a seasonwood ("W") point or a gap point at the very end of
 #' a measurement series. Since these are nonsensical for determining distances between points, these
@@ -116,12 +118,13 @@ read_pos <- function(path = NULL,
       length(path) >= 1
   )
 
-  stopifnot(
-    "default.OD argument must be a numeric vector (a year)" =
-       is.null(default.OD) |
-       is.numeric(default.OD) &
-       length(default.OD) == 1
-  )
+  if (!is.null(default.OD)) {
+    stopifnot(
+      "default.OD argument must be a numeric vector (a year)" =
+        is.numeric(default.OD) |
+        length(default.OD) == 1
+    )
+  }
 
   # Determine if path is a directory or not using list.files, then slim down to a list of .pos
   # files
@@ -136,12 +139,16 @@ read_pos <- function(path = NULL,
   if (length(pos.files) == 0 &&
       !length((grep("\\.pos{1}", path))) == 0) {
     pos.files <- path
+    # For single files
+    stopifnot("path does not lead to a .pos file" =
+                file.exists(pos.files))
+  } else {
+
+    # There must be at least one .pos file in the path - this doesn't check the single files
+    stopifnot("path must lead to at least one .pos file" =
+                length(pos.files[grep("\\.pos{1}", pos.files)]) >= 1)
+
   }
-
-  # There must be at least one .pos file in the path
-  stopifnot("path must lead to at least one .pos file" =
-              length(pos.files[grep("\\.pos{1}", pos.files)]) >= 1)
-
 
   out.list <- lapply(pos.files, FUN = \(f) {
 
@@ -753,7 +760,7 @@ read_pos <- function(path = NULL,
 
         if (CR.ver < 780) {
           tbdr.df <- data.frame(file = f,
-                                message = "This file was not made with CooRecorder >7.7 (do an update & resave file)")
+                                message = "This file was not made with CooRecorder ≥7.8 (do an update & resave file)")
         } else {
 
           if (is.null(OD)) {
