@@ -210,9 +210,13 @@ read_pos <- function(path = NULL,
 
         ## Get the series ID
         # The top line has the full file path, which includes the file name.
-        top.line <- raw.input[1] |> strsplit(split = "\\", fixed = TRUE)
+        # top.line <- raw.input[1] |> strsplit(split = "\\", fixed = TRUE)
         # The path may be complex, but the file name always ends in .pos
-        seriesID <- strsplit(top.line[[1]][length(top.line[[1]])], split = ".pos")[[1]][1]
+        # seriesID <- strsplit(top.line[[1]][length(top.line[[1]])], split = ".pos")[[1]][1]
+        # Get the series ID from the file name
+        f.split <- strsplit(f, split = "/", fixed = TRUE)[[1]]
+        seriesID <- strsplit(f.split[length(f.split)], split = ".pos")[[1]]
+
 
         ## Get the DPI - this is used by CooRecorder to get the numeric x and y scales in mm
         DPI <- raw.input[grep("DPI", raw.input)] |>
