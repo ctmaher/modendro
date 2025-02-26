@@ -742,6 +742,9 @@ read_pos <- function(path = NULL,
         # Clean up the error message and attach it to attributes
         attributes$error.message <- ifelse(error.message %in% "NA; NA", NA, error.message)
 
+        # Order the attributes by series
+        attributes <- attributes[order(attributes$series, decreasing = FALSE),]
+
         # Clean up and order the ring widths
         rw <- whole.ring.widths1[, c("series", "year", "rw.mm",
                                      "ew.mm", "lw.mm", "label")]
@@ -812,6 +815,8 @@ read_pos <- function(path = NULL,
       x[["Attributes"]]
     }) |>
       do.call(what = "rbind")
+
+    att <- att[order(att$series, decreasing = FALSE),]
 
     coord <- lapply(out.list[which(sapply(out.list, class) %in% "list")], FUN = \(x) {
       x[["Raw coordinates"]]
