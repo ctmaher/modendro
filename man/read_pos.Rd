@@ -67,6 +67,11 @@ in the .pos files.
 In CooRecorder, it is possible to have a seasonwood ("W") point or a gap point at the very end of
 a measurement series. Since these are nonsensical for determining distances between points, these
 points are removed by read_pos automatically.
+
+\code{\link{read_pos}} doesn't tolerate replicate .pos file names. File names are series names,
+after all. If you have replicate file names in your path directory, you will get an error message
+that lists the replicated files. Go fix these in your file system and run \code{\link{read_pos}}
+again.
 }
 \examples{
 

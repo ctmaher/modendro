@@ -38,6 +38,10 @@ A data.frame with 3 columns: 1) "year", 2) "series", 3) dat.name ("rw", "rw.mm",
 Simple function to convert rwl-format data (columns are series, rows are years) to long format
 (3 columns: year, series, rw). This is useful for getting your data ready for plotting in ggplot
 or for correlation analyses.
+
+\code{\link{rwl_longer}} doesn't tolerate replicate column names. Column names are series names,
+after all. If you have replicate column names in your rwl, you will get an error message
+that lists the replicated columns. Fix these and run \code{\link{rwl_longer}} again.
 }
 \examples{
 library(dplR)

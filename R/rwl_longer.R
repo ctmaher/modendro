@@ -5,6 +5,9 @@
 #' (3 columns: year, series, rw). This is useful for getting your data ready for plotting in ggplot
 #' or for correlation analyses.
 #'
+#' \code{\link{rwl_longer}} doesn't tolerate replicate column names. Column names are series names,
+#' after all. If you have replicate column names in your rwl, you will get an error message
+#' that lists the replicated columns. Fix these and run \code{\link{rwl_longer}} again.
 #'
 #' @param rwl A rwl-type data.frame (e.g., read in by \code{\link[dplR]{read.rwl}}). Essentially a
 #' data.frame with columns names as series IDs and years as rownames.
@@ -70,17 +73,27 @@ rwl_longer <- function(rwl = NULL,
   stopifnot("new.val.internal.na must be NULL or a numeric vector of length = 1" =
               is.null(new.val.internal.na) |
               (length(new.val.internal.na) == 1 &
-              is.numeric(new.val.internal.na))
-            )
+                 is.numeric(new.val.internal.na))
+  )
 
 
   # Replace the internal NAs if given a new value to do so
   if (is.numeric(new.val.internal.na)) {
-  rwl <- modendro::rwl_replace_internal_NAs(rwl, new.val = new.val.internal.na)
+    rwl <- modendro::rwl_replace_internal_NAs(rwl, new.val = new.val.internal.na)
   }
 
   # Get the series names before we add a year column
   series.cols <- colnames(rwl)
+
+  # Check for any replicated series names
+  sdf <- data.frame(series.cols = series.cols, ind = 1:length(series.cols))
+  sdf.agg <- aggregate(ind ~ series.cols, data = sdf, FUN = \(f) length(f))
+  these <- sdf.agg[which(sdf.agg$ind > 1),]
+
+  if (nrow(these) > 0) {
+    stop(cat(paste("rwl has multiple series (columns) with the same name:",
+                   paste(these$series.cols, collapse = "\n"), sep = "\n")))
+  }
 
   # Make a year column based on the rownames
   rwl[, "year"] <- rownames(rwl) |> as.numeric()
@@ -113,7 +126,7 @@ rwl_longer <- function(rwl = NULL,
     SIMPLIFY = FALSE) |> do.call(what = "rbind")
 
     as.data.frame(long.rwl.trim)
-    } else { # just return everything, NAs & all.
-      as.data.frame(long.rwl)
+  } else { # just return everything, NAs & all.
+    as.data.frame(long.rwl)
   }
-}
+} ## End of function

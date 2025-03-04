@@ -56,6 +56,11 @@
 #' a measurement series. Since these are nonsensical for determining distances between points, these
 #' points are removed by read_pos automatically.
 #'
+#' \code{\link{read_pos}} doesn't tolerate replicate .pos file names. File names are series names,
+#' after all. If you have replicate file names in your path directory, you will get an error message
+#' that lists the replicated files. Go fix these in your file system and run \code{\link{read_pos}}
+#' again.
+#'
 #' @return A list containing 4 data.frames for ring widths, attributes, the original coordinates,
 #' and a 2-column data.frame of the files not read and the associated error message.
 #'
@@ -137,16 +142,27 @@ read_pos <- function(path = NULL,
   )
 
   if (length(pos.files) == 0 &&
-      !length((grep("\\.pos{1}", path))) == 0) {
+      !length((grep("\\.pos{1}", path))) == 0) { # For single files
     pos.files <- path
-    # For single files
+
     stopifnot("path does not lead to a .pos file" =
                 file.exists(pos.files))
-  } else {
+  } else { # For multiple files
 
     # There must be at least one .pos file in the path - this doesn't check the single files
     stopifnot("path must lead to at least one .pos file" =
                 length(pos.files[grep("\\.pos{1}", pos.files)]) >= 1)
+
+    # Check for replicate series
+    filenames <- gsub(pattern = paste0(path,"/"), replacement = "", pos.files)
+    fdf <- data.frame(filenames = filenames, ind = 1:length(filenames))
+    fdf.agg <- aggregate(ind ~ filenames, data = fdf, FUN = \(f) length(f))
+    these <- fdf.agg[which(fdf.agg$ind > 1),]
+
+    if (nrow(these) > 0) {
+      stop(cat(paste("path contains multiple .pos files with the same name:",
+                     paste(these$filenames, collapse = "\n"), sep = "\n")))
+    }
 
   }
 
