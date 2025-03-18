@@ -27,15 +27,6 @@
 
 
 plot_n_mon_corr <- function(x = NULL) {
-
-
-  # Will need this warning
-  # if ((ncol(rwl) - 1) < 10 & make.plots == TRUE) {
-  #   warning("Number of tree-ring series is very low (< 10).
-  #             Be cautious interpreting results plots.")
-  # }
-
-
   # Subset out just the significant correlations
   # But there may not always be significant correlations
 
@@ -64,9 +55,9 @@ plot_n_mon_corr <- function(x = NULL) {
                        na.action = na.pass
   )
 
-  lag.levels <- as.numeric(res.agg$lag) |> unique()
+  lag.levels <- res.agg$lag |> unique()
 
-  res.agg$lag <- factor(res.agg$lag, levels = lag.levels[order(lag.levels)])
+  res.agg$lag <- factor(res.agg$lag, levels = lag.levels[order(as.numeric(lag.levels))])
 
   # Calculate the percentage of significant correlations
   res.agg$prop.sig <- (res.agg$coef / length(unique(x[["Correlation results"]][, "series"]))) *
@@ -165,15 +156,6 @@ plot_n_mon_corr <- function(x = NULL) {
     ggplot2::geom_line(linewidth = 0.75,
                        ggplot2::aes(group = factor(.data[[col_var]], levels = rev(1:max.win)))) +
     ggplot2::facet_wrap( ~ dir, ncol = 1, strip.position = "right") +
-    # ggplot2::geom_vline(
-    #   data = data.frame(
-    #     xint = ifelse(hemisphere == "S",
-    #                   res.agg$comb.x.num[res.agg$comb.x %in% paste0("+1_", gro.period.end)],
-    #                   res.agg$comb.x.num[res.agg$comb.x %in% paste0("0_",gro.period.end)])
-    #   ),
-    #   ggplot2::aes(xintercept = .data[[x.intercept]]),
-    #   color = "white"
-    # ) +
     ggplot2::scale_x_continuous(breaks = unique(res.agg$comb.x.num),
                                 labels = rep(1:12,
                                              times = length(unique(res.agg$comb.x.num))/12)) +
@@ -282,9 +264,6 @@ plot_n_mon_corr <- function(x = NULL) {
       legend.position = "right"
     )
 
-  out.plot.list <- list(per.plot, mean.plot,
-                        res.agg[,c("month","win.len","lag","dir","prop.sig","mean.coef")])
-  names(out.plot.list) <- c("Percent sig. corr. plot", "Mean corr. coef. plot", "Aggregated data")
-  return(out.plot.list)
+  return(c(per.plot, mean.plot))
 
 } # End of function
