@@ -128,7 +128,7 @@ multi_clim_gro_corr <- function(rwl.group = NULL,
   # It is faster to rbind these together & do only a few merges over larger data.frames
   # than to merge over and over again for each month.
 
-  if (hemisphere == "S") {
+  if (hemisphere %in% "S") {
     # The lags are a bit different for the S Hemisphere - we need a lag+1 to capture all
     # the relevant climate periods
 
