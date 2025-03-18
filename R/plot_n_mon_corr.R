@@ -66,7 +66,7 @@ plot_n_mon_corr <- function(x = NULL) {
 
   lag.levels <- res.agg$lag |> unique()
 
-  res.agg$lag <- factor(res.agg$lag, levels = lag.levels[order(as.numeric(res.agg$lag))])
+  res.agg$lag <- factor(res.agg$lag, levels = lag.levels[order(as.numeric(as.character(lag.levels)))])
 
   # Calculate the percentage of significant correlations
   res.agg$prop.sig <- (res.agg$coef / length(unique(x[["Correlation results"]][, "series"]))) *
