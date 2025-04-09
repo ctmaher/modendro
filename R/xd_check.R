@@ -390,7 +390,7 @@ xd_check <- function(data = NULL, # the data you are checking. long format or rw
 
                        #series$std.series <- ifelse(is.na(series$std.series), 0, series$std.series)
 
-                       this.seriesID <- unique(this.series$series)
+                       this.seriesID <- unique(this.series[,"series"])
 
                        loo.chron1 <- aggregate(std.series ~ year,
                                                data = std.all[["data"]][!(std.all[["data"]]$series %in%
