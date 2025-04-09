@@ -27,7 +27,9 @@
 
 
 plot_n_mon_corr <- function(x = NULL) {
-
+  current.opciones <- options()
+  on.exit(options(current.opciones), add = TRUE)
+  options(digits = 2)
 
   # Will need this warning
   # if ((ncol(rwl) - 1) < 10 & make.plots == TRUE) {
