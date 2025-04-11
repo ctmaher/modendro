@@ -163,9 +163,8 @@ read_pos <- function(path = NULL,
     these <- fdf.agg[which(fdf.agg$ind > 1),]
 
     if (nrow(these) != 0)
-      stop(cat(paste("path contains multiple .pos files with the same name:",
-                     paste(these$filenames, collapse = "\n"), sep = "\n")))
-
+      stop(paste("path contains multiple .pos files with the same name:\n",
+                 paste(these$filenames, collapse = "\n")))
   }
 
   out.list <- lapply(pos.files, FUN = \(f) {
