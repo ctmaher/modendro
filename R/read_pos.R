@@ -154,15 +154,17 @@ read_pos <- function(path = NULL,
                 length(pos.files[grep("\\.pos{1}", pos.files)]) >= 1)
 
     # Check for replicate series
-    filenames <- gsub(pattern = paste0(path,"/"), replacement = "", pos.files)
+    filenames <- sapply(pos.files, FUN = \(f) {
+      path.pieces <- strsplit(f, split = "/", fixed = TRUE)[[1]]
+      path.pieces[[length(path.pieces)]]
+    }) # This isolates the .pos files only
     fdf <- data.frame(filenames = filenames, ind = 1:length(filenames))
     fdf.agg <- aggregate(ind ~ filenames, data = fdf, FUN = \(f) length(f))
     these <- fdf.agg[which(fdf.agg$ind > 1),]
 
-    if (nrow(these) > 0) {
+    if (nrow(these) != 0)
       stop(cat(paste("path contains multiple .pos files with the same name:",
                      paste(these$filenames, collapse = "\n"), sep = "\n")))
-    }
 
   }
 
