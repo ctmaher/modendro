@@ -53,9 +53,9 @@ with \code{out.format}).
 }
 \description{
 This function implements a custom statistical check on the dating of a collection of tree-ring
-series. It is \emph{mostly} inspired by operations in CDendro (Larsson & Larsson 2024) and COFECHA,
+series. It is inspired by operations in CDendro (Larsson & Larsson 2024) and COFECHA,
 but does not do all of what either of those programs can do. \code{\link{xd_check}} does simple
-whole-series cross-correlations between leave-one-out (LOO) chronologies and 1-3 reference
+whole-series cross-correlations between leave-one-out (LOO) chronologies and 0-3 reference
 chronologies. You provide collections of raw tree-ring widths (not pre-made chronologies), and
 xd_check will standardize/normalize all series and then generate the chronologies internally.
 If you only provide the \code{data} collection, LOO comparisons are all that you'll get. Adding
@@ -71,13 +71,14 @@ arguments as you please and then take the "Highest" subset as one of the \code{r
 next run. Note that this assumes that you have plenty of good series in your collection!
 
 A note of awareness: the chronology building process in \code{\link{xd_check}} is different than
-the default in CDendro, even though the p2yrsL standardization/normalization is a CDendro method.
-The default in CDendro is to create a mean value chronology of "Heavy" detrended series (the user
-can select the type of detrending), then apply the p2yrsL standardization. The
-\code{\link{xd_check}} method is to apply p2yrsL to all the raw ring width series, then take the
-mean of those to create the chronology. This is the simplest approach, as p2yrsL is like an
-aggressive detrending method. This is just to say that the correlations you see in CDendro and
-CooRecorder might be quantitatively different from what \code{\link{xd_check}} produces.
+the default in CDendro, even though the p2yrsL standardization/normalization derives from
+CDendro. The default in CDendro is to create a mean value chronology of "Heavy" detrended series
+(the user can select the type of detrending), then apply the p2yrsL standardization on the
+chronology. The \code{\link{xd_check}} method is to apply p2yrsL to all the raw ring width series
+, then take the mean of those to create the chronology. This is the simplest approach, as p2yrsL
+is already akin to an aggressive detrending method. Becuase of these differences, the
+correlations you see in CDendro and CooRecorder might be quantitatively different from what
+\code{\link{xd_check}} produces.
 }
 \details{
 \code{\link{xd_check}} does a standardization/normalization on all individual series within the

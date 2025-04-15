@@ -3,9 +3,9 @@
 #'
 #' @description
 #' This function implements a custom statistical check on the dating of a collection of tree-ring
-#' series. It is *mostly* inspired by operations in CDendro (Larsson & Larsson 2024) and COFECHA,
+#' series. It is inspired by operations in CDendro (Larsson & Larsson 2024) and COFECHA,
 #' but does not do all of what either of those programs can do. \code{\link{xd_check}} does simple
-#' whole-series cross-correlations between leave-one-out (LOO) chronologies and 1-3 reference
+#' whole-series cross-correlations between leave-one-out (LOO) chronologies and 0-3 reference
 #' chronologies. You provide collections of raw tree-ring widths (not pre-made chronologies), and
 #' xd_check will standardize/normalize all series and then generate the chronologies internally.
 #' If you only provide the `data` collection, LOO comparisons are all that you'll get. Adding
@@ -21,13 +21,14 @@
 #' next run. Note that this assumes that you have plenty of good series in your collection!
 #'
 #' A note of awareness: the chronology building process in \code{\link{xd_check}} is different than
-#' the default in CDendro, even though the p2yrsL standardization/normalization is a CDendro method.
-#' The default in CDendro is to create a mean value chronology of "Heavy" detrended series (the user
-#' can select the type of detrending), then apply the p2yrsL standardization. The
-#' \code{\link{xd_check}} method is to apply p2yrsL to all the raw ring width series, then take the
-#' mean of those to create the chronology. This is the simplest approach, as p2yrsL is like an
-#' aggressive detrending method. This is just to say that the correlations you see in CDendro and
-#' CooRecorder might be quantitatively different from what \code{\link{xd_check}} produces.
+#' the default in CDendro, even though the p2yrsL standardization/normalization derives from
+#' CDendro. The default in CDendro is to create a mean value chronology of "Heavy" detrended series
+#' (the user can select the type of detrending), then apply the p2yrsL standardization on the
+#' chronology. The \code{\link{xd_check}} method is to apply p2yrsL to all the raw ring width series
+#' , then take the mean of those to create the chronology. This is the simplest approach, as p2yrsL
+#' is already akin to an aggressive detrending method. Becuase of these differences, the
+#' correlations you see in CDendro and CooRecorder might be quantitatively different from what
+#' \code{\link{xd_check}} produces.
 #'
 #'
 #' @param data The collection of raw tree-ring series you wish to check. Can be class "rwl" or
@@ -629,6 +630,27 @@ xd_check <- function(data = NULL, # the data you are checking. long format or rw
       agg.df$as.dated.OD <- unique(this.series[this.series$offset %in% "0",
                                                "sugg.OD"])
 
+      ## Add the correlation coefficients for as dated
+      # There will always be LOO
+      agg.df$as.dated.LOO.corr <- this.series$cor.coef[this.series$reference %in% "LOO" &
+                                                         this.series$offset %in% "0"]
+      # There might be ref1, ref2, and ref3
+      if (any(this.series$reference %in% "ref1")) {
+        agg.df$as.dated.ref1.corr <- this.series$cor.coef[this.series$reference %in% "ref1" &
+                                                            this.series$offset %in% "0"]
+      }
+
+      if (any(this.series$reference %in% "ref2")) {
+        agg.df$as.dated.ref2.corr <- this.series$cor.coef[this.series$reference %in% "ref2" &
+                                                            this.series$offset %in% "0"]
+      }
+
+      if (any(this.series$reference %in% "ref3")) {
+        agg.df$as.dated.ref3.corr <- this.series$cor.coef[this.series$reference %in% "ref3" &
+                                                            this.series$offset %in% "0"]
+      }
+
+
       agg.df$message <- ifelse(nrow(this.series.sum) < n.refs,
                                paste("not checked against",
                                      n.refs - nrow(this.series.sum),
@@ -679,7 +701,7 @@ xd_check <- function(data = NULL, # the data you are checking. long format or rw
 
   ## The final output is a named list
   out.list <- list(cor.summ.list, cor.res, rw.out.list)
-  names(out.list) <- c("Dating conf.", "Corr. res. list", "Subset RW list")
+  names(out.list) <- c("Dating conf.", "Corr. result list", "Subset RW list")
 
   out.list
 
