@@ -22,7 +22,8 @@ A data.frame with series names as columns and years as rownames.
 \description{
 Simple function to convert long format tree ring data (3 columns: year, series, rw) to
 rwl-format data (columns are series, rows are years). This is useful for grouping and
-reassembling data.
+reassembling data. Note that \code{\link{longer_rwl}} does not enforce series name length limits
+like a true rwl does.
 }
 \examples{
 library(dplR)

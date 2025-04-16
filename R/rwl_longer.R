@@ -91,8 +91,9 @@ rwl_longer <- function(rwl = NULL,
   these <- sdf.agg[which(sdf.agg$ind > 1),]
 
   if (nrow(these) > 0) {
-    stop(cat(paste("rwl has multiple series (columns) with the same name:",
-                   paste(these$series.cols, collapse = "\n"), sep = "\n")))
+    stop(paste("rwl has multiple series (columns) with the same name:\n",
+                   paste(these$series.cols, collapse = "\n")))
+
   }
 
   # Make a year column based on the rownames

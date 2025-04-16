@@ -3,7 +3,8 @@
 #' @description
 #' Simple function to convert long format tree ring data (3 columns: year, series, rw) to
 #' rwl-format data (columns are series, rows are years). This is useful for grouping and
-#' reassembling data.
+#' reassembling data. Note that \code{\link{longer_rwl}} does not enforce series name length limits
+#' like a true rwl does.
 #'
 #'
 #' @param df A long-format data.frame with "year" & "series" columns and a data column, specified
@@ -57,7 +58,6 @@ longer_rwl <- function(df = NULL,
       is.character(dat.name) |
       length(dat.name) == 1
   )
-
 
   stopifnot(
     "df does not contain column 'year'" =

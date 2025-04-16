@@ -618,8 +618,12 @@ xd_check <- function(data = NULL, # the data you are checking. long format or rw
                                                             "sugg.ID"]),
                            as.dated.OD = unique(this.series[this.series$offset %in% "0",
                                                             "sugg.OD"]),
+                           # agg.df$as.dated.LOO.corr <- this.series$cor.coef[this.series$reference %in% "LOO" &
+                           #                                                    this.series$offset %in% "0"],
                            message = paste("not checked against any",
                                            "references due to overlap < 20yrs"))
+
+
     } else {
       agg.df <- aggregate(cbind(best.as.dated, sig.as.dated) ~ series, data = this.series.sum,
                           FUN = \(x) paste(sum(x), n.refs, sep = "/"), drop = FALSE)
@@ -631,24 +635,24 @@ xd_check <- function(data = NULL, # the data you are checking. long format or rw
                                                "sugg.OD"])
 
       ## Add the correlation coefficients for as dated
-      # There will always be LOO
-      agg.df$as.dated.LOO.corr <- this.series$cor.coef[this.series$reference %in% "LOO" &
-                                                         this.series$offset %in% "0"]
-      # There might be ref1, ref2, and ref3
-      if (any(this.series$reference %in% "ref1")) {
-        agg.df$as.dated.ref1.corr <- this.series$cor.coef[this.series$reference %in% "ref1" &
-                                                            this.series$offset %in% "0"]
-      }
-
-      if (any(this.series$reference %in% "ref2")) {
-        agg.df$as.dated.ref2.corr <- this.series$cor.coef[this.series$reference %in% "ref2" &
-                                                            this.series$offset %in% "0"]
-      }
-
-      if (any(this.series$reference %in% "ref3")) {
-        agg.df$as.dated.ref3.corr <- this.series$cor.coef[this.series$reference %in% "ref3" &
-                                                            this.series$offset %in% "0"]
-      }
+      # # There will always be LOO
+      # agg.df$as.dated.LOO.corr <- this.series$cor.coef[this.series$reference %in% "LOO" &
+      #                                                    this.series$offset %in% "0"]
+      # # There might be ref1, ref2, and ref3
+      # if (any(this.series$reference %in% "ref1")) {
+      #   agg.df$as.dated.ref1.corr <- this.series$cor.coef[this.series$reference %in% "ref1" &
+      #                                                       this.series$offset %in% "0"]
+      # }
+      #
+      # if (any(this.series$reference %in% "ref2")) {
+      #   agg.df$as.dated.ref2.corr <- this.series$cor.coef[this.series$reference %in% "ref2" &
+      #                                                       this.series$offset %in% "0"]
+      # }
+      #
+      # if (any(this.series$reference %in% "ref3")) {
+      #   agg.df$as.dated.ref3.corr <- this.series$cor.coef[this.series$reference %in% "ref3" &
+      #                                                       this.series$offset %in% "0"]
+      # }
 
 
       agg.df$message <- ifelse(nrow(this.series.sum) < n.refs,
