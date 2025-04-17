@@ -6,9 +6,7 @@
 \usage{
 xd_check(
   data = NULL,
-  ref1 = NULL,
-  ref2 = NULL,
-  ref3 = NULL,
+  ref = NULL,
   std.method = "p2yrsL",
   max.offset = 10,
   p.thresh = 0.05,
@@ -20,17 +18,10 @@ xd_check(
 "data.frame" (long format). This is required. If "data.frame" you need 3 columns: "series",
 "year", & "rw".}
 
-\item{ref1}{A reference collection of raw tree-ring series (NOT a chronology!). Can be class
-"rwl" or "data.frame" (long format). Optional, but more is better here. If "data.frame" you need
-3 columns: "series", "year", & "rw".}
-
-\item{ref2}{A reference collection of raw tree-ring series (NOT a chronology!). Can be class
-"rwl" or "data.frame" (long format). Optional, but more is better here. If "data.frame" you need
-3 columns: "series", "year", & "rw".}
-
-\item{ref3}{A reference collection of raw tree-ring series (NOT a chronology!). Can be class
-"rwl" or "data.frame" (long format). Optional, but more is better here. If "data.frame" you need
-3 columns: "series", "year", & "rw".}
+\item{ref}{A single reference collection or a list of reference collections of raw tree-ring
+series (NOT a chronology!). Can be class "rwl" or "data.frame" (long format). Optional, but more
+references are better here. If "data.frame" you need 3 columns: "series", "year", & "rw". If a
+list, can be a named list so that you can give unique names to your references.}
 
 \item{std.method}{The method of standardization/normalization to apply to the series and
 references. Default (and currently only) option is "p2yrsL", same default as CooRecorder/CDendro.}
@@ -55,14 +46,14 @@ with \code{out.format}).
 This function implements a custom statistical check on the dating of a collection of tree-ring
 series. It is inspired by operations in CDendro (Larsson & Larsson 2024) and COFECHA,
 but does not do all of what either of those programs can do. \code{\link{xd_check}} does simple
-whole-series cross-correlations between leave-one-out (LOO) chronologies and 0-3 reference
+whole-series cross-correlations between leave-one-out (LOO) chronologies and 0-n reference
 chronologies. You provide collections of raw tree-ring widths (not pre-made chronologies), and
 xd_check will standardize/normalize all series and then generate the chronologies internally.
 If you only provide the \code{data} collection, LOO comparisons are all that you'll get. Adding
-external (and properly cross-dated!) reference collections adds a lot to the confidence of your
-checks. The main output of the function is a summary based on how many references have
-best and significant correlations with the series as dated and are ranked lowest, medium, and
-highest confidence.
+appropriate (e.g., properly cross-dated, same species, same region) external reference
+collections adds a lot to the confidence of your checks. The main output of the function is a
+summary based on how many references have best and significant correlations with the series as
+dated and are ranked lowest, medium, and highest confidence.
 
 One potential use for \code{\link{xd_check}} is to generate "clean" references for subsequent
 runs of the function. You can do this by supplying the reference collection to the \code{data}
@@ -86,6 +77,11 @@ correlations you see in CDendro and CooRecorder might be quantitatively differen
 (via \code{\link[DescTools]{TukeyBiweight}}). The LOO method is common in dendrochronology as
 the method to compute interseries correlations for a tree-ring collection. In LOO, each series
 has its own chronology made up of the remaining series.
+
+The basic ranking of dating confidence here is based on two basic criteria: 1) is the
+whole-series correlation best as dated? and 2) is the correlation significant as dated? These
+criteria are assessed for each reference comparison. The more references you have, the higher
+your overall confidence should be.
 }
 \examples{
 # Examples to come

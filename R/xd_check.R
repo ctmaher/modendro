@@ -5,14 +5,14 @@
 #' This function implements a custom statistical check on the dating of a collection of tree-ring
 #' series. It is inspired by operations in CDendro (Larsson & Larsson 2024) and COFECHA,
 #' but does not do all of what either of those programs can do. \code{\link{xd_check}} does simple
-#' whole-series cross-correlations between leave-one-out (LOO) chronologies and 0-3 reference
+#' whole-series cross-correlations between leave-one-out (LOO) chronologies and 0-n reference
 #' chronologies. You provide collections of raw tree-ring widths (not pre-made chronologies), and
 #' xd_check will standardize/normalize all series and then generate the chronologies internally.
 #' If you only provide the `data` collection, LOO comparisons are all that you'll get. Adding
-#' external (and properly cross-dated!) reference collections adds a lot to the confidence of your
-#' checks. The main output of the function is a summary based on how many references have
-#' best and significant correlations with the series as dated and are ranked lowest, medium, and
-#' highest confidence.
+#' appropriate (e.g., properly cross-dated, same species, same region) external reference
+#' collections adds a lot to the confidence of your checks. The main output of the function is a
+#' summary based on how many references have best and significant correlations with the series as
+#' dated and are ranked lowest, medium, and highest confidence.
 #'
 #' One potential use for \code{\link{xd_check}} is to generate "clean" references for subsequent
 #' runs of the function. You can do this by supplying the reference collection to the `data`
@@ -34,15 +34,10 @@
 #' @param data The collection of raw tree-ring series you wish to check. Can be class "rwl" or
 #' "data.frame" (long format). This is required. If "data.frame" you need 3 columns: "series",
 #' "year", & "rw".
-#' @param ref1 A reference collection of raw tree-ring series (NOT a chronology!). Can be class
-#' "rwl" or "data.frame" (long format). Optional, but more is better here. If "data.frame" you need
-#' 3 columns: "series", "year", & "rw".
-#' @param ref2 A reference collection of raw tree-ring series (NOT a chronology!). Can be class
-#' "rwl" or "data.frame" (long format). Optional, but more is better here. If "data.frame" you need
-#' 3 columns: "series", "year", & "rw".
-#' @param ref3 A reference collection of raw tree-ring series (NOT a chronology!). Can be class
-#' "rwl" or "data.frame" (long format). Optional, but more is better here. If "data.frame" you need
-#' 3 columns: "series", "year", & "rw".
+#' @param ref A single reference collection or a list of reference collections of raw tree-ring
+#' series (NOT a chronology!). Can be class "rwl" or "data.frame" (long format). Optional, but more
+#' references are better here. If "data.frame" you need 3 columns: "series", "year", & "rw". If a
+#' list, can be a named list so that you can give unique names to your references.
 #' @param std.method The method of standardization/normalization to apply to the series and
 #' references. Default (and currently only) option is "p2yrsL", same default as CooRecorder/CDendro.
 #' @param max.offset The maximum offset (in years) you want to check in either direction from the
@@ -56,9 +51,14 @@
 #' @details
 #' \code{\link{xd_check}} does a standardization/normalization on all individual series within the
 #' `data` and `refn` collections, then it computes chronologies using Tukey's Biweight Robust mean
-#'  (via \code{\link[DescTools]{TukeyBiweight}}). The LOO method is common in dendrochronology as
-#'  the method to compute interseries correlations for a tree-ring collection. In LOO, each series
-#'  has its own chronology made up of the remaining series.
+#' (via \code{\link[DescTools]{TukeyBiweight}}). The LOO method is common in dendrochronology as
+#' the method to compute interseries correlations for a tree-ring collection. In LOO, each series
+#' has its own chronology made up of the remaining series.
+#'
+#' The basic ranking of dating confidence here is based on two basic criteria: 1) is the
+#' whole-series correlation best as dated? and 2) is the correlation significant as dated? These
+#' criteria are assessed for each reference comparison. The more references you have, the higher
+#' your overall confidence should be.
 #'
 #' @return A list containing 1) the partitioned results based on relative confidence (itself a
 #' 4-element list), 2) the raw correlation results in a nested list for easy viewing in RStudio,
@@ -77,9 +77,7 @@
 #' # Examples to come
 
 xd_check <- function(data = NULL, # the data you are checking. long format or rwl
-                     ref1 = NULL, # a reference. long format or rwl
-                     ref2 = NULL, # a reference. long format or rwl
-                     ref3 = NULL, # a reference. long format or rwl
+                     ref = NULL, # a single reference data.frame or a list of references.
                      std.method = "p2yrsL", # standardization method
                      max.offset = 10, # max offset in years to check
                      p.thresh = 0.05,
@@ -125,7 +123,6 @@ xd_check <- function(data = NULL, # the data you are checking. long format or rw
       length(grep("rw", colnames(data))) > 0
   )
 
-
   # make sure that "rw" column is labelled as such
   colnames(data)[grep("rw", colnames(data))] <- "rw"
 
@@ -144,167 +141,132 @@ xd_check <- function(data = NULL, # the data you are checking. long format or rw
       is.double(data[, "rw"])
   )
 
-
   ## Detailed checking of the data and references to determine if they are rwl format or
   # long format. If rwls are read in using dplR::read.rwl they will have class "rwl" already.
   # What else can signify this? Not sure of a robust test
   # Start with the simple test. For this function, I will convert rwls to long format.
 
   # The references should only go though these checks if they exist.
-  ### ref1
-  if (!is.null(ref1)) {
-    # Basic format check
-    stopifnot(
-      "ref1 is not an object of class 'data.frame', or 'matrix'" =
-        data.class(ref1) %in% "rwl" |
-        data.class(ref1) %in% "data.frame" |
-        data.class(ref1) %in% "matrix"
-    )
+  # For the list case, it might make the most since to check through everything, then check through
+  # the results once to give the entire result at once (maybe).
+  if (!is.null(ref)) {
+    if (is.list(ref) &&
+        !(data.class(ref) %in% "rwl" ||
+          data.class(ref) %in% "data.frame" ||
+          data.class(ref) %in% "matrix")) { # If ref is a list
+      ref.names <- names(ref) # keep the names for later
+      ref <- lapply(seq_along(ref), FUN = \(i) {
+        this.ref <- ref[[i]]
 
-    # Convert to long format if a rwl
-    if (any(class(ref1) %in% "rwl")) {
-      ref1 <- rwl_longer(rwl = ref1, series.name = "series", dat.name = "rw", trim = TRUE,
-                         new.val.internal.na = 0)
+        if (!(data.class(this.ref) %in% "rwl" ||
+              data.class(this.ref) %in% "data.frame" ||
+              data.class(this.ref) %in% "matrix")) {
+
+          stop(sprintf("ref element %d is not an object of class 'data.frame', or 'matrix'", i))
+        }
+
+        # Convert to long format if a rwl
+        if (any(class(this.ref) %in% "rwl")) {
+          this.ref <- rwl_longer(rwl = this.ref,
+                                 series.name = "series",
+                                 dat.name = "rw",
+                                 trim = TRUE,
+                                 new.val.internal.na = 0)
+        }
+
+        ## Columns check
+        if (any(colnames(this.ref) %in% c("Year", "year")) == FALSE) {
+
+          stop(sprintf("ref element %d does not have a year column",
+                       i))
+        }
+
+        # make sure that "year" columns are labelled as such
+        colnames(this.ref)[which((colnames(this.ref) %in%
+                                    c("Year", "year")) == T)] <- "year"
+
+        # general check
+        if (!(any(colnames(this.ref) %in% "series") ||
+              any(colnames(this.ref) %in% "year") ||
+              length(grep("rw", colnames(this.ref))) > 0)) {
+
+          stop(sprintf("ref element %d needs to contain these 3 columns: 'series', 'year', & 'rw'",
+                       i))
+        }
+
+        # make sure that "rw" column is labelled as such
+        colnames(this.ref)[grep("rw", colnames(this.ref))] <- "rw"
+
+        # Make sure these columns are the right kind of data (year & rw need to be numeric)
+        if (!(is.numeric(this.ref[, "year"]) ||
+              is.integer(this.ref[, "year"]) ||
+              is.double(this.ref[, "year"]))) {
+
+          stop(sprintf("year variable in ref element %d not numeric or integer",
+                       i))
+        }
+
+        if (!(is.numeric(this.ref[, "rw"]) ||
+              is.double(this.ref[, "rw"]))) {
+
+          stop(sprintf("ring width ('rw') in ref element %d not numeric",
+                       i))
+        }
+        this.ref
+      })
+
+      names(ref) <- ref.names
+
+    } else { # if ref is not a list
+
+      stopifnot(
+        "ref is not an object of class 'data.frame', 'matrix', or 'list'" =
+          data.class(ref) %in% "rwl" |
+          data.class(ref) %in% "data.frame" |
+          data.class(ref) %in% "matrix"
+      )
+
+      # Convert to long format if a rwl
+      if (any(class(ref) %in% "rwl")) {
+        ref <- rwl_longer(rwl = ref, series.name = "series", dat.name = "rw", trim = TRUE,
+                          new.val.internal.na = 0)
+      }
+
+      ## Columns check
+      stopifnot(
+        "ref does not have a year column?" =
+          any(colnames(ref) %in% c("Year", "year")) == TRUE
+      )
+
+      # make sure that "year" columns are labelled as such
+      colnames(ref)[which((colnames(ref) %in% c("Year", "year")) == T)] <- "year"
+
+      # general check
+      stopifnot(
+        "ref needs to contain these 3 columns: 'series', 'year', & 'rw'" =
+          any(colnames(ref) %in% "series") |
+          any(colnames(ref) %in% "year") |
+          length(grep("rw", colnames(ref))) > 0
+      )
+
+      # make sure that "rw" column is labelled as such
+      colnames(ref)[grep("rw", colnames(ref))] <- "rw"
+
+      # Make sure these columns are the right kind of data (year & rw need to be numeric)
+      stopifnot(
+        "year variable in ref not numeric or integer" =
+          is.numeric(ref[, "year"]) |
+          is.integer(ref[, "year"]) |
+          is.double(ref[, "year"])
+      )
+
+      stopifnot(
+        "ring width ('rw') variable in ref not numeric or integer" =
+          is.numeric(ref[, "rw"]) |
+          is.integer(ref[, "rw"]) |
+          is.double(ref[, "rw"])
+      )
     }
-
-    ## Columns check
-    stopifnot(
-      "ref1 does not have a year column?" =
-        any(colnames(ref1) %in% c("Year", "year")) == TRUE
-    )
-
-    # make sure that "year" columns are labelled as such
-    colnames(ref1)[which((colnames(ref1) %in% c("Year", "year")) == T)] <- "year"
-
-    # general check
-    stopifnot(
-      "ref1 needs to contain these 3 columns: 'series', 'year', & 'rw'" =
-        any(colnames(ref1) %in% "series") |
-        any(colnames(ref1) %in% "year") |
-        length(grep("rw", colnames(ref1))) > 0
-    )
-
-    # make sure that "rw" column is labelled as such
-    colnames(ref1)[grep("rw", colnames(ref1))] <- "rw"
-
-    # Make sure these columns are the right kind of data (year & rw need to be numeric)
-    stopifnot(
-      "year variable in ref1 not numeric or integer" =
-        is.numeric(ref1[, "year"]) |
-        is.integer(ref1[, "year"]) |
-        is.double(ref1[, "year"])
-    )
-
-    stopifnot(
-      "ring width ('rw') variable in ref1 not numeric or integer" =
-        is.numeric(ref1[, "rw"]) |
-        is.integer(ref1[, "rw"]) |
-        is.double(ref1[, "rw"])
-    )
-  }
-
-  ### ref2
-  if (!is.null(ref2)) {
-    # Basic format check
-    stopifnot(
-      "ref2 is not an object of class 'data.frame', or 'matrix'" =
-        data.class(ref2) %in% "rwl" |
-        data.class(ref2) %in% "data.frame" |
-        data.class(ref2) %in% "matrix"
-    )
-
-    # Convert to long format if a rwl
-    if (any(class(ref2) %in% "rwl")) {
-      ref2 <- rwl_longer(rwl = ref2, series.name = "series", dat.name = "rw", trim = TRUE,
-                         new.val.internal.na = 0)
-    }
-
-    ## Columns check
-    stopifnot(
-      "ref2 does not have a year column?" =
-        any(colnames(ref2) %in% c("Year", "year")) == TRUE
-    )
-
-    # make sure that "year" columns are labelled as such
-    colnames(ref2)[which((colnames(ref2) %in% c("Year", "year")) == T)] <- "year"
-
-    # general check
-    stopifnot(
-      "ref2 needs to contain these 3 columns: 'series', 'year', & 'rw'" =
-        any(colnames(ref2) %in% "series") |
-        any(colnames(ref2) %in% "year") |
-        length(grep("rw", colnames(ref2))) > 0
-    )
-
-    # make sure that "rw" column is labelled as such
-    colnames(ref2)[grep("rw", colnames(ref2))] <- "rw"
-
-    # Make sure these columns are the right kind of data (year & rw need to be numeric)
-    stopifnot(
-      "year variable in ref2 not numeric or integer" =
-        is.numeric(ref2[, "year"]) |
-        is.integer(ref2[, "year"]) |
-        is.double(ref2[, "year"])
-    )
-
-    stopifnot(
-      "ring width ('rw') variable in ref2 not numeric or integer" =
-        is.numeric(ref2[, "rw"]) |
-        is.integer(ref2[, "rw"]) |
-        is.double(ref2[, "rw"])
-    )
-  }
-
-  ### ref3
-  if (!is.null(ref3)) {
-    # Basic format check
-    stopifnot(
-      "ref3 is not an object of class 'data.frame', or 'matrix'" =
-        data.class(ref3) %in% "rwl" |
-        data.class(ref3) %in% "data.frame" |
-        data.class(ref3) %in% "matrix"
-    )
-
-    # Convert to long format if a rwl
-    if (any(class(ref3) %in% "rwl")) {
-      ref3 <- rwl_longer(rwl = ref3, series.name = "series", dat.name = "rw", trim = TRUE,
-                         new.val.internal.na = 0)
-    }
-
-    ## Columns check
-    stopifnot(
-      "ref3 does not have a year column?" =
-        any(colnames(ref3) %in% c("Year", "year")) == TRUE
-    )
-
-    # make sure that "year" column is labelled as such
-    colnames(ref3)[which((colnames(ref3) %in% c("Year", "year")) == T)] <- "year"
-
-    # general check
-    stopifnot(
-      "ref3 needs to contain these 3 columns: 'series', 'year', & 'rw'" =
-        any(colnames(ref3) %in% "series") |
-        any(colnames(ref3) %in% "year") |
-        length(grep("rw", colnames(ref3))) > 0
-    )
-
-    # make sure that "rw" column is labelled as such
-    colnames(ref3)[grep("rw", colnames(ref3))] <- "rw"
-
-    # Make sure these columns are the right kind of data (year & rw need to be numeric)
-    stopifnot(
-      "year variable in ref3 not numeric or integer" =
-        is.numeric(ref3[, "year"]) |
-        is.integer(ref3[, "year"]) |
-        is.double(ref3[, "year"])
-    )
-
-    stopifnot(
-      "ring width ('rw') variable in ref3 not numeric or integer" =
-        is.numeric(ref3[, "rw"]) |
-        is.integer(ref3[, "rw"]) |
-        is.double(ref3[, "rw"])
-    )
   }
 
   ## The other args
@@ -343,9 +305,30 @@ xd_check <- function(data = NULL, # the data you are checking. long format or rw
   # Steps: 1) convert to p2yrsL, AR, or ARIMA. 2) Build chronologies. 3) Run correlations.
   # 4) Assemble the results
 
-  # Convert to p2yrsL - first assemble a list of all the data
-  dat.ref.list <- list(data, ref1, ref2, ref3)
-  names(dat.ref.list) <- c("data", "ref1", "ref2", "ref3")
+  # Make a list of the data and the ref(s)
+  if (is.list(ref) &&
+      !(data.class(ref) %in% "rwl" ||
+        data.class(ref) %in% "data.frame" ||
+        data.class(ref) %in% "matrix")) {
+
+    dat.ref.list <- c(list(data), ref)
+
+    if(is.null(names(ref))) { # NULL names
+      length.ref <- ifelse(is.null(ref), 0, length(ref))
+      if (length.ref == 0) { # ref is NULL altogether
+        names(dat.ref.list) <- "data"
+      } else {
+        names(dat.ref.list) <- c("data", paste0("ref", 1:length.ref))
+      }
+    } else { # if ref has names
+      names(dat.ref.list) <- c("data", names(ref))
+    }
+
+  } else { # Ref is not a list
+
+    dat.ref.list <- list(data, ref)
+    names(dat.ref.list) <- c("data", "ref1")
+  }
 
   # Remove the null values
   dat.ref.list <- dat.ref.list[!unlist(lapply(dat.ref.list, FUN = \(x)is.null(x)))]
@@ -380,7 +363,7 @@ xd_check <- function(data = NULL, # the data you are checking. long format or rw
   lags <- seq(-max.offset, max.offset, by = 1)
   # These then have to be applied to each series + chron combination
 
-  # set min.overlap
+  # set min.overlap - the way I'm handling this is causing problems I think
   min.overlap <- 20
 
   # Do the leave-one-out chronology method on the data (n chrons = n series)
@@ -394,13 +377,15 @@ xd_check <- function(data = NULL, # the data you are checking. long format or rw
                        this.seriesID <- unique(this.series[,"series"])
 
                        loo.chron1 <- aggregate(std.series ~ year,
-                                               data = std.all[["data"]][!(std.all[["data"]]$series %in%
+                                               data = std.all[["data"]][!(std.all[["data"]]$series
+                                                                          %in%
                                                                             this.seriesID),],
                                                FUN = \(x) DescTools::TukeyBiweight(x, na.rm = TRUE))
                        colnames(loo.chron1)[colnames(loo.chron1) %in% "std.series"] <- "std.chron"
 
                        loo.depth <- aggregate(std.series ~ year,
-                                              data = std.all[["data"]][!(std.all[["data"]]$series %in%
+                                              data = std.all[["data"]][!(std.all[["data"]]$series
+                                                                         %in%
                                                                            this.seriesID),],
                                               length)
                        colnames(loo.depth)[colnames(loo.depth) %in% "std.series"] <- "samp.depth"
@@ -590,39 +575,45 @@ xd_check <- function(data = NULL, # the data you are checking. long format or rw
   # series.
 
   # Perhaps the best way (consider if all the references have best as dated and are significant)
-  n.refs <- length(dat.ref.list)
+  n.refs <- length(data.refs.list)
   all.bad <- paste("0", n.refs, sep = "/")
 
   cor.res.message <- lapply(split(cor.res.raw1, f = cor.res.raw1$series), FUN = \(this.series) {
 
     this.series.sum <- lapply(split(this.series, f = this.series[, "reference"]),
                               FUN = \(this.combo) {
-                                this.combo <- this.combo[order(this.combo$cor.coef, decreasing = TRUE),]
+                                this.combo <- this.combo[order(this.combo$cor.coef,
+                                                               decreasing = TRUE),]
                                 rownames(this.combo) <- 1:nrow(this.combo)
                                 as.dated <- this.combo[this.combo$offset %in% "0",]
 
                                 data.frame(series = as.dated$series,
-                                           best.as.dated = ifelse(which(this.combo$offset %in% "0") %in% "1", 1, 0),
+                                           best.as.dated = ifelse(which(this.combo$offset %in% "0")
+                                                                  %in% "1", 1, 0),
                                            sig.as.dated = ifelse(as.dated$p.val < p.thresh, 1, 0))
-
 
                               }) |> do.call(what = "rbind")
 
     # Make sure it says 0/n if the overlap is inadequate to have anything
 
-    if (nrow(this.series.sum) < 1) {
+    # I need to figure out which of the references (including LOO) have correlations for
+    # this.series as dated.
+    these.refs <- rownames(this.series.sum)[which(names(data.refs.list) %in%
+                                                    rownames(this.series.sum))]
+
+
+    if (nrow(this.series.sum) < 1) { # No refs had adequate overlap
       agg.df <- data.frame(series = unique(this.series[, "series"]),
                            best.as.dated = all.bad,
                            sig.as.dated = all.bad,
                            as.dated.ID = unique(this.series[this.series$offset %in% "0",
                                                             "sugg.ID"]),
                            as.dated.OD = unique(this.series[this.series$offset %in% "0",
-                                                            "sugg.OD"]),
-                           # agg.df$as.dated.LOO.corr <- this.series$cor.coef[this.series$reference %in% "LOO" &
-                           #                                                    this.series$offset %in% "0"],
-                           message = paste("not checked against any",
-                                           "references due to overlap < 20yrs"))
+                                                            "sugg.OD"]))
+      agg.df[, paste0("as.dated.", names(data.refs.list), ".cor")] <- NA
 
+      agg.df$message <-  paste("not checked against any",
+                               "references due to overlap < 20yrs")
 
     } else {
       agg.df <- aggregate(cbind(best.as.dated, sig.as.dated) ~ series, data = this.series.sum,
@@ -635,25 +626,14 @@ xd_check <- function(data = NULL, # the data you are checking. long format or rw
                                                "sugg.OD"])
 
       ## Add the correlation coefficients for as dated
-      # # There will always be LOO
-      # agg.df$as.dated.LOO.corr <- this.series$cor.coef[this.series$reference %in% "LOO" &
-      #                                                    this.series$offset %in% "0"]
-      # # There might be ref1, ref2, and ref3
-      # if (any(this.series$reference %in% "ref1")) {
-      #   agg.df$as.dated.ref1.corr <- this.series$cor.coef[this.series$reference %in% "ref1" &
-      #                                                       this.series$offset %in% "0"]
-      # }
-      #
-      # if (any(this.series$reference %in% "ref2")) {
-      #   agg.df$as.dated.ref2.corr <- this.series$cor.coef[this.series$reference %in% "ref2" &
-      #                                                       this.series$offset %in% "0"]
-      # }
-      #
-      # if (any(this.series$reference %in% "ref3")) {
-      #   agg.df$as.dated.ref3.corr <- this.series$cor.coef[this.series$reference %in% "ref3" &
-      #                                                       this.series$offset %in% "0"]
-      # }
+      # Which refs do we have correlation coefs for?
+      cor.coefs <- lapply(1:n.refs, FUN = \(i) {
+        this.coef <- this.series[this.series$offset %in% "0" &
+                                   this.series$reference %in% names(data.refs.list)[i], "cor.coef"]
+        ifelse(length(this.coef) == 0, NA, this.coef)
+      }) |> do.call(what = "c")
 
+      agg.df[, paste0("as.dated.", names(data.refs.list), ".corr")] <- cor.coefs
 
       agg.df$message <- ifelse(nrow(this.series.sum) < n.refs,
                                paste("not checked against",
@@ -710,6 +690,3 @@ xd_check <- function(data = NULL, # the data you are checking. long format or rw
   out.list
 
 } # End of function
-
-
-
