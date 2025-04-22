@@ -126,7 +126,7 @@ read_pos <- function(path = NULL,
   if (!is.null(default.OD)) {
     stopifnot(
       "default.OD argument must be a numeric vector (a year)" =
-        is.numeric(default.OD) |
+        is.numeric(default.OD) &
         length(default.OD) == 1
     )
   }
