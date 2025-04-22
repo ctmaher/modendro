@@ -789,7 +789,7 @@ read_pos <- function(path = NULL,
 
         if (CR.ver < 780) {
           tbdr.df <- data.frame(file = f,
-                                message = enc2utf8(".pos files must be from CooRecorder ≥7.8 (update CooRecorder & resave file)"))
+                                message = enc2utf8(".pos files must be from CooRecorder \u2265 7.8 (update CooRecorder & resave file)"))
         } else {
 
           if (is.null(OD)) {
