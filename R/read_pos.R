@@ -40,13 +40,26 @@
 #' interventions from the user or try to clearly guide the user to a fix they can make in
 #' CooRecorder.
 #'
+#' Note: because the output from read_pos includes the `"Raw coordinates"`, you can check for these
+#' errors in R. This is much more efficient than going back into to CooRecorder to check multiple
+#' .pos files. See the examples below for a workflow using faceted plots in ggplot2.
+#'
 #' A possible error in CooRecorder is that points can be saved out of order. Usually CooRecorder
 #' will give you an "Erroneous point order" message, but it will save the file anyhow. This can
 #' wreak havoc on determining ring widths. \code{\link{read_pos}} has a simple way of determining
 #' if there are out of order points and it will warn you if it finds something. Since false
-#' positives are likely with this approach, read_pos() will read in the files anyway with warnings.
-#' Go check the files in CooRecorder - some will be false positives, others will truly be messed
-#' up.
+#' positives are likely with this approach, \code{\link{read_pos}} will read in the files anyway
+#' with warnings the console and in the `message` column of the `"Attributes"` data.frame in the
+#' output. This will produce false negatives, but others will truly be messed up.
+#'
+#' Another possible error in CooRecorder is that the pith location gets jumbled around and is no
+#' longer valid. This will make any calculations using distance to pith (like age estimates or basal
+#' area/basal area increment) wrong! Unfortunately this doesn't cause any error to arise in
+#' CooRecorder itself. In attempt to catch these errors, \code{\link{read_pos}} uses a similar logic
+#' as for the erroneous points - if the pith veers off in some unexpected direction \emph{or} if
+#' the distance to pith is greater than 50% of the range of the long axis, you'll get a warning in
+#' the console and in the `message` column of the `"Attributes"` data.frame in the output. This will
+#' produce false negatives, but others will truly be messed up.
 #'
 #' For the forseeable future, \code{\link{read_pos}} will only work with .pos files from CooRecorder
 #' 7.8 or greater - which is the earliest version (I think!) to include the actual pith coordinates
@@ -94,7 +107,7 @@
 #' # "Not read" gives you a data.frame of files that were not read in and potentially why
 #' ex.pos[["Not read"]]
 #'
-#' # you can see the coordinates
+#' # Check the coordinates - this is an efficient way to check point order or pith location errors
 #' ggplot(ex.pos[["Raw coordinates"]], aes(x, y)) +
 #'   geom_path() +
 #'   geom_point(aes(color = type)) +
@@ -169,6 +182,7 @@ read_pos <- function(path = NULL,
 
   out.list <- lapply(pos.files, FUN = \(f) {
 
+    # For internal testing
     #f <- pos.files
 
     # wrap in tryCatch so we can handle the error
@@ -317,9 +331,11 @@ read_pos <- function(path = NULL,
         ## Get the point coordinates
         # The license info seems to be the 2nd-to-last line before the rest of the coordinates
         # There is a blank line in between
-        # This is usually true but not always! Maybe I need more of a positive ID of the coordinates.
+        # This is usually true but not always! Maybe I need more of a positive ID of the
+        # coordinates.
         # Find the first line that contains just coordinates. That is, two stings coercible to
-        # numeric that are separated by a comma. The key is that there is nothing else in the string.
+        # numeric that are separated by a comma. The key is that there is nothing else in the
+        # string.
         # coord.start <- grep("licensedTo", raw.input) + 2
 
         # This method will not count gaps or season wood - but I'm pretty sure it is not
@@ -355,7 +371,8 @@ read_pos <- function(path = NULL,
             label <- ifelse(grepl("#", x), label_match, NA)
 
             coords.string <- sub(" #.*", "", x)  # Remove everything after ' #'
-            # in the cases of multipoints, split by spaces. If single points this leaves it unchanged.
+            # in the cases of multipoints, split by spaces. If single points this leaves it
+            # unchanged.
             coords.string1 <- strsplit(coords.string, "\\s+")[[1]]
 
             if (length(coords.string1) == 1) { # "regular points"
@@ -424,22 +441,37 @@ read_pos <- function(path = NULL,
         }, x = ring.bound, x.names = names(ring.bound), SIMPLIFY = FALSE) |>
           do.call(what = "rbind")
 
+        # Files that end in a gap or a W should be trimmed - I think this is rare but is possible
+        # Really what we need is that the file ends in a reg point or a multi2 point
+        if(!(ring.bound.df$type[nrow(ring.bound.df)] %in% c("reg","multi2"))) {
+          ring.bound.df <- ring.bound.df[1:(nrow(ring.bound.df) - 1),]
+        }
+
+        # Check it twice!
+        if(!(ring.bound.df$type[nrow(ring.bound.df)] %in% c("reg","multi2"))) {
+          ring.bound.df <- ring.bound.df[1:(nrow(ring.bound.df) - 1),]
+        }
+
+        # Add the pith coordinates.
+        all.coords <- rbind(ring.bound.df[, c("series","x","y","label","type")], pith.coords.df)
+
         # Sometimes the files have "Erroneous order" messages, (points are out of out of order).
         # We can order the points by their x or y position. Leave out pith for now if it's there -
         # it always should go at the end.
         # The following several lines fix the order if it is broken
 
         # Each set of coords needs a unique identifier
-        ring.bound.df$orig.index <- 1:nrow(ring.bound.df)
+        all.coords$orig.index <- 1:nrow(all.coords)
 
-        # ggplot(ring.bound.df) +
+        # ggplot(all.coords) +
         #   geom_path(aes(x, y), inherit.aes = F) +
         #   geom_point(aes(x, y, color = type), inherit.aes = F) +
         #   coord_fixed()
 
         # A fairly simple way to determine if any points are out of order is to see if there are any
-        # directional changes in the differences of BOTH the axis. 1 at a time is okay and plausible.
-        check.diffs <- ring.bound.df
+        # directional changes in the differences of BOTH the axis. 1 at a time is okay and
+        # plausible.
+        check.diffs <- all.coords
         check.diffs$x.diff <- c(NA, diff(check.diffs$x))
         check.diffs$y.diff <- c(NA, diff(check.diffs$y))
 
@@ -447,11 +479,14 @@ read_pos <- function(path = NULL,
         check.diffs <- check.diffs[-1,]
 
         # Define the direction of movement
-        check.diffs$x.dir <- ifelse(check.diffs$x.diff < 0, "neg", "pos")
-        check.diffs$y.dir <- ifelse(check.diffs$y.diff < 0, "neg", "pos")
+        check.diffs$x.dir <- ifelse(check.diffs$x.diff < 0,
+                                    "neg", "pos")
+        check.diffs$y.dir <- ifelse(check.diffs$y.diff < 0,
+                                    "neg", "pos")
 
         # 0 diffs should take on the neg or pos label of the preceding point for direction
-        # Must also account for 0 diffs at the top of - take the next one instead of the previous one
+        # Must also account for 0 diffs at the top of - take the next one instead of the previous
+        # one
         for (i in seq_along(check.diffs$x.dir)) {
           if (check.diffs$x.diff[i] == 0) {
             if (length(check.diffs$x.dir[i - 1]) == 0) {
@@ -478,12 +513,17 @@ read_pos <- function(path = NULL,
         check.diffs <- check.diffs[!(check.diffs$type %in% "multi2"),]
 
         # Find the prevailing direction of each axis
-        # Note that this is imperfect in that there can be multiple "prevailing" directions!
+        # This is imperfect in that there can be multiple "prevailing" directions!
         # Tree-ring series may twist in such a way that the short axis can have two prevailing
         # directions. There are a lot of observations in these cases though.
-        # This might be impossible. I might have to give a warning and proceed anyway.
-        x.prevailing <- aggregate(series ~ x.dir, data = check.diffs, length)
-        y.prevailing <- aggregate(series ~ y.dir, data = check.diffs, length)
+        # I err on the side of producing false negatives rather than missing true negatives.
+        # Exclude the pith at this point
+        x.prevailing <- aggregate(series ~ x.dir,
+                                  data = check.diffs[!(check.diffs$type %in% "pith"),],
+                                  length)
+        y.prevailing <- aggregate(series ~ y.dir,
+                                  data = check.diffs[!(check.diffs$type %in% "pith"),],
+                                  length)
 
         check.diffs$x.head <- ifelse(check.diffs$x.dir %in%
                                        x.prevailing$x.dir[which.max(x.prevailing$series)],
@@ -495,14 +535,27 @@ read_pos <- function(path = NULL,
         # If we have any observations where BOTH heading components are divergent, then we may have
         # erroneous point order. Read these in anyway, but give a warning and a tag.
 
+        # Give a separate warning if the pith direction is divergent & based on different
+        # criteria: only one heading has to be divergent or if the long axis dist is more
+        # than 50% of the range of the other points
+        long.axis <- ifelse(which.max(c(
+          abs(diff(range(check.diffs$x[!(check.diffs$type %in% "pith")]))),
+          abs(diff(range(check.diffs$y[!(check.diffs$type %in% "pith")]))))
+        ) == 1,
+        "x", "y")
+        long.axis.range <- abs(diff(range(check.diffs[!(check.diffs$type %in% "pith"),
+                                                      long.axis])))
+
         # Set up the null data.frame
         error.df <- data.frame(file = f, message = NA)
 
-        if (any(check.diffs$x.head %in% "div" & check.diffs$y.head %in% "div")) {
+        # All points but pith
+        if (any(check.diffs$x.head[!(check.diffs$type %in% "pith")] %in% "div" &
+                check.diffs$y.head[!(check.diffs$type %in% "pith")] %in% "div")) {
 
           warning(paste0("Check coordinates for ", unique(check.diffs$series), ".pos - ",
                          "possible erroneous point order"),
-                  call. = FALSE)
+                  call. = FALSE, immediate. = TRUE)
 
           error.df <- data.frame(file = f,
                                  message = paste0("Check coordinates - ",
@@ -510,25 +563,29 @@ read_pos <- function(path = NULL,
 
         }
 
-        # Files that end in a gap or a W should be trimmed - I think this is rare but is possible
-        # Really what we need is that the file ends in a reg point or a multi2 point
-        if(!(ring.bound.df$type[nrow(ring.bound.df)] %in% c("reg","multi2"))) {
-          ring.bound.df <- ring.bound.df[1:(nrow(ring.bound.df) - 1),]
-        }
+        # Just the pith location
+        if (any(check.diffs$x.head[check.diffs$type %in% "pith"] %in% "div" |
+                check.diffs$y.head[check.diffs$type %in% "pith"] %in% "div") ||
+            abs(check.diffs[check.diffs$type %in% "pith", paste0(long.axis, ".diff")]) >=
+            0.5*long.axis.range) {
 
-        # Check it twice!
-        if(!(ring.bound.df$type[nrow(ring.bound.df)] %in% c("reg","multi2"))) {
-          ring.bound.df <- ring.bound.df[1:(nrow(ring.bound.df) - 1),]
+          warning(paste0("Check pith location for ", unique(check.diffs$series), ".pos - ",
+                         "possible pith location error"),
+                  call. = FALSE, immediate. = TRUE)
+
+          if (is.na(error.df$message)) {
+            error.df$message <- paste0("Check pith location - ",
+                                       "possible pith location error")
+          } else {
+            error.df$message <- paste(error.df$message,
+                                      paste0("Check pith location - ",
+                                             "possible pith location error"),
+                                      sep = "; ")
+          }
         }
 
         # The coordinates can look inverted vertically relative to what I see in CooRecorder.
         # This doesn't matter for the distances
-
-        # Add the pith coordinates. Note that the pith coords are sometimes flipped on the y axis
-        # relative to the other coords.
-        # This should not affect the distance, however. What matters is that the pith coords appear
-        # at the bottom or end of the other points.
-        all.coords <- rbind(ring.bound.df[, c("series","x","y","label","type")], pith.coords.df)
 
         # Clean up the label
         all.coords$label <- ifelse(all.coords$label %in% "", NA, all.coords$label)
@@ -548,7 +605,8 @@ read_pos <- function(path = NULL,
         # Gaps can be indicated by 2 points (we skip the distance between them) or by a single point
         # (we skip the distance between a regular point and the gap point - also would apply to
         # "W" points).
-        # The order of points is the only thing that indicates the year each point is associated with.
+        # The order of points is the only thing that indicates the year each point is
+        # associated with.
         #all.coords$year1 <- NA
         all.coords$year <- NA
         all.coords$year[all.coords$type %in%
@@ -657,7 +715,8 @@ read_pos <- function(path = NULL,
                                                if (this.year$type[i] %in% "gap" &&
                                                    i < nrow(this.year)) {
                                                  # Add "gap" dist to the next row
-                                                 this.year$dist.mm[i + 1] <- this.year$dist.mm[i + 1] +
+                                                 this.year$dist.mm[i + 1] <-
+                                                   this.year$dist.mm[i + 1] +
                                                    this.year$dist.mm[i]
                                                }
                                              }
@@ -746,7 +805,7 @@ read_pos <- function(path = NULL,
                            attributes$series,
                            ".pos. Ring width measurements will ",
                            "be incorrect if DPI is wrong."),
-                    call. = FALSE)
+                    call. = FALSE, immediate. = TRUE)
           }
           error.message <- paste(error.df$message, DPI.message, sep = "; ")
         }
@@ -812,7 +871,8 @@ read_pos <- function(path = NULL,
     # If a single series, just return the out.list
     # Make an exception if it falls under "not read"
     if (any(colnames(out.list[[1]]) %in% "message")) {
-      warning(paste0("File not read: ", out.list[[1]]$message))
+      warning(paste0("File not read: ", out.list[[1]]$message),
+              call. = FALSE, immediate. = TRUE)
     } else {
       out.list[[1]]
     }
@@ -849,7 +909,7 @@ read_pos <- function(path = NULL,
 
     if (length(tbdr) >= 1) {
       warning("Some files not read. See 'Not read' list for details.",
-              call. = FALSE)
+              call. = FALSE, immediate. = TRUE)
     }
     new.out.list
   }

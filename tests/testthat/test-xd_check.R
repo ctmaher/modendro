@@ -57,14 +57,63 @@ test_that("function returns error for missing data input", {
 
 
 
-
-test_that("function returns error for missing data input", {
+test_that("function returns error for invalid ref input", {
   expect_error(
     xd_check(data = rwl,
-             ref = NULL,
+             ref = "queseyo",
              std.method = "p2yrsL",
              max.offset = 10,
              p.thresh = 0.05,
              out.format = "rwl")
   )
 })
+
+
+test_that("function returns error for invalid std.method input", {
+  expect_error(
+    xd_check(data = rwl,
+             ref = NULL,
+             std.method = "queseyo",
+             max.offset = 10,
+             p.thresh = 0.05,
+             out.format = "rwl")
+  )
+})
+
+
+test_that("function returns error for invalid max.offset input", {
+  expect_error(
+    xd_check(data = rwl,
+             ref = NULL,
+             std.method = "p2yrsL",
+             max.offset = -10,
+             p.thresh = 0.05,
+             out.format = "rwl")
+  )
+})
+
+
+test_that("function returns error for invalid p.thresh input", {
+  expect_error(
+    xd_check(data = rwl,
+             ref = NULL,
+             std.method = "p2yrsL",
+             max.offset = 10,
+             p.thresh = -5,
+             out.format = "rwl")
+  )
+})
+
+
+test_that("function returns error for invalid out.format input", {
+  expect_error(
+    xd_check(data = rwl,
+             ref = NULL,
+             std.method = "p2yrsL",
+             max.offset = 10,
+             p.thresh = -5,
+             out.format = "whosit")
+  )
+})
+
+

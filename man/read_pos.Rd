@@ -52,13 +52,26 @@ widths, then go back to CooRecorder and make sure those series have the correct 
 interventions from the user or try to clearly guide the user to a fix they can make in
 CooRecorder.
 
+Note: because the output from read_pos includes the \code{"Raw coordinates"}, you can check for these
+errors in R. This is much more efficient than going back into to CooRecorder to check multiple
+.pos files. See the examples below for a workflow using faceted plots in ggplot2.
+
 A possible error in CooRecorder is that points can be saved out of order. Usually CooRecorder
 will give you an "Erroneous point order" message, but it will save the file anyhow. This can
 wreak havoc on determining ring widths. \code{\link{read_pos}} has a simple way of determining
 if there are out of order points and it will warn you if it finds something. Since false
-positives are likely with this approach, read_pos() will read in the files anyway with warnings.
-Go check the files in CooRecorder - some will be false positives, others will truly be messed
-up.
+positives are likely with this approach, \code{\link{read_pos}} will read in the files anyway
+with warnings the console and in the \code{message} column of the \code{"Attributes"} data.frame in the
+output. This will produce false negatives, but others will truly be messed up.
+
+Another possible error in CooRecorder is that the pith location gets jumbled around and is no
+longer valid. This will make any calculations using distance to pith (like age estimates or basal
+area/basal area increment) wrong! Unfortunately this doesn't cause any error to arise in
+CooRecorder itself. In attempt to catch these errors, \code{\link{read_pos}} uses a similar logic
+as for the erroneous points - if the pith veers off in some unexpected direction \emph{or} if
+the distance to pith is greater than 50\% of the range of the long axis, you'll get a warning in
+the console and in the \code{message} column of the \code{"Attributes"} data.frame in the output. This will
+produce false negatives, but others will truly be messed up.
 
 For the forseeable future, \code{\link{read_pos}} will only work with .pos files from CooRecorder
 7.8 or greater - which is the earliest version (I think!) to include the actual pith coordinates
@@ -92,7 +105,7 @@ ex.pos[["Attributes"]]
 # "Not read" gives you a data.frame of files that were not read in and potentially why
 ex.pos[["Not read"]]
 
-# you can see the coordinates
+# Check the coordinates - this is an efficient way to check point order or pith location errors
 ggplot(ex.pos[["Raw coordinates"]], aes(x, y)) +
   geom_path() +
   geom_point(aes(color = type)) +
