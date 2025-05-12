@@ -25,7 +25,16 @@ The motivation of this function is to replicate some of the basic operations of 
 This allows the user to avoid saving tree-ring collections using some of the arcane tree-ring
 file formats which don't allow users to take full advantage of the great features of CooRecorder,
 such as point labels, comments, etc. It also calculates the ring widths with greater precision
-(they are not rounded by default) than what CDendro exports. The outputs of
+(they are not rounded by default) than what CDendro exports. Additionally, seasonwood widths are
+saved in the same step as whole ring widths, eliminating the extra steps you would have to do in
+CDendro.
+
+\code{\link{read_pos}} is also a great tool for basic error checking in .pos files. The raw
+coordinates are part of the output, so you can use faceted plots in ggplot2, for example, to
+visually check point placement. This is particularly useful for checking pith location estimates.
+See details and examples below.
+
+The outputs of
 \code{\link{read_pos}} are long-format data.frames, which are much more versatile than the old
 rwl-format. If you need to export this data as a .rwl, for example, you can use
 \code{\link{longer_rwl}} and dplR's \code{\link[dplR]{write.rwl}}. Note that for
@@ -79,7 +88,7 @@ in the .pos files.
 
 In CooRecorder, it is possible to have a seasonwood ("W") point or a gap point at the very end of
 a measurement series. Since these are nonsensical for determining distances between points, these
-points are removed by read_pos automatically.
+points are removed by \code{\link{read_pos}} automatically.
 
 \code{\link{read_pos}} doesn't tolerate replicate .pos file names. File names are series names,
 after all. If you have replicate file names in your path directory, you will get an error message
