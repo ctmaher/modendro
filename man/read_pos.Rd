@@ -62,16 +62,16 @@ wreak havoc on determining ring widths. \code{\link{read_pos}} has a simple way 
 if there are out of order points and it will warn you if it finds something. Since false
 positives are likely with this approach, \code{\link{read_pos}} will read in the files anyway
 with warnings the console and in the \code{message} column of the \code{"Attributes"} data.frame in the
-output. This will produce false negatives, but others will truly be messed up.
+output. This will produce false negatives.
 
 Another possible error in CooRecorder is that the pith location gets jumbled around and is no
 longer valid. This will make any calculations using distance to pith (like age estimates or basal
 area/basal area increment) wrong! Unfortunately this doesn't cause any error to arise in
 CooRecorder itself. In attempt to catch these errors, \code{\link{read_pos}} uses a similar logic
-as for the erroneous points - if the pith veers off in some unexpected direction \emph{or} if
-the distance to pith is greater than 50\% of the range of the long axis, you'll get a warning in
-the console and in the \code{message} column of the \code{"Attributes"} data.frame in the output. This will
-produce false negatives, but others will truly be messed up.
+as for the erroneous points - if the pith veers off in a different direction from the last set
+of points \emph{or} if the distance to pith from the last point is greater than 50\% of the range
+of the long axis of coordinates, you'll get a warning in the console and in the \code{message} column
+of the \code{"Attributes"} data.frame in the output. This will produce some false negatives.
 
 For the forseeable future, \code{\link{read_pos}} will only work with .pos files from CooRecorder
 7.8 or greater - which is the earliest version (I think!) to include the actual pith coordinates
