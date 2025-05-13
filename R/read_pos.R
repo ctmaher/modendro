@@ -576,6 +576,13 @@ read_pos <- function(path = NULL,
             abs(diff(range(check.diffs$y[!(check.diffs$type %in% "pith")]))))
           ) == 1,
           "x", "y")
+
+          short.axis <- ifelse(which.min(c(
+            abs(diff(range(check.diffs$x[!(check.diffs$type %in% "pith")]))),
+            abs(diff(range(check.diffs$y[!(check.diffs$type %in% "pith")]))))
+          ) == 1,
+          "x", "y")
+
           long.axis.range <- range(check.diffs[!(check.diffs$type %in% "pith"),
                                                long.axis])
           long.axis.range.diff <- abs(diff(long.axis.range))
