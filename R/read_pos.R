@@ -580,14 +580,14 @@ read_pos <- function(path = NULL,
                                                long.axis])
           long.axis.range.diff <- abs(diff(long.axis.range))
 
-          if (!(check.diffs$x.head[check.diffs$type %in% "pith"] %in%
-                check.diffs$x.head[(nrow(check.diffs) - 1)]) &&
-              !(check.diffs$y.head[check.diffs$type %in% "pith"] %in%
-                check.diffs$y.head[(nrow(check.diffs) - 1)]) ||
+          if (!(check.diffs[check.diffs$type %in% "pith", paste0(short.axis, ".dir")] %in%
+                check.diffs[(nrow(check.diffs) - 1), paste0(short.axis, ".dir")])
+              ||
               abs(check.diffs[check.diffs$type %in% "pith", paste0(long.axis, ".diff")]) >=
-              0.5*long.axis.range.diff ||
-              (check.diffs[check.diffs$type %in% "pith", long.axis] > long.axis.range[1] &&
-               check.diffs[check.diffs$type %in% "pith", long.axis] < long.axis.range[2])
+              0.5*long.axis.range.diff
+              # ||
+              # (check.diffs[check.diffs$type %in% "pith", long.axis] > long.axis.range[1] &&
+              #  check.diffs[check.diffs$type %in% "pith", long.axis] < long.axis.range[2])
           ) {
 
             warning(paste0("Check pith location for ", unique(check.diffs$series), ".pos - ",
