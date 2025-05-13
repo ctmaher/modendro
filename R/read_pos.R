@@ -544,16 +544,7 @@ read_pos <- function(path = NULL,
         # If we have any observations where BOTH heading components are divergent, then we may have
         # erroneous point order. Read these in anyway, but give a warning and a tag.
 
-        # Give a separate warning if the pith direction is divergent & based on different
-        # criteria: only one heading has to be divergent or if the long axis dist is more
-        # than 50% of the range of the other points
-        long.axis <- ifelse(which.max(c(
-          abs(diff(range(check.diffs$x[!(check.diffs$type %in% "pith")]))),
-          abs(diff(range(check.diffs$y[!(check.diffs$type %in% "pith")]))))
-        ) == 1,
-        "x", "y")
-        long.axis.range <- abs(diff(range(check.diffs[!(check.diffs$type %in% "pith"),
-                                                      long.axis])))
+
 
         # Set up the null data.frame
         error.df <- data.frame(file = f, message = NA)
@@ -573,14 +564,31 @@ read_pos <- function(path = NULL,
         }
 
         # If pith.coords.df exists,
-        # check if pith direction is the same as last set of points
+        # check if pith direction is the same as last set of points,
+        # if the distance is really large,
+        # or if the pith lies within the range of the long axis.
         if (!is.null(pith.coords.df)) {
+          # Give a separate warning if the pith direction is divergent & based on different
+          # criteria: only one heading has to be divergent or if the long axis dist is more
+          # than 50% of the range of the other points
+          long.axis <- ifelse(which.max(c(
+            abs(diff(range(check.diffs$x[!(check.diffs$type %in% "pith")]))),
+            abs(diff(range(check.diffs$y[!(check.diffs$type %in% "pith")]))))
+          ) == 1,
+          "x", "y")
+          long.axis.range <- range(check.diffs[!(check.diffs$type %in% "pith"),
+                                               long.axis])
+          long.axis.range.diff <- abs(diff(long.axis.range))
+
           if (!(check.diffs$x.head[check.diffs$type %in% "pith"] %in%
-                check.diffs$x.head[(nrow(check.diffs) - 1)]) ||
+                check.diffs$x.head[(nrow(check.diffs) - 1)]) &&
               !(check.diffs$y.head[check.diffs$type %in% "pith"] %in%
                 check.diffs$y.head[(nrow(check.diffs) - 1)]) ||
               abs(check.diffs[check.diffs$type %in% "pith", paste0(long.axis, ".diff")]) >=
-              0.5*long.axis.range) {
+              0.5*long.axis.range.diff ||
+              (check.diffs[check.diffs$type %in% "pith", long.axis] > long.axis.range[1] ||
+               check.diffs[check.diffs$type %in% "pith", long.axis] < long.axis.range[2])
+          ) {
 
             warning(paste0("Check pith location for ", unique(check.diffs$series), ".pos - ",
                            "possible pith location error"),
