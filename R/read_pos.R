@@ -587,14 +587,23 @@ read_pos <- function(path = NULL,
                                                long.axis])
           long.axis.range.diff <- abs(diff(long.axis.range))
 
-          if (!(check.diffs[check.diffs$type %in% "pith", paste0(short.axis, ".dir")] %in%
-                check.diffs[(nrow(check.diffs) - 1), paste0(short.axis, ".dir")])
-              ||
-              abs(check.diffs[check.diffs$type %in% "pith", paste0(long.axis, ".diff")]) >=
-              0.5*long.axis.range.diff
-              # ||
-              # (check.diffs[check.diffs$type %in% "pith", long.axis] > long.axis.range[1] &&
-              #  check.diffs[check.diffs$type %in% "pith", long.axis] < long.axis.range[2])
+          max.diff <- abs(c(check.diffs$x.diff[!(check.diffs$type %in% "pith")],
+                            check.diffs$y.diff[!(check.diffs$type %in% "pith")])) |> max()
+
+          if (
+            # pith diffs are larger than max diff for ring widths - ie, ignore the small pith diffs
+            max(abs(c(check.diffs$x.diff[check.diffs$type %in% "pith"],
+                      check.diffs$y.diff[check.diffs$type %in% "pith"]))) >
+            max.diff
+            &&
+            # direction to pith is different than the last two points
+            !(check.diffs[check.diffs$type %in% "pith", paste0(short.axis, ".dir")] %in%
+              check.diffs[(nrow(check.diffs) - 1), paste0(short.axis, ".dir")])
+            ||
+            # max pith dist is larger than half of the long.axis.range.diff
+            max(abs(c(check.diffs$x.diff[check.diffs$type %in% "pith"],
+                      check.diffs$y.diff[check.diffs$type %in% "pith"]))) >=
+            0.5*long.axis.range.diff
           ) {
 
             warning(paste0("Check pith location for ", unique(check.diffs$series), ".pos - ",
