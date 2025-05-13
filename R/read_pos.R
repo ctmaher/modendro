@@ -586,7 +586,7 @@ read_pos <- function(path = NULL,
                 check.diffs$y.head[(nrow(check.diffs) - 1)]) ||
               abs(check.diffs[check.diffs$type %in% "pith", paste0(long.axis, ".diff")]) >=
               0.5*long.axis.range.diff ||
-              (check.diffs[check.diffs$type %in% "pith", long.axis] > long.axis.range[1] ||
+              (check.diffs[check.diffs$type %in% "pith", long.axis] > long.axis.range[1] &&
                check.diffs[check.diffs$type %in% "pith", long.axis] < long.axis.range[2])
           ) {
 
