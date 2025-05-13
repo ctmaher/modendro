@@ -68,7 +68,12 @@
 #' as for the erroneous points - if the pith veers off in a different direction from the last set
 #' of points \emph{or} if the distance to pith from the last point is greater than 50% of the range
 #' of the long axis of coordinates, you'll get a warning in the console and in the `message` column
-#' of the `"Attributes"` data.frame in the output. This will produce some false negatives.
+#' of the `"Attributes"` data.frame in the output. There is a constraint in that this check will
+#' ignore pith distances that within the range of normal ring width distances. This may produce some
+#' false positives, but will keep the false negatives to a manageable level. Assuming that the small
+#' pith distances are close to accurate (i.e., the true pith distance is \emph{not} really large),
+#' then these small errors should have a small affect on the accuracy of estimates using distance
+#' to pith.
 #'
 #' For the forseeable future, \code{\link{read_pos}} will only work with .pos files from CooRecorder
 #' 7.8 or greater - which is the earliest version (I think!) to include the actual pith coordinates
@@ -592,9 +597,9 @@ read_pos <- function(path = NULL,
 
           if (
             # pith diffs are larger than max diff for ring widths - ie, ignore the small pith diffs
-            max(abs(c(check.diffs$x.diff[check.diffs$type %in% "pith"],
+            (max(abs(c(check.diffs$x.diff[check.diffs$type %in% "pith"],
                       check.diffs$y.diff[check.diffs$type %in% "pith"]))) >
-            max.diff
+            max.diff)
             &&
             # direction to pith is different than the last two points
             !(check.diffs[check.diffs$type %in% "pith", paste0(short.axis, ".dir")] %in%
