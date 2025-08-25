@@ -21,7 +21,8 @@ ci_detect(
 data.frame with columns names as series IDs and years as rownames.}
 
 \item{detrend.method}{A character vector specifying the detrending method to use. Passes to
-\code{\link[dplR]{detrend}} via \code{\link{cp_detrend}}. Default is "Mean".}
+\code{\link[dplR]{detrend}} via \code{\link{cp_detrend}}. Default is "Mean" (no detrending).
+Choose wisely!}
 
 \item{nyrs}{A numeric vector that determines the flexibility of the \code{"AgeDepSpline"} or
 the \code{"Spline"} detrending methods. Passes to \code{\link[dplR]{detrend}}. The default is 50
@@ -34,7 +35,8 @@ The default is 9.}
 The default is the smallest of 30 years or 1/3 of the series length.}
 
 \item{thresh}{The disturbance detection threshold, corresponding to the number of deviations
-from the robust mean. The default is 3.29, following Druckenbrod et al. 2013.}
+from the robust mean. The default is 3.29, following Druckenbrod et al. 2013. Don't change this
+unless you have a good reason for it!}
 
 \item{dist.span}{Parameter to determine the wiggliness of the loess splines fit to disturbances
 periods. Higher numbers = less wiggles. Passes to \code{\link[stats]{loess}}.

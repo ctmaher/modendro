@@ -16,7 +16,8 @@
 #' @param rwl A rwl-type data.frame (e.g., read in by \code{\link[dplR]{read.rwl}}). Essentially a
 #' data.frame with columns names as series IDs and years as rownames.
 #' @param detrend.method A character vector specifying the detrending method to use. Passes to
-#' \code{\link[dplR]{detrend}} via \code{\link{cp_detrend}}. Default is "Mean".
+#' \code{\link[dplR]{detrend}} via \code{\link{cp_detrend}}. Default is "Mean" (no detrending).
+#' Choose wisely!
 #' @param nyrs A numeric vector that determines the flexibility of the `"AgeDepSpline"` or
 #' the `"Spline"` detrending methods. Passes to \code{\link[dplR]{detrend}}. The default is 50
 #' years or 1/3 the series length.
@@ -25,7 +26,8 @@
 #' @param max.win The maximum disturbance length in years (i.e., a moving window) to search for.
 #' The default is the smallest of 30 years or 1/3 of the series length.
 #' @param thresh The disturbance detection threshold, corresponding to the number of deviations
-#' from the robust mean. The default is 3.29, following Druckenbrod et al. 2013.
+#' from the robust mean. The default is 3.29, following Druckenbrod et al. 2013. Don't change this
+#' unless you have a good reason for it!
 #' @param dist.span Parameter to determine the wiggliness of the loess splines fit to disturbances
 #'  periods. Higher numbers = less wiggles. Passes to \code{\link[stats]{loess}}.
 #'  The default is 1.25
@@ -48,9 +50,9 @@
 #' details.
 #'
 #' The choice of initial detrending can have an effect on the subsequent disturbance detection and
-#'  removal, so choose wisely. All detrending is done with inside the function with
-#'  \code{\link{cp_detrend}} so that the resulting series are transformed to homogenize variance
-#'  and are residuals with a mean of 0.
+#' removal, so choose wisely. All detrending is done with inside the function with
+#' \code{\link{cp_detrend}} so that the resulting series are transformed to homogenize variance
+#' and are residuals with a mean of 0.
 #'
 #' The final steps of the process involve adding back the initial detrending curves and reversing
 #' the transformations so that the resulting "disturbance-free" series are in the original ring
@@ -147,10 +149,48 @@ ci_detect <- function(rwl = NULL,
   )
 
   #
-  if (apply(rwl, MARGIN = 2, FUN = \(x) all(is.na(x))) |> any() == TRUE) {
-    these_are_NA <- colnames(rwl)[which(apply(rwl, MARGIN = 2, FUN = \(x) all(is.na(x))) == TRUE)]
-    stop("The following series have no values (all NAs): " , paste(these_are_NA, collapse = ", "))
-  }
+  stopifnot("detrend.method must be a character vector matching options in dplR::detrend.series()" =
+              is.character(detrend.method) |
+              detrend.method %in% c("Spline", "ModNegExp", "Mean",
+                                    "Ar", "Friedman", "ModHugershoff","AgeDepSpline")
+  )
+
+  #
+  stopifnot("nyrs must be a positive numeric vector" =
+              is.null(nyrs) | # Can be NULL and that is fine
+              is.numeric(nyrs) |
+              nyrs > 0
+  )
+
+  #
+  stopifnot("min.win must be a numeric vector > 0" =
+              is.numeric(min.win) |
+              min.win > 0
+  )
+
+  #
+  stopifnot("max.win must be a numeric vector > 0" =
+              is.numeric(max.win) |
+              max.win > 0
+  )
+
+  #
+  stopifnot("thresh must be a numeric vector > 0" =
+              is.numeric(thresh) |
+              thresh > 0
+  )
+
+  #
+  stopifnot("dist.span must be a numeric vector > 0" =
+              is.numeric(dist.span) |
+              dist.span > 0
+  )
+
+  #
+  stopifnot("max.iter must be a numeric vector > 0" =
+              is.numeric(max.iter) |
+              max.iter > 0
+  )
 
   #
   stopifnot("min.win is too small for effective curve fitting.
@@ -159,9 +199,37 @@ ci_detect <- function(rwl = NULL,
               min.win >= 5
   )
 
-  stopifnot("thresh must be > 0" =
-              thresh > 0
-  )
+  # If any series are all NAs, ID them and stop
+  if (apply(rwl, MARGIN = 2, FUN = \(x) all(is.na(x))) |> any() == TRUE) {
+    these_are_NA <- colnames(rwl)[which(apply(rwl, MARGIN = 2, FUN = \(x) all(is.na(x))) == TRUE)]
+    stop("The following series have no values (all NAs): " , paste(these_are_NA, collapse = ", "))
+  }
+
+  # If any series have internal NAs, ID them and stop
+  if (apply(rwl, MARGIN = 2, FUN = \(x) {
+    notNAs <- which(!is.na(x)) # Get the NAs
+    x.body <- x[min(notNAs):max(notNAs)] # Get the "body" of x, which may include NAs within
+    length(na.omit(x)) < length(x.body)
+  }) |> any() == TRUE) {
+    internal_NAs <- colnames(rwl)[which(apply(rwl, MARGIN = 2, FUN = \(x) {
+      notNAs <- which(!is.na(x))
+      x.body <- x[min(notNAs):max(notNAs)]
+      length(na.omit(x)) < length(x.body)
+    }) == TRUE)]
+    stop("Some series have internal NAs (see ?rwl_replace_internal_NAs): " ,
+         paste(internal_NAs, collapse = ", "))
+  }
+
+
+  # If there are any series that are shorter than max.win, ID them and stop
+  if (apply(rwl, MARGIN = 2, FUN = \(x) length(na.omit(x)) < 2*min.win) |> any() == TRUE) {
+    these_are_short <- colnames(rwl)[which(apply(rwl, MARGIN = 2,
+                                                 FUN = \(x) length(na.omit(x)) < 2*min.win) ==
+                                             TRUE)]
+    stop("The following series are shorter than 2 * min.win: " ,
+         paste(these_are_short, collapse = ", "))
+  }
+
 
   # save the original order of the names to realign at each step
   orig.IDs <- colnames(rwl)
