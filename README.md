@@ -1,9 +1,10 @@
 
 <!-- README.md is generated from README.Rmd. Please edit that file -->
 
-# modendro: more dendro (tree-ring) functions <img src="./man/figures/modendro_hex_logo_skyonly_small.png" width="160" align="right" />
+# modendro: more dendro (tree-ring) functions in R <img src="./man/figures/modendro_hex_logo_skyonly_small.png" width="160" align="right" />
 
 <!-- badges: start -->
+
 <!-- badges: end -->
 
 modendro is a collection of functions to do a variety of tree-ring
@@ -106,7 +107,7 @@ dplR. We can do this with modendro’s `longer_rwl()`.
 ``` r
 
 library(dplR)
-#> This is dplR version 1.7.7.
+#> This is dplR version 1.7.8.
 #> dplR is part of openDendro https://opendendro.org.
 #> New users can visit https://opendendro.github.io/dplR-workshop/ to get started.
 data("ca533")
@@ -233,12 +234,12 @@ ex.pos[["Attributes"]]
 
 # "Not read" gives you a data.frame of files that were not read in and potentially why
 ex.pos[["Not read"]]
-#>                                                                                                                         file
-#> 1   /private/var/folders/z3/8vzzgsxs5z77l16gk9l71k4m0000gn/T/RtmpBGXBoc/temp_libpathfcae43e3c3f0/modendro/extdata/broken.pos
-#> 2 /private/var/folders/z3/8vzzgsxs5z77l16gk9l71k4m0000gn/T/RtmpBGXBoc/temp_libpathfcae43e3c3f0/modendro/extdata/old_file.pos
-#>                                                                     message
-#> 1                     Unknown problem with .pos file. Check in CooRecorder.
-#> 2 This file was not made with CooRecorder >7.7 (do an update & resave file)
+#>                                                                                                 file
+#> 1   /Library/Frameworks/R.framework/Versions/4.5-arm64/Resources/library/modendro/extdata/broken.pos
+#> 2 /Library/Frameworks/R.framework/Versions/4.5-arm64/Resources/library/modendro/extdata/old_file.pos
+#>                                                                        message
+#> 1                        Unknown problem with .pos file. Check in CooRecorder.
+#> 2 .pos files must be from CooRecorder ≥ 7.8 (update CooRecorder & resave file)
 
 # you can see the coordinates
 ggplot(ex.pos[["Raw coordinates"]], aes(x, y)) +
@@ -394,7 +395,7 @@ PS.corr <- n_mon_corr(rwl = PerkinsSwetnam96,
                       hemisphere = "N",
                       prewhiten = TRUE,
                       corr.method = "spearman")
-#> The following tree-ring series have < 4 years overlap with clim data
+#> The following tree-ring series have < 5 years overlap with clim data
 #>     and will be removed from rwl:
 #> TWP05, TWP13, TWP20, TWP21, SDP36, SDP26, SDP28, SDM10, UPS12, UPS16, UPS31, UPS35, UPS04, UPSM1, UPM5, UPM14, UPM25, RRR19, RRR26, RRR28
 #> The following tree-ring series have < 25 years overlap with clim data.
@@ -450,11 +451,11 @@ PS.corr.plots[["Mean corr. coef. plot"]]
 PS.corr.plots[["Aggregated data"]] |> head()
 #>    month win.len lag  dir prop.sig   mean.coef
 #> 3      1       1  -2 Neg.  0.00000 -0.06144863
-#> 4      1       1  -2 Pos. 10.81081  0.15089999
+#> 4      1       1  -2 Pos. 10.81081  0.15089412
 #> 9      1       2  -2 Neg.  0.00000 -0.03508997
-#> 10     1       2  -2 Pos. 21.62162  0.21733757
+#> 10     1       2  -2 Pos. 21.62162  0.21733036
 #> 15     1       3  -2 Neg.  0.00000 -0.03507990
-#> 16     1       3  -2 Pos. 21.62162  0.22710420
+#> 16     1       3  -2 Pos. 21.62162  0.22709802
 ```
 
 ## Example: detection and removal of disturbances in tree-ring series
