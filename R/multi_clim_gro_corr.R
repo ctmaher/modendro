@@ -127,6 +127,7 @@ multi_clim_gro_corr <- function(rwl.group = NULL,
   # lagn.year, respectively
   # It is faster to rbind these together & do only a few merges over larger data.frames
   # than to merge over and over again for each month.
+  # This is a good place to do the raw climate lags if prewhiten = TRUE
 
   if (hemisphere %in% "S") {
     # The lags are a bit different for the S Hemisphere - we need a lag+1 to capture all
@@ -141,8 +142,20 @@ multi_clim_gro_corr <- function(rwl.group = NULL,
       cbind(mo, lag.years)
     }) |> do.call(what = "rbind")
 
-    # Merge all the series at once for each lag
+    # We only need to do this if prewhiten == TRUE
+    # This won't be used for the merging below, but will be included in the output list
+    if (prewhiten == TRUE) {
+      raw.clim.lag.bind <- lapply(split(clim1, f = clim1$month), FUN = \(mo) {
+        lag.years <- sapply(-1:max.lag, FUN = \(n.lag) {
+          this.lag <- data.frame(mo[, "year"] + n.lag)
+          colnames(this.lag) <- paste0("lag", n.lag, ".year")
+          this.lag
+        }) |> do.call(what = "cbind")
+        cbind(mo, lag.years)
+      }) |> do.call(what = "rbind")
+    }
 
+    # Merge all the series at once for each lag
     lag.list <- sapply(-1:max.lag, FUN = \(n.lag) {
       merge(
         clim.lag.bind,
@@ -165,8 +178,20 @@ multi_clim_gro_corr <- function(rwl.group = NULL,
       cbind(mo, lag.years)
     }) |> do.call(what = "rbind")
 
-    # Merge all the series at once for each lag
+    # We only need to do this if prewhiten == TRUE
+    # This won't be used for the merging below, but will be included in the output list
+    if (prewhiten == TRUE) {
+      raw.clim.lag.bind <- lapply(split(clim1, f = clim1$month), FUN = \(mo) {
+        lag.years <- sapply(0:max.lag, FUN = \(n.lag) {
+          this.lag <- data.frame(mo[, "year"] + n.lag)
+          colnames(this.lag) <- paste0("lag", n.lag, ".year")
+          this.lag
+        }) |> do.call(what = "cbind")
+        cbind(mo, lag.years)
+      }) |> do.call(what = "rbind")
+    }
 
+    # Merge all the series at once for each lag
     lag.list <- sapply(0:max.lag, FUN = \(n.lag) {
       merge(
         clim.lag.bind,
@@ -306,7 +331,7 @@ multi_clim_gro_corr <- function(rwl.group = NULL,
       }) |> do.call(what = "rbind")
 
       this.lag.corr$lag <- ifelse(substr(unique(which.lag), 5, 6) == "0", "0",
-                                  substr(unique(which.lag), 4, 6))
+                                  substr(unique(which.lag), 4, 7))
       this.lag.corr
 
     },
@@ -319,14 +344,67 @@ multi_clim_gro_corr <- function(rwl.group = NULL,
   rwl.dat <- rwl.group[, !(colnames(rwl.group) %in% "year"), drop = FALSE]
   class(rwl.dat) <- c("rwl", "data.frame")
 
+  # Prepare the output list
+  # Add lags to the climate data
+
   if (prewhiten == TRUE) {
+    # Prepare the lagged climate data - have to rearrange for a nice output.
+    # Both raw and prewhitened
+    long.pw.clim <- stats::reshape(
+      clim.lag.bind,
+      varying = colnames(clim.lag.bind)[grep(pattern = "lag", x = colnames(clim.lag.bind))],
+      v.names = "year",
+      timevar = "lag1",
+      times = colnames(clim.lag.bind)[grep(pattern = "lag", x = colnames(clim.lag.bind))],
+      direction = "long",
+      drop = "year")
+    long.pw.clim$id <- NULL
+
+    long.raw.clim <- stats::reshape(
+      raw.clim.lag.bind,
+      varying = colnames(raw.clim.lag.bind)[grep(pattern = "lag", x = colnames(raw.clim.lag.bind))],
+      v.names = "year",
+      timevar = "lag1",
+      times = colnames(raw.clim.lag.bind)[grep(pattern = "lag", x = colnames(raw.clim.lag.bind))],
+      direction = "long",
+      drop = "year")
+    long.raw.clim$id <- NULL
+
+    # Clean up the new lag variable
+    long.pw.clim$lag <- sub("^lag(.*)\\.year$", "\\1", long.pw.clim$lag1) |> as.numeric()
+    long.raw.clim$lag <- sub("^lag(.*)\\.year$", "\\1", long.raw.clim$lag1) |> as.numeric()
+    long.pw.clim$lag <- long.pw.clim$lag * -1
+    long.raw.clim$lag <- long.raw.clim$lag * -1
+    long.pw.clim$lag <- as.factor(long.pw.clim$lag)
+    long.raw.clim$lag <- as.factor(long.raw.clim$lag)
+    long.pw.clim$lag1 <- NULL
+    long.raw.clim$lag1 <- NULL
+
     res.list <- list(cor.res.df,
-                     do.call(what = "rbind", clim1.mo.split),
-                     clim1,
+                     long.pw.clim,
+                     long.raw.clim,
                      rwl.dat)
     names(res.list) <- c("cor.res.dat", "clim.dat.pw", "clim.dat", "rwl.dat")
   } else {
-    res.list <- list(cor.res.df, clim1, rwl.dat)
+    # Prepare the lagged climate data - have to rearrange for a nice output
+    clim.lag.bind
+    long.raw.clim <- stats::reshape(
+      clim.lag.bind,
+      varying = colnames(clim.lag.bind)[grep(pattern = "lag", x = colnames(clim.lag.bind))],
+      v.names = "year",
+      timevar = "lag1",
+      times = colnames(clim.lag.bind)[grep(pattern = "lag", x = colnames(clim.lag.bind))],
+      direction = "long",
+      drop = "year")
+    long.raw.clim$id <- NULL
+
+    # Clean up the new lag variable
+    long.raw.clim$lag <- sub("^lag(.*)\\.year$", "\\1", long.raw.clim$lag1) |> as.numeric()
+    long.raw.clim$lag <- long.raw.clim$lag * -1
+    long.raw.clim$lag <- as.factor(long.raw.clim$lag)
+    long.raw.clim$lag1 <- NULL
+
+    res.list <- list(cor.res.df, long.raw.clim, rwl.dat)
     names(res.list) <- c("cor.res.dat", "clim.dat", "rwl.dat")
   }
 

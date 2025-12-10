@@ -100,9 +100,10 @@
 #' year).
 #'
 #'
-#' @return A 2-4 element list containing data.frames of the correlation results, the moving-window
-# climate data used in the correlations (both prewhitened and raw if prewhiten = TRUE), the
-#' prewhitened tree-ring data (if prewhiten = TRUE), and the default plot.
+#' @return A 3-5 element list containing data.frames of the correlation results, the summarized
+#' correlation results across all series, the moving-window climate data used in the correlations
+#' (both prewhitened and raw if prewhiten = TRUE), and the prewhitened tree-ring data
+#' (if prewhiten = TRUE).
 #'
 #' @references
 #' Schulman, E. (1956) \emph{Dendroclimatic changes in semiarid America},
@@ -142,7 +143,11 @@
 #'                          group.IDs.df = NULL,
 #'                          group.var = NULL)
 #' names(PS_gro_Tavg)
-#' PS_gro_Tavg$`Results plots`
+#' PS_gro_Tavg[["Results summary"]] |> head(n = 10) # Take a look at the top 10 for this example
+#' PS_gro_Tavg.plots <- plot_n_mon_corr(PS_gro_Tavg)
+#' PS_gro_Tavg.plots[["Percent sig. corr. plot"]]
+#' PS_gro_Tavg.plots[["Mean corr. coef. plot"]]
+#'
 #' # April has the strongest signal (largest % of significant correlations), and it is a negative
 #' # relationship.
 #'
@@ -163,14 +168,26 @@
 #'                         group.IDs.df = NULL,
 #'                         group.var = NULL)
 #' names(PS_gro_PPT)
+#' PS_gro_PPT[["Results summary"]] |> head(n = 10)
 #' # Take a look at the plots
-#' plot_n_mon_corr(PS_gro_PPT)
+#' PS_gro_PPT.plots <- plot_n_mon_corr(PS_gro_PPT)
+#' PS_gro_PPT.plots[["Percent sig. corr. plot"]]
+#' PS_gro_PPT.plots[["Mean corr. coef. plot"]]
+#'
 #' # Strongest signal is Oct-Jan total precip.
 #'
 #'
-#' ## Demonstrate grouped data
+#' ## Demonstrate grouped data - e.g., when you have tree ring series with enough spatial spread
+#' # that you have different climate series for each site.
+#'
 #' data(idPRISMgroup)
 #' data(PSgroupIDs)
+#'
+#' # Take a look at the grouped data. Note that the climate data has the different sites indicated
+#' # and that we introduce a new data.frame (the group.IDs.df) that links tree ring series IDs with
+#' # sites.
+#' head(idPRISMgroup)
+#' head(PSgroupIDs)
 #'
 #' PS_gro_Tavg_grouped <- n_mon_corr(rwl = PerkinsSwetnam96,
 #'                                  clim = idPRISMgroup,
@@ -186,7 +203,11 @@
 #'                                  group.IDs.df = PSgroupIDs,
 #'                                  group.var = "site")
 #' names(PS_gro_Tavg_grouped)
-#' plot_n_mon_corr(PS_gro_Tavg_grouped)
+#' PS_gro_Tavg_grouped[["Results summary"]] |> head(n = 10)
+#' PS_gro_Tavg_grouped.plots <- plot_n_mon_corr(PS_gro_Tavg_grouped)
+#' PS_gro_Tavg_grouped.plots[["Percent sig. corr. plot"]]
+#' PS_gro_Tavg_grouped.plots[["Mean corr. coef. plot"]]
+#'
 #' # Similar result, but not identical - now month = Apr with a 2-month moving window
 #' # The climate data is slightly different for each site, so some differences in results are not
 #' # surprising.
@@ -311,6 +332,9 @@ n_mon_corr <- function(rwl = NULL,
 
   stopifnot("Arg max.lag must have an absolute value >= 1" =
               max.lag >= 1)
+
+  stopifnot("Arg max.lag must be less than 100 years" =
+              max.lag < 100)
 
   ###### hemisphere
   if (is.null(hemisphere)) {
@@ -575,7 +599,6 @@ n_mon_corr <- function(rwl = NULL,
       clim.var = clim.var,
       common.years = common.years,
       group.var = group.var,
-      #gro.period.end = gro.period.end,
       agg.fun = agg.fun,
       max.win = max.win,
       win.align = win.align,
@@ -600,7 +623,6 @@ n_mon_corr <- function(rwl = NULL,
         clim.var = clim.var,
         common.years = common.years,
         group.var = group.var,
-        #gro.period.end = gro.period.end,
         agg.fun = agg.fun,
         max.win = max.win,
         win.align = win.align,
@@ -633,33 +655,98 @@ n_mon_corr <- function(rwl = NULL,
     names(cor.res.list) <- out.list.names
   }
 
+
+  ## Calculate the summary of results - aggregate revealing strongest climate signals
+
+  # Subset out just the significant correlations
+  # But there may not always be significant correlations
+
+  # Theoretical - just one place holder for the possible combinations
+  sig.only.th <- expand.grid(month = unique(cor.res.list[["cor.res.dat"]]$month),
+                             win.len = unique(cor.res.list[["cor.res.dat"]]$win.len),
+                             lag = unique(cor.res.list[["cor.res.dat"]]$lag),
+                             dir = unique(cor.res.list[["cor.res.dat"]]$dir))
+
+  # Empirical - what actually exists (could be none)
+  sig.only.em <- cor.res.list[["cor.res.dat"]][cor.res.list[["cor.res.dat"]]$p <= 0.05, ]
+
+  # Merge them
+  sig.only <- merge(sig.only.th, sig.only.em,
+                    by = c("month","win.len","lag","dir"),
+                    all = TRUE)
+
+  sig.only$lag <- as.character(sig.only$lag)
+
+  res.agg <- aggregate(coef ~ month + win.len + lag + dir,
+                       data = sig.only,
+                       FUN = \(x) {
+                         length(na.omit(x))
+                       },
+                       drop = FALSE, # make sure the blank combinations still appear
+                       na.action = na.pass
+  )
+  colnames(res.agg)[colnames(res.agg) %in% "coef"] <- "n.sig"
+
+  lag.levels <- res.agg$lag |> unique()
+
+  res.agg$lag <- factor(res.agg$lag, levels = lag.levels[order(as.numeric(as.character(lag.levels)))])
+
+  # Calculate the percentage of significant correlations
+  res.agg$per.sig <- (res.agg$n.sig / length(unique(cor.res.list[["cor.res.dat"]][, "series"]))) *
+    100
+
+  # Calculate the mean correlation coefficient as well
+  mean.coef.agg <- aggregate(coef ~ month + win.len + lag + dir,
+                             data = cor.res.list[["cor.res.dat"]],
+                             FUN = \(x) mean(x),
+                             drop = FALSE) # make sure the blank combinations still appear
+  colnames(mean.coef.agg)[colnames(mean.coef.agg) %in% "coef"] <- "mean.coef"
+
+  # Merge the two
+  res.agg <- merge(res.agg, mean.coef.agg, by = c("month", "win.len", "lag", "dir"))
+
+  res.agg$dir <- factor(res.agg$dir, levels = c("Pos.", "Neg."))
+
+
   if (prewhiten == TRUE) {
 
     out.list <- list(cor.res.list[["cor.res.dat"]],
+                     res.agg,
                      cor.res.list[["clim.dat.pw"]],
                      cor.res.list[["clim.dat"]],
-                     cor.res.list[["rwl.dat"]])
+                     cor.res.list[["rwl.dat"]]
+    )
     names(out.list) <-
       c(
         "Correlation results",
+        "Results summary",
         "Climate data (prewhitened)",
         "Climate data (raw)",
         "Ring-width series (prewhitened)"
       )
 
-
   } else {
 
-    out.list <- list(cor.res.list[["cor.res.dat"]], cor.res.list[["clim.dat"]])
+    out.list <- list(cor.res.list[["cor.res.dat"]],
+                     res.agg,
+                     cor.res.list[["clim.dat"]])
     names(out.list) <-
-      c("Correlation results", "Climate data (raw)")
+      c("Correlation results",
+        "Results summary",
+        "Climate data (raw)")
 
   }
 
   # Lastly, order the Correlation results based on the highest correlation
   out.list[["Correlation results"]] <-
     out.list[["Correlation results"]][
-      order(out.list[["Correlation results"]]$coef, decreasing = T), ]
+      order(out.list[["Correlation results"]]$coef, decreasing = TRUE), ]
+
+  out.list[["Results summary"]] <-
+    out.list[["Results summary"]][
+      order(out.list[["Results summary"]]$n.sig, decreasing = TRUE), ]
+
+  class(out.list) <- c("list", "n_mon_corr")
 
   return(out.list)
 

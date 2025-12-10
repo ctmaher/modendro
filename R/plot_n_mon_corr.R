@@ -1,23 +1,26 @@
 #' Summary plotting function for n_mon_corr output
 #'
 #' @description
-#' Exploratory data analysis (EDA) function to compute correlations between tree ring data and a
-#' monthly climate variable aggregated for every combination (lengths 1:12) of consecutive months
-#' going back a specified number of years.
+#' \code{\link{n_mon_corr}} is an exploratory data analysis function to compute correlations between
+#' tree ring data and a monthly climate variable aggregated for every combination (lengths 1:12) of
+#' consecutive months going back a specified number of years. This plotting function shows a handy
+#' way to visualize a summary of the results.
 #'
 #' The results plots show 1) the percentage of tree-ring series that had statistically significant
 #' correlations and 2) the mean correlation coefficient (ALL correlations, not just significant
-#' ones) with all possible moving window combinations. Moving windows are represented by their start
+#' ones) with all possible moving window combinations. Moving windows are represented by their start or end
 #' month (the x-axis) and window length (represented by the lines of different colors). Each plot
 #' is split by the direction of the relationships: positive (coef > 0) and negative (coef < 0).
 #' The x-axis is extended to the left according to the number of lag years the user specifies (with
 #' `max.lag`). Lag years are indicated by labeled rectangles just above the x-axis ticks.
-#' "0" represents the current year.
+#' "0" represents the current year. Year "+1" is employed if the user selected hemisphere = "S" in
+#' \code{\link{n_mon_corr}} to deal with the convention for assigning years in the southern hemisphere.
+#'
+#' See examples for \code{\link{n_mon_corr}} to see example plots.
 #'
 #' @param x the n_mon_corr output list object
 #'
-#'
-#' @return 2 plots
+#' @return A 2-element list containing the "Percent sig. corr. plot" and the "Mean corr. coef. plot"
 #'
 #' @import ggplot2
 #' @importFrom grDevices hcl.colors
@@ -25,54 +28,24 @@
 #' @export
 
 
-
 plot_n_mon_corr <- function(x = NULL) {
+  # Control digits for plotting, but restore to what user had before
   current.opciones <- options()
   on.exit(options(current.opciones), add = TRUE)
   options(digits = 2)
 
+  ## Error catching
+  stopifnot("x is not a list output from n_mon_corr()" =
+              class(x) %in% c("list", "n_mon_corr"))
+
   # Will need this warning
-  # if ((ncol(rwl) - 1) < 10 & make.plots == TRUE) {
-  #   warning("Number of tree-ring series is very low (< 10).
-  #             Be cautious interpreting results plots.")
-  # }
+  if (length(unique(x[["Correlation results"]][, "series"])) < 10) {
+    warning("Number of tree-ring series is very low (< 10).
+            Be cautious interpreting results plots.")
+  }
 
-
-  # Subset out just the significant correlations
-  # But there may not always be significant correlations
-
-  # Theoretical - just one place holder for the possible combinations
-  sig.only.th <- expand.grid(month = unique(x[["Correlation results"]]$month),
-                             win.len = unique(x[["Correlation results"]]$win.len),
-                             lag = unique(x[["Correlation results"]]$lag),
-                             dir = unique(x[["Correlation results"]]$dir))
-
-  # Empirical - what actually exists (could be none)
-  sig.only.em <- x[["Correlation results"]][x[["Correlation results"]]$p <= 0.05, ]
-
-  # Merge them
-  sig.only <- merge(sig.only.th, sig.only.em,
-                    by = c("month","win.len","lag","dir"),
-                    all = TRUE)
-
-  sig.only$lag <- as.character(sig.only$lag)
-
-  res.agg <- aggregate(coef ~ month + win.len + lag + dir,
-                       data = sig.only,
-                       FUN = \(x) {
-                         length(na.omit(x))
-                       },
-                       drop = FALSE, # make sure the blank combinations still appear
-                       na.action = na.pass
-  )
-
-  lag.levels <- res.agg$lag |> unique()
-
-  res.agg$lag <- factor(res.agg$lag, levels = lag.levels[order(as.numeric(as.character(lag.levels)))])
-
-  # Calculate the percentage of significant correlations
-  res.agg$prop.sig <- (res.agg$coef / length(unique(x[["Correlation results"]][, "series"]))) *
-    100
+  # Separate out the aggregated summary results from the n_mon_corr output
+  res.agg <- x[["Results summary"]]
 
   # Make a new composite x-axis that combines month and lag
   # Have to control the order of lag and month
@@ -81,28 +54,18 @@ plot_n_mon_corr <- function(x = NULL) {
   res.agg$comb.x <- factor(res.agg$comb.x, levels = unique(res.agg$comb.x))
   res.agg$comb.x.num <- as.numeric(res.agg$comb.x)
 
-  mean.coef.agg <- aggregate(coef ~ month + win.len + lag + dir,
-                             data = x[["Correlation results"]],
-                             FUN = \(x) mean(x),
-                             drop = FALSE) # make sure the blank combinations still appear
-  colnames(mean.coef.agg)[colnames(mean.coef.agg) %in% "coef"] <- "mean.coef"
-
-  res.agg <- merge(res.agg, mean.coef.agg, by = c("month", "win.len", "lag", "dir"))
-  #res.agg$lag <- factor(res.agg$lag, levels = lag.levels[order(as.numeric(lag.levels))])
-  res.agg$dir <- factor(res.agg$dir, levels = c("Pos.", "Neg."))
-  res.agg <- res.agg[order(res.agg$lag, res.agg$month),]
-
   # Make a plot.
-  # These 4 lines are to deal with "no visible binding" NOTEs from check()
+  # These lines are to deal with "no visible binding" NOTEs from check()
   x_var <- "comb.x.num"
   x_lab <- "month"
-  y_var <- "prop.sig"
+  y_var <- "per.sig"
   y_var2 <- "mean.coef"
   col_var <- "win.len"
   x.intercept <- "xint"
   y.intercept <- "yint"
 
   # For geom_tile & geom_text
+  lag.levels <- res.agg$lag |> unique()
   lag.lab.df1 <- res.agg[, c("lag", "month", "comb.x", "comb.x.num")] |> unique()
   lag.lab.df1$dir <- factor("Neg.", levels = c("Pos.","Neg."))
 
@@ -167,15 +130,6 @@ plot_n_mon_corr <- function(x = NULL) {
     ggplot2::geom_line(linewidth = 0.75,
                        ggplot2::aes(group = factor(.data[[col_var]], levels = rev(1:max.win)))) +
     ggplot2::facet_wrap( ~ dir, ncol = 1, strip.position = "right") +
-    # ggplot2::geom_vline(
-    #   data = data.frame(
-    #     xint = ifelse(hemisphere == "S",
-    #                   res.agg$comb.x.num[res.agg$comb.x %in% paste0("+1_", gro.period.end)],
-    #                   res.agg$comb.x.num[res.agg$comb.x %in% paste0("0_",gro.period.end)])
-    #   ),
-    #   ggplot2::aes(xintercept = .data[[x.intercept]]),
-    #   color = "white"
-    # ) +
     ggplot2::scale_x_continuous(breaks = unique(res.agg$comb.x.num),
                                 labels = rep(1:12,
                                              times = length(unique(res.agg$comb.x.num))/12)) +
@@ -246,15 +200,6 @@ plot_n_mon_corr <- function(x = NULL) {
     ggplot2::geom_line(linewidth = 0.75,
                        ggplot2::aes(group = factor(.data[[col_var]], levels = rev(1:12)))) +
     ggplot2::facet_wrap( ~ dir, ncol = 1, strip.position = "right", scales = "free_y") +
-    # ggplot2::geom_vline(
-    #   data = data.frame(
-    #     xint = ifelse(hemisphere == "S",
-    #                   res.agg$comb.x.num[res.agg$comb.x %in% paste0("+1_", gro.period.end)],
-    #                   res.agg$comb.x.num[res.agg$comb.x %in% paste0("0_",gro.period.end)])
-    #   ),
-    #   ggplot2::aes(xintercept = .data[[x.intercept]]),
-    #   color = "white"
-    # ) +
     ggplot2::scale_x_continuous(breaks = unique(res.agg$comb.x.num),
                                 labels = rep(1:12,
                                              times = length(unique(res.agg$comb.x.num))/12)) +
@@ -284,9 +229,8 @@ plot_n_mon_corr <- function(x = NULL) {
       legend.position = "right"
     )
 
-  out.plot.list <- list(per.plot, mean.plot,
-                        res.agg[,c("month","win.len","lag","dir","prop.sig","mean.coef")])
-  names(out.plot.list) <- c("Percent sig. corr. plot", "Mean corr. coef. plot", "Aggregated data")
+  out.plot.list <- list(per.plot, mean.plot)
+  names(out.plot.list) <- c("Percent sig. corr. plot", "Mean corr. coef. plot")
   return(out.plot.list)
 
 } # End of function

@@ -72,8 +72,10 @@ specification), representing a grouping (e.g., site, plot) variable.}
 Must exist and be identical in clim and group.ID.df.}
 }
 \value{
-A 2-4 element list containing data.frames of the correlation results, the moving-window
-prewhitened tree-ring data (if prewhiten = TRUE), and the default plot.
+A 3-5 element list containing data.frames of the correlation results, the summarized
+correlation results across all series, the moving-window climate data used in the correlations
+(both prewhitened and raw if prewhiten = TRUE), and the prewhitened tree-ring data
+(if prewhiten = TRUE).
 }
 \description{
 Exploratory data analysis (EDA) function to compute correlations between individual tree ring
@@ -157,7 +159,11 @@ PS_gro_Tavg <- n_mon_corr(rwl = PerkinsSwetnam96,
                          group.IDs.df = NULL,
                          group.var = NULL)
 names(PS_gro_Tavg)
-PS_gro_Tavg$`Results plots`
+PS_gro_Tavg[["Results summary"]] |> head(n = 10) # Take a look at the top 10 for this example
+PS_gro_Tavg.plots <- plot_n_mon_corr(PS_gro_Tavg)
+PS_gro_Tavg.plots[["Percent sig. corr. plot"]]
+PS_gro_Tavg.plots[["Mean corr. coef. plot"]]
+
 # April has the strongest signal (largest \% of significant correlations), and it is a negative
 # relationship.
 
@@ -178,14 +184,26 @@ PS_gro_PPT <- n_mon_corr(rwl = PerkinsSwetnam96,
                         group.IDs.df = NULL,
                         group.var = NULL)
 names(PS_gro_PPT)
+PS_gro_PPT[["Results summary"]] |> head(n = 10)
 # Take a look at the plots
-plot_n_mon_corr(PS_gro_PPT)
+PS_gro_PPT.plots <- plot_n_mon_corr(PS_gro_PPT)
+PS_gro_PPT.plots[["Percent sig. corr. plot"]]
+PS_gro_PPT.plots[["Mean corr. coef. plot"]]
+
 # Strongest signal is Oct-Jan total precip.
 
 
-## Demonstrate grouped data
+## Demonstrate grouped data - e.g., when you have tree ring series with enough spatial spread
+# that you have different climate series for each site.
+
 data(idPRISMgroup)
 data(PSgroupIDs)
+
+# Take a look at the grouped data. Note that the climate data has the different sites indicated
+# and that we introduce a new data.frame (the group.IDs.df) that links tree ring series IDs with
+# sites.
+head(idPRISMgroup)
+head(PSgroupIDs)
 
 PS_gro_Tavg_grouped <- n_mon_corr(rwl = PerkinsSwetnam96,
                                  clim = idPRISMgroup,
@@ -201,7 +219,11 @@ PS_gro_Tavg_grouped <- n_mon_corr(rwl = PerkinsSwetnam96,
                                  group.IDs.df = PSgroupIDs,
                                  group.var = "site")
 names(PS_gro_Tavg_grouped)
-plot_n_mon_corr(PS_gro_Tavg_grouped)
+PS_gro_Tavg_grouped[["Results summary"]] |> head(n = 10)
+PS_gro_Tavg_grouped.plots <- plot_n_mon_corr(PS_gro_Tavg_grouped)
+PS_gro_Tavg_grouped.plots[["Percent sig. corr. plot"]]
+PS_gro_Tavg_grouped.plots[["Mean corr. coef. plot"]]
+
 # Similar result, but not identical - now month = Apr with a 2-month moving window
 # The climate data is slightly different for each site, so some differences in results are not
 # surprising.

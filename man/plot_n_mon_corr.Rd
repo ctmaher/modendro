@@ -10,19 +10,23 @@ plot_n_mon_corr(x = NULL)
 \item{x}{the n_mon_corr output list object}
 }
 \value{
-2 plots
+A 2-element list containing the "Percent sig. corr. plot" and the "Mean corr. coef. plot"
 }
 \description{
-Exploratory data analysis (EDA) function to compute correlations between tree ring data and a
-monthly climate variable aggregated for every combination (lengths 1:12) of consecutive months
-going back a specified number of years.
+\code{\link{n_mon_corr}} is an exploratory data analysis function to compute correlations between
+tree ring data and a monthly climate variable aggregated for every combination (lengths 1:12) of
+consecutive months going back a specified number of years. This plotting function shows a handy
+way to visualize a summary of the results.
 
 The results plots show 1) the percentage of tree-ring series that had statistically significant
 correlations and 2) the mean correlation coefficient (ALL correlations, not just significant
-ones) with all possible moving window combinations. Moving windows are represented by their start
+ones) with all possible moving window combinations. Moving windows are represented by their start or end
 month (the x-axis) and window length (represented by the lines of different colors). Each plot
 is split by the direction of the relationships: positive (coef > 0) and negative (coef < 0).
 The x-axis is extended to the left according to the number of lag years the user specifies (with
 \code{max.lag}). Lag years are indicated by labeled rectangles just above the x-axis ticks.
-"0" represents the current year.
+"0" represents the current year. Year "+1" is employed if the user selected hemisphere = "S" in
+\code{\link{n_mon_corr}} to deal with the convention for assigning years in the southern hemisphere.
+
+See examples for \code{\link{n_mon_corr}} to see example plots.
 }
