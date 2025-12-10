@@ -1,6 +1,6 @@
 Package: modendro
 Title: modendro: more dendro (tree-ring) functions in R
-Version: 0.8.5
+Version: 0.8.6
 Authors@R: 
     person("Colin", "Maher", , "cmbristlecone@gmail.com", role = c("aut", "cre"),
            comment = c(ORCID = "https://orcid.org/0000-0001-8409-7775"))
