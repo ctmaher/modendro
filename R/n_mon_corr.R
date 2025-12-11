@@ -276,6 +276,17 @@ n_mon_corr <- function(rwl = NULL,
   # order clim by month and year
   clim <- clim[order(clim$year, clim$month), ]
 
+  # Make sure there are 12 months - no less and no more
+  stopifnot(
+    "Month variable in climate data has incorrect number of unique values (needs 12)" =
+      length(unique(clim$month)) == 12
+  )
+
+  # Make sure the unique values are the same as 1:12
+  stopifnot(
+    "Month variable in climate data has unique values that are not in 1:12" =
+      all(unique(clim$month) %in% 1:12)
+  )
 
   ###### clim.var
   match.test <- clim.var %in% colnames(clim)
@@ -505,8 +516,8 @@ n_mon_corr <- function(rwl = NULL,
     }
 
     # Have to check that the series IDs in rwl and group.IDs.df match too
-    if (!all(suppressWarnings(colnames(rwl) %in% unique(group.IDs.df[, "series"]) &
-                              unique(group.IDs.df[, "series"]) %in% colnames(rwl)))) {
+    if (!all(suppressWarnings(colnames(rwl[,!(colnames(rwl) %in% "year")]) %in% unique(group.IDs.df[, "series"]) &
+                              unique(group.IDs.df[, "series"]) %in% colnames(rwl[,!(colnames(rwl) %in% "year")])))) {
       warning("Series names in rwl and group.IDs.df are different -
       subsetting both data.frames to contain just the common set")
       all.series.names <- c(colnames(rwl), unique(group.IDs.df[, "series"]))
