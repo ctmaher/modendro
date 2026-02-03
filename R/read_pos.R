@@ -689,9 +689,7 @@ read_pos <- function(path = NULL,
 
         # Gaps need some special handling - two gaps in a row need new labels - gap1 & gap2.
         # We will ignore gap2 distances, but keep gap1. Single gaps will stay as "gap", and we will
-        # ignore those. This will ignore the distance between the gap point and the point before it
-        # (as long as dist.mm starts with NA) - this is incorrect, although this is inconsistent
-        # behavior. This means that any dist AFTER a single gap point needs to be deleted.
+        # ignore those. This means that any dist AFTER a single gap point will be deleted.
         # I'll need to label these points too.
 
         # Find where gaps are and if they are sequential
