@@ -177,10 +177,12 @@ dist_det_rem <- function(rwi,
 
   mov_avgs <- lapply(comp_resids[orig.IDs], \(x) {
     # Cap max.win at 1/3 the series length. If not, detection becomes oversensitive for short
-    # series
-    max.win <- min(max.win, round(nrow(x) / 3))
+    # series. Also control for circumstances where 1/3 the length of the series is less than
+    # min.win. This can happen! The initial gate keeping in ci_detect weeds out just the series
+    # shorter than 2 * min.win.
+    max.win1 <- min(max.win, ifelse(round(nrow(x) / 3) < min.win, min.win, round(nrow(x) / 3)))
 
-    win_lens <- min.win:max.win
+    win_lens <- min.win:max.win1
 
     x[, "year"] <- as.numeric(rownames(x))
 
