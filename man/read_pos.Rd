@@ -104,10 +104,10 @@ In CooRecorder, it is possible to have a seasonwood ("W") point or a gap point a
 a measurement series. Since these are nonsensical for determining distances between points, these
 points are removed by \code{\link{read_pos}} automatically.
 
-\code{\link{read_pos}} doesn't tolerate replicate .pos file names. File names are series names,
-after all. If you have replicate file names in your path directory, you will get an error message
-that lists the replicated files. Go fix these in your file system and run \code{\link{read_pos}}
-again.
+\code{\link{read_pos}} warns you if it finds replicate .pos file names. File names are series
+names, so you will need to fix this in your file system. The warning lists the replicated file
+names and these show up in the error.message column of the Attributes data.frame in the output
+list.
 
 For the forseeable future, \code{\link{read_pos}} will only work with .pos files from CooRecorder
 7.8 or greater - which is the earliest version (I think!) to include the actual pith coordinates

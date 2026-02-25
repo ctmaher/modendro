@@ -92,10 +92,10 @@
 #' a measurement series. Since these are nonsensical for determining distances between points, these
 #' points are removed by \code{\link{read_pos}} automatically.
 #'
-#' \code{\link{read_pos}} doesn't tolerate replicate .pos file names. File names are series names,
-#' after all. If you have replicate file names in your path directory, you will get an error message
-#' that lists the replicated files. Go fix these in your file system and run \code{\link{read_pos}}
-#' again.
+#' \code{\link{read_pos}} warns you if it finds replicate .pos file names. File names are series
+#' names, so you will need to fix this in your file system. The warning lists the replicated file
+#' names and these show up in the error.message column of the Attributes data.frame in the output
+#' list.
 #'
 #' For the forseeable future, \code{\link{read_pos}} will only work with .pos files from CooRecorder
 #' 7.8 or greater - which is the earliest version (I think!) to include the actual pith coordinates
@@ -200,11 +200,16 @@ read_pos <- function(path = NULL,
     }) # This isolates the .pos files only
     fdf <- data.frame(filenames = filenames, ind = 1:length(filenames))
     fdf.agg <- aggregate(ind ~ filenames, data = fdf, FUN = \(f) length(f))
-    these <- fdf.agg[which(fdf.agg$ind > 1),]
+    these.are.dups <- fdf.agg[which(fdf.agg$ind > 1),]
 
-    if (nrow(these) != 0)
-      stop(paste("path contains multiple .pos files with the same name:\n",
-                 paste(these$filenames, collapse = "\n")))
+    if (nrow(these.are.dups) != 0) {
+      # Give warning
+      warning(paste0(
+        "path contains replicate .pos files (also see error.message column in 'Attributes'):\n",
+        paste(these.are.dups$filenames, collapse = "\n")),
+        call. = FALSE, immediate. = TRUE)
+      # We can flag the duplicated ones in the output too
+    }
   }
 
   out.list <- lapply(pos.files, FUN = \(f) {
@@ -611,8 +616,8 @@ read_pos <- function(path = NULL,
           if (
             # pith diffs are larger than max diff for ring widths - ie, ignore the small pith diffs
             (max(abs(c(check.diffs$x.diff[check.diffs$type %in% "pith"],
-                      check.diffs$y.diff[check.diffs$type %in% "pith"]))) >
-            max.diff)
+                       check.diffs$y.diff[check.diffs$type %in% "pith"]))) >
+             max.diff)
             &&
             # direction to pith is different than the last two points
             !(check.diffs[check.diffs$type %in% "pith", paste0(short.axis, ".dir")] %in%
@@ -692,7 +697,7 @@ read_pos <- function(path = NULL,
         # ignore those. This means that any dist AFTER a single gap point will be deleted.
         # I'll need to label these points too.
 
-        # Find where gaps are and if they are sequential
+        # Find where gaps are and if they are sequential - run length encoding
         rle.vec <- rle(as.character(all.coords$type))
 
         # Initialize an empty result vector
@@ -939,15 +944,22 @@ read_pos <- function(path = NULL,
       x[["Ring widths"]]
     }) |>
       do.call(what = "rbind")
-
+    # Sort by series and year within series
     rw <- rw[order(rw$series, rw$year, decreasing = FALSE),]
 
     att <- lapply(out.list[which(sapply(out.list, class) %in% "list")], FUN = \(x) {
       x[["Attributes"]]
     }) |>
       do.call(what = "rbind")
-
+    # Sort by series and year within series
     att <- att[order(att$series, decreasing = FALSE),]
+    # Add error message for replicated files
+    if(nrow(these.are.dups) != 0) {
+      att[att$series %in% gsub(".pos", "", these.are.dups$filenames), ]$error.message <-
+        ifelse(is.na(att[att$series %in% gsub(".pos", "", these.are.dups$filenames), ]$error.message),
+               "REPLICATED FILE",
+               paste0("REPLICATED FILE; ", att[att$series %in% gsub(".pos", "", these.are.dups$filenames), ]$error.message))
+    }
 
     coord <- lapply(out.list[which(sapply(out.list, class) %in% "list")], FUN = \(x) {
       x[["Raw coordinates"]]
