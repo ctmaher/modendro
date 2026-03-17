@@ -28,7 +28,7 @@ references. Default (and currently only) option is "p2yrsL", same default as Coo
 
 \item{max.offset}{The maximum offset (in years) you want to check in either direction from the
 years as dated. Minimum is 5 years. No true maximum limit, but overlap between series and
-references must be at least 20 years. Default is 10 years.}
+references must be at least 15 years. Default is 10 years.}
 
 \item{p.thresh}{The p-value threshold to determine if a correlation is significant. Default is
 the common 0.05.}

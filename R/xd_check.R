@@ -42,7 +42,7 @@
 #' references. Default (and currently only) option is "p2yrsL", same default as CooRecorder/CDendro.
 #' @param max.offset The maximum offset (in years) you want to check in either direction from the
 #' years as dated. Minimum is 5 years. No true maximum limit, but overlap between series and
-#' references must be at least 20 years. Default is 10 years.
+#' references must be at least 15 years. Default is 10 years.
 #' @param p.thresh The p-value threshold to determine if a correlation is significant. Default is
 #' the common 0.05.
 #' @param out.format The format of subsets of data based on the dating confidence ranking. Options
@@ -113,7 +113,7 @@ xd_check <- function(data = NULL, # the data you are checking. long format or rw
   )
 
   # make sure that "year" columns are labelled as such
-  colnames(data)[which((colnames(data) %in% c("Y", "y")) == T)] <- "year"
+  colnames(data)[which((colnames(data) %in% c("Year", "year")) == T)] <- "year"
 
   # general check
   stopifnot(
@@ -364,7 +364,7 @@ xd_check <- function(data = NULL, # the data you are checking. long format or rw
   # These then have to be applied to each series + chron combination
 
   # set min.overlap - the way I'm handling this is causing problems I think
-  min.overlap <- 20
+  min.overlap <- 15
 
   # Do the leave-one-out chronology method on the data (n chrons = n series)
   data.series.split <- split(std.all[["data"]], f = std.all[["data"]]$series)
@@ -412,6 +412,7 @@ xd_check <- function(data = NULL, # the data you are checking. long format or rw
                        lag.dfs <- lapply(merged.loo.lags, FUN = \(this.lag) {
                          if (nrow(this.lag) < min.overlap) {
                            NA
+                           #this.lag[0, , drop = FALSE]
                          } else {
                            this.lag
                          }
@@ -499,36 +500,46 @@ xd_check <- function(data = NULL, # the data you are checking. long format or rw
   # The output here is a single data.frame containing all the results - can make any other type of
   # organization from this point
   cor.res.raw <- mapply(FUN = \(this.combo, these.names) {
-    lapply(this.combo, FUN = \(this.series) {
-      all.lags <- lapply(this.series, FUN = \(this.lag) { # Do correlations on this layer
-        overlap <- nrow(this.lag)
-        if (overlap < min.overlap) {
-          cor.coef <- NA
-          p.val <- NA
-        } else {
-          suppressWarnings(
-            this.cor.res <- cor.test(this.lag[, "std.series"],
-                                     this.lag[, "std.chron"],
-                                     method = "spearman")
-          )
-          # Round the results for easy viewing
-          cor.coef <- round(this.cor.res$estimate[[1]], digits = 2)
-          p.val <- round(this.cor.res$p.value[[1]], digits = 3)
-        }
+    mapply(FUN = \(this.series, series.name) {
+      if (length(this.series) == 0) { # Handle really short series properly (no lags possible)
+        all.lags <- data.frame(series = series.name,
+                               reference = these.names,
+                               offset = 0,
+                               overlap = NA,
+                               cor.coef = NA,
+                               p.val = NA,
+                               T.val = NA)
+      } else {
+        all.lags <- lapply(this.series, FUN = \(this.lag) { # Do correlations on this layer
+          overlap <- nrow(this.lag)
+          if (overlap < min.overlap) {
+            cor.coef <- NA
+            p.val <- NA
+          } else {
+            suppressWarnings(
+              this.cor.res <- cor.test(this.lag[, "std.series"],
+                                       this.lag[, "std.chron"],
+                                       method = "spearman")
+            )
+            # Round the results for easy viewing
+            cor.coef <- round(this.cor.res$estimate[[1]], digits = 2)
+            p.val <- round(this.cor.res$p.value[[1]], digits = 3)
+          }
 
-        res.df <- data.frame(series = unique(this.lag[, "series"]),
-                             reference = these.names,
-                             offset = unique(this.lag[, "lag"]),
-                             overlap = overlap,
-                             cor.coef = cor.coef,
-                             p.val = p.val)
-        res.df$T.val <- round(
-          abs(res.df$cor.coef) *
-            sqrt((res.df$overlap-2)/1-(res.df$cor.coef)^2),
-          digits = 2)
+          res.df <- data.frame(series = this.lag[1, "series"],
+                               reference = these.names,
+                               offset = this.lag[1, "lag"],
+                               overlap = overlap,
+                               cor.coef = cor.coef,
+                               p.val = p.val)
+          res.df$T.val <- round(
+            abs(res.df$cor.coef) *
+              sqrt((res.df$overlap-2)/1-(res.df$cor.coef)^2),
+            digits = 2)
 
-        res.df
-      }) |> do.call(what = "rbind")
+          res.df
+        }) |> do.call(what = "rbind")
+      }
 
       # Calculate correct sugg.ID and sugg.OD that can go beyond the references
       # This will get the LOO and the reference values - only the LOO is guaran
@@ -540,7 +551,8 @@ xd_check <- function(data = NULL, # the data you are checking. long format or rw
       #
       all.lags
 
-    }) |> do.call(what = "rbind")
+    }, this.series = this.combo, series.name = names(this.combo),
+    SIMPLIFY = FALSE) |> do.call(what = "rbind")
 
   }, this.combo = data.refs.list, these.names = names(data.refs.list),
   SIMPLIFY = FALSE) |> do.call(what = "rbind")
@@ -560,6 +572,10 @@ xd_check <- function(data = NULL, # the data you are checking. long format or rw
   # Reorganize the columns
   cor.res.raw1 <- cor.res.raw1[, c("series","reference","offset","sugg.ID","sugg.OD",
                                    "overlap","cor.coef","p.val","T.val")]
+  # Add actual overlap to series that didn't have enough overlap for correlations
+  cor.res.raw1$overlap <- ifelse(is.na(cor.res.raw1$overlap),
+                                 cor.res.raw1$sugg.OD - cor.res.raw1$sugg.ID,
+                                 cor.res.raw1$overlap)
 
   ## Sort/filter/arrange this massive amount of data into a useful output
   # First step is to reorganize into a list that can be perused easily by the user
@@ -589,8 +605,10 @@ xd_check <- function(data = NULL, # the data you are checking. long format or rw
 
                                 data.frame(series = as.dated$series,
                                            best.as.dated = ifelse(which(this.combo$offset %in% "0")
-                                                                  %in% "1", 1, 0),
-                                           sig.as.dated = ifelse(as.dated$p.val < p.thresh, 1, 0))
+                                                                  %in% "1" &
+                                                                    nrow(this.combo) > 1, 1, 0),
+                                           sig.as.dated = ifelse(as.dated$p.val > p.thresh |
+                                                                   is.na(as.dated$p.val), 0, 1))
 
                               }) |> do.call(what = "rbind")
 
@@ -602,18 +620,18 @@ xd_check <- function(data = NULL, # the data you are checking. long format or rw
                                                     rownames(this.series.sum))]
 
 
-    if (nrow(this.series.sum) < 1) { # No refs had adequate overlap
-      agg.df <- data.frame(series = unique(this.series[, "series"]),
+    if (this.series$overlap[this.series$offset %in% "0"] <= min.overlap) { # If low overlap
+      agg.df <- data.frame(series = this.series[1, "series"],
                            best.as.dated = all.bad,
                            sig.as.dated = all.bad,
                            as.dated.ID = unique(this.series[this.series$offset %in% "0",
                                                             "sugg.ID"]),
                            as.dated.OD = unique(this.series[this.series$offset %in% "0",
                                                             "sugg.OD"]))
-      agg.df[, paste0("as.dated.", names(data.refs.list), ".cor")] <- NA
+      agg.df[, paste0("as.dated.", names(data.refs.list), ".corr")] <- NA
 
-      agg.df$message <-  paste("not checked against any",
-                               "references due to overlap < 20yrs")
+      agg.df$message <- paste("not checked against any",
+                              "references due to overlap <", min.overlap, "yrs")
 
     } else {
       agg.df <- aggregate(cbind(best.as.dated, sig.as.dated) ~ series, data = this.series.sum,
@@ -638,7 +656,7 @@ xd_check <- function(data = NULL, # the data you are checking. long format or rw
       agg.df$message <- ifelse(nrow(this.series.sum) < n.refs,
                                paste("not checked against",
                                      n.refs - nrow(this.series.sum),
-                                     "reference due to overlap < 20yrs"),
+                                     "references due to overlap <", min.overlap, "yrs"),
                                paste("checked against",
                                      n.refs,
                                      ifelse(n.refs == 1,
