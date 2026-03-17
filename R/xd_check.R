@@ -573,9 +573,9 @@ xd_check <- function(data = NULL, # the data you are checking. long format or rw
   cor.res.raw1 <- cor.res.raw1[, c("series","reference","offset","sugg.ID","sugg.OD",
                                    "overlap","cor.coef","p.val","T.val")]
   # Add actual overlap to series that didn't have enough overlap for correlations
-  cor.res.raw1$overlap <- ifelse(is.na(cor.res.raw1$overlap),
-                                 cor.res.raw1$sugg.OD - cor.res.raw1$sugg.ID,
-                                 cor.res.raw1$overlap)
+  # cor.res.raw1$overlap <- ifelse(is.na(cor.res.raw1$overlap),
+  #                                cor.res.raw1$sugg.OD - cor.res.raw1$sugg.ID,
+  #                                cor.res.raw1$overlap)
 
   ## Sort/filter/arrange this massive amount of data into a useful output
   # First step is to reorganize into a list that can be perused easily by the user
@@ -619,49 +619,54 @@ xd_check <- function(data = NULL, # the data you are checking. long format or rw
     these.refs <- rownames(this.series.sum)[which(names(data.refs.list) %in%
                                                     rownames(this.series.sum))]
 
+    # Error in if (this.series$overlap[this.series$offset %in% "0"] <= min.overlap) { :
+    #     the condition has length > 1
+    # Need to control this for multiple reference comparisons
+    # if (this.series$overlap[this.series$offset %in% "0"] <= min.overlap) { # If low overlap
+    #   agg.df <- data.frame(series = this.series[1, "series"],
+    #                        best.as.dated = all.bad,
+    #                        sig.as.dated = all.bad,
+    #                        as.dated.ID = this.series[this.series$offset %in% "0",
+    #                                                         "sugg.ID"][1],
+    #                        as.dated.OD = this.series[this.series$offset %in% "0",
+    #                                                         "sugg.OD"][1])
+    #   agg.df[, paste0("as.dated.", names(data.refs.list), ".corr")] <- NA
+    #
+    #   agg.df$message <- paste("not checked against any",
+    #                   "references due to overlap <", min.overlap, "yrs")
+    #
+    #} else {
+    agg.df <- aggregate(cbind(best.as.dated, sig.as.dated) ~ series, data = this.series.sum,
+                        FUN = \(x) paste(sum(x), n.refs, sep = "/"), drop = FALSE)
 
-    if (this.series$overlap[this.series$offset %in% "0"] <= min.overlap) { # If low overlap
-      agg.df <- data.frame(series = this.series[1, "series"],
-                           best.as.dated = all.bad,
-                           sig.as.dated = all.bad,
-                           as.dated.ID = unique(this.series[this.series$offset %in% "0",
-                                                            "sugg.ID"]),
-                           as.dated.OD = unique(this.series[this.series$offset %in% "0",
-                                                            "sugg.OD"]))
-      agg.df[, paste0("as.dated.", names(data.refs.list), ".corr")] <- NA
+    agg.df$as.dated.ID <- unique(this.series[this.series$offset %in% "0",
+                                             "sugg.ID"])
 
-      agg.df$message <- paste("not checked against any",
-                              "references due to overlap <", min.overlap, "yrs")
+    agg.df$as.dated.OD <- unique(this.series[this.series$offset %in% "0",
+                                             "sugg.OD"])
 
-    } else {
-      agg.df <- aggregate(cbind(best.as.dated, sig.as.dated) ~ series, data = this.series.sum,
-                          FUN = \(x) paste(sum(x), n.refs, sep = "/"), drop = FALSE)
+    ## Add the correlation coefficients for as dated
+    # Which refs do we have correlation coefs for?
+    cor.coefs <- lapply(1:n.refs, FUN = \(i) {
+      this.coef <- this.series[this.series$offset %in% "0" &
+                                 this.series$reference %in% names(data.refs.list)[i], "cor.coef"]
+      ifelse(length(this.coef) == 0, NA, this.coef)
+    }) |> do.call(what = "c")
 
-      agg.df$as.dated.ID <- unique(this.series[this.series$offset %in% "0",
-                                               "sugg.ID"])
+    agg.df[, paste0("as.dated.", names(data.refs.list), ".corr")] <- cor.coefs
 
-      agg.df$as.dated.OD <- unique(this.series[this.series$offset %in% "0",
-                                               "sugg.OD"])
-
-      ## Add the correlation coefficients for as dated
-      # Which refs do we have correlation coefs for?
-      cor.coefs <- lapply(1:n.refs, FUN = \(i) {
-        this.coef <- this.series[this.series$offset %in% "0" &
-                                   this.series$reference %in% names(data.refs.list)[i], "cor.coef"]
-        ifelse(length(this.coef) == 0, NA, this.coef)
-      }) |> do.call(what = "c")
-
-      agg.df[, paste0("as.dated.", names(data.refs.list), ".corr")] <- cor.coefs
-
-      agg.df$message <- ifelse(nrow(this.series.sum) < n.refs,
-                               paste("not checked against",
-                                     n.refs - nrow(this.series.sum),
-                                     "references due to overlap <", min.overlap, "yrs"),
-                               paste("checked against",
-                                     n.refs,
-                                     ifelse(n.refs == 1,
-                                            "reference", "references")))
-    }
+    agg.df$message <- ifelse(nrow(this.series.sum) < n.refs,
+                             paste("not checked against",
+                                   n.refs - nrow(this.series.sum),
+                                   "references due to overlap <", min.overlap, "yrs"),
+                             ifelse(all(is.na(this.series$overlap[this.series$offset %in% "0"])),
+                                    paste("not checked against any",
+                                          "references due to overlap <", min.overlap, "yrs"),
+                                    paste("checked against",
+                                          n.refs,
+                                          ifelse(n.refs == 1,
+                                                 "reference", "references"))))
+    #}
 
     agg.df
 
