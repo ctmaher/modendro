@@ -317,7 +317,7 @@ read_pos <- function(path = NULL,
           if (is.null(pith.coords.df)) {
             if ((grep("Written", raw.input) - grep("DATED", raw.input)) > 1) {
               comment.lines <- raw.input[(grep("DATED", raw.input) + 1):(grep("Written",
-                                                                              raw.input) - 1)]
+                                                                              raw.input) - 1)][1]
               comment <- gsub(pattern = "#C ",
                               replacement = "",
                               comment.lines)
@@ -327,7 +327,7 @@ read_pos <- function(path = NULL,
           } else {
             if ((grep("PithCoordinates", raw.input) - grep("DATED", raw.input)) > 1) {
               comment.lines <- raw.input[(grep("DATED", raw.input) + 1):(grep("PithCoordinates",
-                                                                              raw.input) - 1)]
+                                                                              raw.input) - 1)][1]
               comment <- gsub(pattern = "#C ",
                               replacement = "",
                               comment.lines)
@@ -339,7 +339,7 @@ read_pos <- function(path = NULL,
           if (is.null(pith.coords.df)) {
             if ((grep("Written", raw.input) - grep("SCALE", raw.input)) > 1) {
               comment.lines <- raw.input[(grep("SCALE", raw.input) + 1):(grep("Written",
-                                                                              raw.input) - 1)]
+                                                                              raw.input) - 1)][1]
               comment <- gsub(pattern = "#C ",
                               replacement = "",
                               comment.lines)
@@ -349,7 +349,7 @@ read_pos <- function(path = NULL,
           } else {
             if ((grep("PithCoordinates", raw.input) - grep("SCALE", raw.input)) > 1) {
               comment.lines <- raw.input[(grep("SCALE", raw.input) + 1):(grep("PithCoordinates",
-                                                                              raw.input) - 1)]
+                                                                              raw.input) - 1)][1]
               comment <- gsub(pattern = "#C ",
                               replacement = "",
                               comment.lines)
