@@ -141,6 +141,19 @@ xd_check <- function(data = NULL, # the data you are checking. long format or rw
       is.double(data[, "rw"])
   )
 
+  # Also need to make sure there are no internal NAs in rw or year columns (this will not be the
+  # case if data started as an rwl, but might be if user supplies data)
+  noNA.data <- lapply(split(data, f = data[,"series"]), FUN = \(this.series) {
+    this.series[,"rw"] <- replace_internal_NAs(this.series[,"rw"], new.val = 0)
+    this.series
+  }) |> do.call(what = "rbind")
+
+  if (any(noNA.data[,"rw"] != data[,"rw"])) {
+    warning("\nSome series had internal NA values. These were replaced with 0s.\n")
+  }
+
+  data <- noNA.data
+
   ## Detailed checking of the data and references to determine if they are rwl format or
   # long format. If rwls are read in using dplR::read.rwl they will have class "rwl" already.
   # What else can signify this? Not sure of a robust test
