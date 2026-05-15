@@ -154,8 +154,7 @@ d_detrend <- function(data = NULL,
                       d.detrend.method = "AgeDepSpline",
                       detrend.method = "AgeDepSpline",
                       nyrs = c(10, 25),
-                      event.type = "release",
-                      standardize = TRUE) {
+                      event.type = "release") {
   #### Initial error catching
   ## data
   stopifnot(
@@ -316,12 +315,6 @@ d_detrend <- function(data = NULL,
       length(event.type) == 1 |
       event.type %in% c('both', 'release', 'suppression')
   )
-
-  ## standardize
-  stopifnot("standardize must be a logical vector" =
-              is.logical(standardize) |
-              standardize %in% c(TRUE, FALSE))
-
 
   #### Power transform the ring width here
   orig.IDs <- unique(data[,"series"])
