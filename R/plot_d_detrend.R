@@ -363,25 +363,7 @@ plot_d_detrend <- function(x = NULL) {
 
     } else {
 
-      rwi.plot <- ggplot2::ggplot() +
-        ggplot2::geom_line(data = pgc_s,
-                           ggplot2::aes(year, rw.ddtrd.index),
-                           na.rm = TRUE) +
-        ggplot2::theme(
-          panel.background = ggplot2::element_blank(),
-          legend.position = "bottom",
-          legend.position.inside = c(0.5, 0),
-          legend.direction = "horizontal"
-        ) +
-        ggplot2::scale_x_continuous(n.breaks = 10) +
-        ggplot2::ylab(bquote(atop({
-          A
-        }[t] * " & " * {
-          D
-        }[t] * " detrended","ratio RWI"))) +
-        ggplot2::xlab("Year")
-
-      # Also include the residual plot
+      # Also include the residual series plot
       resid.plot <- ggplot2::ggplot() +
         ggplot2::geom_line(data = pgc_s,
                            ggplot2::aes(year, pt.rw.ddtrd.resid),
@@ -397,8 +379,28 @@ plot_d_detrend <- function(x = NULL) {
           A
         }[t] * " & " * {
           D
-        }[t] * " detrended","resid. RWI"))) +
+        }[t] * " detrended", "resid. RWI"))) +
         ggplot2::xlab("Year")
+
+      # The ratio series plot
+      rwi.plot <- ggplot2::ggplot() +
+        ggplot2::geom_line(data = pgc_s,
+                           ggplot2::aes(year, rw.ddtrd.index),
+                           na.rm = TRUE) +
+        ggplot2::theme(
+          panel.background = ggplot2::element_blank(),
+          legend.position = "bottom",
+          legend.position.inside = c(0.5, 0),
+          legend.direction = "horizontal"
+        ) +
+        ggplot2::scale_x_continuous(n.breaks = 10) +
+        ggplot2::ylab(bquote(atop({
+          A
+        }[t] * " & " * {
+          D
+        }[t] * " detrended", "ratio RWI"))) +
+        ggplot2::xlab("Year")
+
 
       # Assemble the final output plots
       final.plots <- cowplot::plot_grid(
@@ -411,7 +413,6 @@ plot_d_detrend <- function(x = NULL) {
         axis = "lr"
       )
     }
-
 
     out.plots <- list(detection.plots, d.iter.plots, final.plots)
     names(out.plots) <- c("Detection plots", "Dist. detrending", "Result plots")
