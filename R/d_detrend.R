@@ -38,8 +38,6 @@
 #' regular "Spline" the flexibility is constant throughout. Defaults are c(10, 25) years.
 #' @param event.type The type of disturbance events to detrend. Options are "release", "suppression",
 #' or "both". Default is "release".
-#' @param standardize Standardize the final detrended series by dividing out the age trend curve?
-#' Default is TRUE. If FALSE, the difference is taken instead, resulting in residual series.
 #'
 #' @details
 #' The concept of separately detrending disturbances derives from Cook's (1987) linear aggregate

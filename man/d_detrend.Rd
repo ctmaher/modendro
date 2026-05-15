@@ -11,8 +11,7 @@ d_detrend(
   d.detrend.method = "AgeDepSpline",
   detrend.method = "AgeDepSpline",
   nyrs = c(10, 25),
-  event.type = "release",
-  standardize = TRUE
+  event.type = "release"
 )
 }
 \arguments{
@@ -40,9 +39,6 @@ regular "Spline" the flexibility is constant throughout. Defaults are c(10, 25) 
 
 \item{event.type}{The type of disturbance events to detrend. Options are "release", "suppression",
 or "both". Default is "release".}
-
-\item{standardize}{Standardize the final detrended series by dividing out the age trend curve?
-Default is TRUE. If FALSE, the difference is taken instead, resulting in residual series.}
 }
 \value{
 A list containing 3 data.frames 1) the disturbance detrended ring width results including
