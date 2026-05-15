@@ -151,7 +151,7 @@ d_detrend <- function(data = NULL,
                       pgc.thresh = 50,
                       d.detrend.method = "AgeDepSpline",
                       detrend.method = "AgeDepSpline",
-                      nyrs = c(10, 25),
+                      nyrs = c(10, 30),
                       event.type = "release") {
   #### Initial error catching
   ## data
