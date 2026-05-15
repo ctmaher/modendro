@@ -140,7 +140,7 @@ plot_d_detrend <- function(x = NULL) {
       ggplot2::geom_line(
         data = pgc_s,
         na.rm = TRUE,
-        aes(year, rw.pgc),
+        ggplot2::aes(year, rw.pgc),
         color = "black"
       ) +
       ggplot2::geom_line(data = pgc_s[-get.these.rows2, ],
@@ -149,7 +149,7 @@ plot_d_detrend <- function(x = NULL) {
       make_anchor_scales(pgc_s$pgc, pgc.thresh, pgc.name) +
       ggplot2::scale_shape_manual(values = c(25, 24), guide = "none") +
       ggplot2::theme(
-        panel.background = element_blank(),
+        panel.background = ggplot2::element_blank(),
         legend.position = "none",
         legend.position.inside = c(0.5, 0),
         legend.direction = "horizontal"
@@ -405,6 +405,7 @@ plot_d_detrend <- function(x = NULL) {
         res.orig.rw.plot,
         resid.plot,
         rwi.plot,
+        rel_heights = c(0.5, 0.25, 0.25),
         ncol = 1,
         align = "v",
         axis = "lr"
