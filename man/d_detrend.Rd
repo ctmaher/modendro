@@ -31,14 +31,15 @@ are \code{"AgeDepSpline"}, \code{"Spline"}, \code{"Friedman"}, \code{"Hugershoff
 is \code{"AgeDepSpline"}. See details for more information.}
 
 \item{detrend.method}{Which method to use for the final age detrending on each series. Options are
-all the methods available in \code{\link[dplR]{detrend.series}}. Default is "AgeDepSpline".}
+all the methods available in \code{\link[dplR]{detrend.series}} except for "Ar". Default is
+"AgeDepSpline".}
 
 \item{nyrs}{Two numbers (in years) setting flexibility of splines for \code{d.detrend.method} and
 \code{detrend.method}, respectively. For "AgeDepSpline", nyrs determines the initial flexibility. For
-regular "Spline" the flexibility is constant throughout. Defaults are c(15, 25) years.}
+regular "Spline" the flexibility is constant throughout. Defaults are c(10, 25) years.}
 
 \item{event.type}{The type of disturbance events to detrend. Options are "release", "suppression",
-or "both".}
+or "both". Default is "release".}
 
 \item{standardize}{Standardize the final detrended series by dividing out the age trend curve?
 Default is TRUE. If FALSE, the difference is taken instead, resulting in residual series.}
@@ -49,32 +50,90 @@ the percent growth change series and intermediate steps ("PGC"), 2) details abou
 disturbance events detected, and 3) details on the disturbance event trend fitting and removal
 process.
 
-All data.frames are in "long-format" with series as a categorical variable.
+All data.frames are in "long-format" with \code{series} as a categorical variable.
 }
 \description{
 \code{\link{d_detrend}} implements the disturbance detrending algorithm of Druckenbrod et al.
-2024. This is an updated version of the same type of analysis as \code{\link{ci_detect}} - the
+(2024). This is an updated version of the same type of analysis as \code{\link{ci_detect}} - the
 step-by-step identification and removal of disturbance events tree-ring series from closed-canopy
 forests. The basic assumption is that rapid changes in growth are likely driven by stand
-dynamics, not climate.
+dynamics, not climate. \code{\link{d_detrend}} was adapted from MatLab code provided by
+D. Druckenbrod.
 
-This newer method combines Nowacki & Abrams's (1997) radial growth averaging to detect
-disturbances with the intervention detection techniques of Druckenbrod et al. 2013,
-Rydval et al. 2016, and Rydval et al. 2018 to fit curves to the disturbance event periods and
+This method combines Nowacki & Abrams's (1997) radial growth averaging to detect
+disturbances with the intervention detection techniques of Druckenbrod et al. (2013),
+Rydval et al. (2016), and Rydval et al. (2018) to fit curves to the disturbance event periods and
 remove them from tree-ring series. By default, events are fit with age-dependent splines
 (Melvin et al. 2007).
 
-The \code{modendro} implementation includes additional flexibility to tune parameters and try
-different curve fitting methods, and also to allow the algorithm to detect and remove growth
-suppression events in addition to growth releases.
+The \code{modendro} implementation includes additional flexibility to try different curve fitting
+methods for disturbance events and final age detrending, and to allow the algorithm to detect and
+remove growth suppression events in addition to growth releases. The default settings match the
+parameters in Druckenbrod et al. (2024).
 }
 \details{
-Details to come
+The concept of separately detrending disturbances derives from Cook's (1987) linear aggregate
+model. Although Cook's model distinguishes between endogenous and exogenous disturbances, in
+practice this is not possible without prior knowledge. Instead, disturbances are defined
+quantitatively.
+
+In \code{\link{d_detrend}} the percentage growth change (PGC) is calculated from
+radial growth averaging (Nowacki & Abrams 1997) - i.e., the percentage change between adjacent (1
+year of separation) \code{win.len} moving averages of ring width. Periods of PGC that are greater
+than or equal to \code{abs(pgc.thresh)} are identified as disturbance events. Within the event
+periods, the maximum PGC value is selected as the start year of the event. In this \code{modendro}
+implementation, events that occur within the earliest 2*win.len years of the original tree-ring
+series are ignored. This is to avoid treating juvenile growth trends as disturbance events. Also
+unique the \code{modendro} version, \code{\link{d_detrend}} will always identify both release and
+suppression events. However, you can control which type of event is detrended with the
+\code{event.type} argument.
+
+Once events are identified, we power- or log-transform (see \code{\link{pwr_t_rwl}}) the whole
+series based on the variance-mean (i.e., spread-level) relationship unique to each series, then
+detrend them individually starting with the most recent event, moving backward in time until all
+events are detrended. Event detrending involves extracting the subset of the transformed series
+from the estimated start year (max PGC) to the end of the series. A line is then fit to the
+subset, subtracted from the transformed values, and the 1st value of the original
+power-transformed event subset is added back. Each event is then determined to be "sustained" or
+"transient". If the detrended event values stay below/above the original values for the remainder
+of the series, the event is sustained. If the detrended event values ever cross the original
+values, the event is transient. Transient events are only detrended for the period between event
+start and when they cross the original values.
+
+You can choose the type of line used to detrend each event through \code{d.detrend.method}. The
+default \code{"AgeDepSpline"} is the recommended method. You can adjust the initial flexibility of the
+spline through the 1st element of \code{nyrs}. You may want to adjust depending on your goals/system.
+Other methods are available as well to allow further exploration of techniques. Methods \code{Spline},
+\code{Friedman}, \code{Linear}, and \code{Mean} are fairly straight-forward and follow the descriptions in
+\code{\link[dplR]{detrend.series}}. Method \code{Hugershoff} is a custom implementation and follows
+the "simple increment function" described by Warren & MacWilliam (1981), with the b parameter set
+to 1. The curve is fit via \code{\link[stats]{nls}}. If the fit fails, the event is fit with
+\code{"AgeDepSpline"}.
+
+After all events are detrended, the long-term (whole series) age trend lines are fit to the
+transformed series. Under the hood, this is just a call to \code{\link[dplR]{detrend.series}}.
+Residual series are extracted here. You can elect to skip this age-detrending step by entering
+\code{"none"} to the \code{detrend.method} argument, returning just the disturbance detrended series.
+
+Finally, the power transformation is reversed for the disturbance detrended series and the fitted
+age trend line, putting both in the original ring width units. Note that because the power
+used was based on the empirical variance-mean relationship for the series, the variances of the
+detrended events are also adjusted. In this way, the disturbance detrending is not a simple
+subtraction. The last step is to compute the standardized ring width index by dividing the
+reverse-transformed disturbance-detrended series by the reverse-transformed age trend.
+
+For more details, see Druckenbrod et al. (2024).
+
+I highly recommend you look at the results! Convenient visualizations of the
+\code{\link{d_detrend}} process are available by using \code{\link{plot_d_detrend}}.
 }
 \examples{
 Examples to come
 }
 \references{
+Cook ER. 1987. The Decomposition of Tree-Ring Series for Environmental Studies.
+\emph{Tree-Ring Bulletin}. \strong{47}:37–59
+
 Druckenbrod DL, Cook ER, Pederson N, Martin-Benito D. 2024. Detrending tree-ring widths in
 closed-canopy forests for climate and disturbance history reconstructions.
 \emph{Dendrochronologia}. \strong{85}:126195. https://doi.org/10.1016/j.dendro.2024.126195

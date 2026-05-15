@@ -3,20 +3,22 @@
 #'
 #' @description
 #' \code{\link{d_detrend}} implements the disturbance detrending algorithm of Druckenbrod et al.
-#' 2024. This is an updated version of the same type of analysis as \code{\link{ci_detect}} - the
+#' (2024). This is an updated version of the same type of analysis as \code{\link{ci_detect}} - the
 #' step-by-step identification and removal of disturbance events tree-ring series from closed-canopy
 #' forests. The basic assumption is that rapid changes in growth are likely driven by stand
-#' dynamics, not climate.
+#' dynamics, not climate. \code{\link{d_detrend}} was adapted from MatLab code provided by
+#' D. Druckenbrod.
 #'
-#' This newer method combines Nowacki & Abrams's (1997) radial growth averaging to detect
-#' disturbances with the intervention detection techniques of Druckenbrod et al. 2013,
-#' Rydval et al. 2016, and Rydval et al. 2018 to fit curves to the disturbance event periods and
+#' This method combines Nowacki & Abrams's (1997) radial growth averaging to detect
+#' disturbances with the intervention detection techniques of Druckenbrod et al. (2013),
+#' Rydval et al. (2016), and Rydval et al. (2018) to fit curves to the disturbance event periods and
 #' remove them from tree-ring series. By default, events are fit with age-dependent splines
 #' (Melvin et al. 2007).
 #'
-#' The `modendro` implementation includes additional flexibility to tune parameters and try
-#' different curve fitting methods, and also to allow the algorithm to detect and remove growth
-#' suppression events in addition to growth releases.
+#' The `modendro` implementation includes additional flexibility to try different curve fitting
+#' methods for disturbance events and final age detrending, and to allow the algorithm to detect and
+#'  remove growth suppression events in addition to growth releases. The default settings match the
+#'  parameters in Druckenbrod et al. (2024).
 #'
 #' @param data The collection of raw tree-ring series you wish to disturbance-detrend. Can be class
 #' `"rwl"` (e.g., read in by \code{\link[dplR]{read.rwl}}) or `"data.frame"` (long format). If
@@ -29,26 +31,83 @@
 #' are `"AgeDepSpline"`, `"Spline"`, `"Friedman"`, `"Hugershoff"`, `"Linear"`, and "`Mean"`. Default
 #' is `"AgeDepSpline"`. See details for more information.
 #' @param detrend.method Which method to use for the final age detrending on each series. Options are
-#' all the methods available in \code{\link[dplR]{detrend.series}}. Default is "AgeDepSpline".
+#' all the methods available in \code{\link[dplR]{detrend.series}} except for "Ar". Default is
+#' "AgeDepSpline".
 #' @param nyrs Two numbers (in years) setting flexibility of splines for `d.detrend.method` and
 #' `detrend.method`, respectively. For "AgeDepSpline", nyrs determines the initial flexibility. For
-#' regular "Spline" the flexibility is constant throughout. Defaults are c(15, 25) years.
+#' regular "Spline" the flexibility is constant throughout. Defaults are c(10, 25) years.
 #' @param event.type The type of disturbance events to detrend. Options are "release", "suppression",
-#' or "both".
+#' or "both". Default is "release".
 #' @param standardize Standardize the final detrended series by dividing out the age trend curve?
 #' Default is TRUE. If FALSE, the difference is taken instead, resulting in residual series.
 #'
 #' @details
-#' Details to come
+#' The concept of separately detrending disturbances derives from Cook's (1987) linear aggregate
+#' model. Although Cook's model distinguishes between endogenous and exogenous disturbances, in
+#' practice this is not possible without prior knowledge. Instead, disturbances are defined
+#' quantitatively.
+#'
+#' In \code{\link{d_detrend}} the percentage growth change (PGC) is calculated from
+#' radial growth averaging (Nowacki & Abrams 1997) - i.e., the percentage change between adjacent (1
+#'  year of separation) `win.len` moving averages of ring width. Periods of PGC that are greater
+#'  than or equal to `abs(pgc.thresh)` are identified as disturbance events. Within the event
+#'  periods, the maximum PGC value is selected as the start year of the event. In this `modendro`
+#'  implementation, events that occur within the earliest 2*win.len years of the original tree-ring
+#'  series are ignored. This is to avoid treating juvenile growth trends as disturbance events. Also
+#'  unique the `modendro` version, \code{\link{d_detrend}} will always identify both release and
+#'  suppression events. However, you can control which type of event is detrended with the
+#'  `event.type` argument.
+#'
+#' Once events are identified, we power- or log-transform (see \code{\link{pwr_t_rwl}}) the whole
+#' series based on the variance-mean (i.e., spread-level) relationship unique to each series, then
+#' detrend them individually starting with the most recent event, moving backward in time until all
+#' events are detrended. Event detrending involves extracting the subset of the transformed series
+#' from the estimated start year (max PGC) to the end of the series. A line is then fit to the
+#' subset, subtracted from the transformed values, and the 1st value of the original
+#' power-transformed event subset is added back. Each event is then determined to be "sustained" or
+#' "transient". If the detrended event values stay below/above the original values for the remainder
+#' of the series, the event is sustained. If the detrended event values ever cross the original
+#' values, the event is transient. Transient events are only detrended for the period between event
+#' start and when they cross the original values.
+#'
+#' You can choose the type of line used to detrend each event through `d.detrend.method`. The
+#' default `"AgeDepSpline"` is the recommended method. You can adjust the initial flexibility of the
+#' spline through the 1st element of `nyrs`. You may want to adjust depending on your goals/system.
+#' Other methods are available as well to allow further exploration of techniques. Methods `Spline`,
+#' `Friedman`, `Linear`, and `Mean` are fairly straight-forward and follow the descriptions in
+#' \code{\link[dplR]{detrend.series}}. Method `Hugershoff` is a custom implementation and follows
+#' the "simple increment function" described by Warren & MacWilliam (1981), with the b parameter set
+#'  to 1. The curve is fit via \code{\link[stats]{nls}}. If the fit fails, the event is fit with
+#' `"AgeDepSpline"`.
+#'
+#' After all events are detrended, the long-term (whole series) age trend lines are fit to the
+#' transformed series. Under the hood, this is just a call to \code{\link[dplR]{detrend.series}}.
+#' Residual series are extracted here. You can elect to skip this age-detrending step by entering
+#' `"none"` to the `detrend.method` argument, returning just the disturbance detrended series.
+#'
+#' Finally, the power transformation is reversed for the disturbance detrended series and the fitted
+#'  age trend line, putting both in the original ring width units. Note that because the power
+#' used was based on the empirical variance-mean relationship for the series, the variances of the
+#' detrended events are also adjusted. In this way, the disturbance detrending is not a simple
+#' subtraction. The last step is to compute the standardized ring width index by dividing the
+#' reverse-transformed disturbance-detrended series by the reverse-transformed age trend.
+#'
+#' For more details, see Druckenbrod et al. (2024).
+#'
+#' I highly recommend you look at the results! Convenient visualizations of the
+#' \code{\link{d_detrend}} process are available by using \code{\link{plot_d_detrend}}.
 #'
 #' @return A list containing 3 data.frames 1) the disturbance detrended ring width results including
 #'  the percent growth change series and intermediate steps ("PGC"), 2) details about the specific
 #'  disturbance events detected, and 3) details on the disturbance event trend fitting and removal
 #'  process.
 #'
-#' All data.frames are in "long-format" with series as a categorical variable.
+#' All data.frames are in "long-format" with `series` as a categorical variable.
 #'
 #' @references
+#' Cook ER. 1987. The Decomposition of Tree-Ring Series for Environmental Studies.
+#' \emph{Tree-Ring Bulletin}. \strong{47}:37–59
+#'
 #' Druckenbrod DL, Cook ER, Pederson N, Martin-Benito D. 2024. Detrending tree-ring widths in
 #' closed-canopy forests for climate and disturbance history reconstructions.
 #' \emph{Dendrochronologia}. \strong{85}:126195. https://doi.org/10.1016/j.dendro.2024.126195
@@ -212,16 +271,14 @@ d_detrend <- function(data = NULL,
     "d.detrend.method must be a character matching options these options: c(
         'AgeDepSpline',
         'Spline',
-        'Friedman',
         'Hugershoff',
         'Linear',
         'Mean'
       )" =
-      is.character(detrend.method) ||
-      detrend.method %in% c(
+      is.character(d.detrend.method) ||
+      d.detrend.method %in% c(
         "AgeDepSpline",
         "Spline",
-        "Friedman",
         "Hugershoff",
         "Linear",
         "Mean"
@@ -230,13 +287,12 @@ d_detrend <- function(data = NULL,
 
   ## detrend.method
   stopifnot(
-    "detrend.method must be a character matching options in dplR::detrend.series(), or 'none'" =
+    "detrend.method must match options (except 'Ar') in dplR::detrend.series(), or 'none'" =
       is.character(detrend.method) ||
       detrend.method %in% c(
         "Spline",
         "ModNegExp",
         "Mean",
-        "Ar",
         "Friedman",
         "ModHugershoff",
         "AgeDepSpline",
@@ -268,6 +324,7 @@ d_detrend <- function(data = NULL,
 
 
   #### Power transform the ring width here
+  orig.IDs <- unique(data[,"series"])
   # Find the optimal power of transformation and transform the series
   pt.list <- modendro::pwr_t_rwl(longer_rwl(data, series.name = "series", dat.name = "rw"))
   # The transformed series
@@ -402,7 +459,7 @@ d_detrend <- function(data = NULL,
 
     # determine if there were any events detected
     if (base::is.null(evt_s)) {
-      evt_s <- data.frame(
+      event.ind <- data.frame(
         series = pgc_s[, "series"][1],
         max.ind = as.numeric(NA),
         max.val = as.numeric(NA),
@@ -426,7 +483,6 @@ d_detrend <- function(data = NULL,
         )
       )
 
-
       pt.rw.detrended <- pgc_s[, "pt.rw"]
 
     } else {
@@ -444,212 +500,242 @@ d_detrend <- function(data = NULL,
         }
       }
 
-      # Separate out the power transformed ring-width
-      pt.rw.detrended <- pgc_s[, "pt.rw"]
-      series.length <- base::length(pt.rw.detrended)
+      # In some cases, we might erase the only detected event in the steps above
+      if (nrow(event.ind) == 0) {
+        event.ind <- data.frame(
+          series = pgc_s[, "series"][1],
+          max.ind = as.numeric(NA),
+          max.val = as.numeric(NA),
+          pgc.thresh = pgc.thresh,
+          year = as.numeric(NA),
+          message = "No disturbance events detected"
+        )
 
-      ### Iterate through the events
-      # Need a way to save each iteration - and the curves
-      d.detrend.iter <- vector("list", nrow(event.ind))
-      # Create a data.frame to hold results as we go
-      iter.df <- data.frame(series = pgc_s[, "series"], year = pgc_s[, "year"])
-      for (i in base::seq_along(event.ind$max.ind)) {
-        # Get this event's end index - ie, the start index plus the win.len
-        event.end <- event.ind$max.ind[i] + win.len
-        # Subset the event - max pgc until the end of the series
-        this.event <- pt.rw.detrended[event.ind$max.ind[i]:series.length]
-
-        ## Fit the disturbance lines. Conceivably appropriate options are the ADS, loess spline,
-        # & Hugershoff/Warren. Perhaps I should put straight line and mean in there too.
-        # Suite of options could be c("AgeDepSpline", "Spline", "Friedman", "Hugershoff", "Linear", "Mean")
-
-        # fit the ADS curve - from dplR
-        if (d.detrend.method %in% "AgeDepSpline") {
-          event.fit <- dplR::ads(y = this.event,
-                                 nyrs0 = nyrs[1],
-                                 pos.slope = TRUE)
-        }
-
-        if (d.detrend.method %in% "Spline") {
-          event.fit <- dplR::caps(y = this.event,
-                                  nyrs = nyrs[1],
-                                  f = 0.5)
-        }
-
-        if (d.detrend.method %in% "Friedman") {
-          event.fit <- stats::supsmu(y = this.event,
-                                     x = base::seq_along(this.event),
-                                     periodic = FALSE)$y
-        }
-
-        if (d.detrend.method %in% "Hugershoff") {
-          # Hugershoff - fits to the detected period and the reminder of the series too
-          # The formula is modified. t is an added parameter that controls how far above/below the
-          # initial fit can go beyond the asymptote. b = 1, always, to allow t to work.
-          # d mainly controls the asymptote value.
-
-          hug_form <-
-            formula(rwi ~ a * ((x - t) ^ 1) * exp(-c * (x - t)) + d)
-
-          # Set up some start values & constraints for a, based on event.type (release or suppression)
-          a_start <- ifelse(event.ind$max.ind[i] > 0, 0.1, -0.1)
-          if (event.ind$max.ind[i] > 0) {
-            a_const <- c(0.005, 5)
-          } else {
-            a_const <- c(-5, -0.005)
-          }
-
-          d.range <- range(this.event, na.rm = TRUE)
-
-          lower_const <- list(a = a_const[1],
-                              c = -5,
-                              t = -10,
-                              d = d.range[1])
-          upper_const <- list(a = a_const[2],
-                              c = 5,
-                              t = 10,
-                              d = d.range[2])
-
-          event.df <- data.frame(rwi = this.event, x = base::seq_along(this.event))
-
-
-          hug_fit.warnings <- list()
-          hug_fit.errors <- list()
-
-          hug_fit <- tryCatch(
-            withCallingHandlers(
-              nls(hug_form,
-                  data = event.df,
-                  start = list(a = a_start,
-                               c = 0.1,
-                               t = 1.5,
-                               d = DescTools::TukeyBiweight(this.event, na.rm = TRUE)),
-                  algorithm = "port",
-                  lower = lower_const,
-                  upper = upper_const,
-                  control = nls.control(
-                    maxiter = 100,
-                    minFactor = 1 / 4096,
-                    warnOnly = FALSE
-                  )
-              ),
-              warning = \(w) {
-                hug_fit.warnings[[length(hug_fit.warnings) + 1]] <<- conditionMessage(w)
-                invokeRestart("muffleWarning")
-              }),
-            error = \(e) {
-              hug_fit.errors[[length(hug_fit.errors) + 1]] <<- conditionMessage(e)
-              NULL
-            }
+        d.detrend.iter <- list(
+          data.frame(
+            series = pgc_s[, "series"][1],
+            year = as.numeric(NA),
+            pt.rw.i = as.numeric(NA),
+            curve = as.numeric(NA),
+            pt.rw.ddtrd.i = as.numeric(NA),
+            iter = as.numeric(NA),
+            eventID = as.numeric(NA),
+            event.type = as.character(NA),
+            event.dur = as.character(NA),
+            d.detrend.method = as.character(NA)
           )
+        )
 
-          # Print the warning and ID the series that had the issue
-          if (length(hug_fit.errors) > 0) {
+        pt.rw.detrended <- pgc_s[, "pt.rw"]
 
-            cat("\nd.detrend.method Hugershoff fit failed for series '",
-                pgc_s$series[1], "', ", event.ind$year[i], " event", "\nRunning AgeDepSpline instead\n", hug_fit.errors[[1]], "\n\n",
-                sep = "")
+      } else {
 
+        # Separate out the power transformed ring-width
+        pt.rw.detrended <- pgc_s[, "pt.rw"]
+        series.length <- base::length(pt.rw.detrended)
+
+        ### Iterate through the events
+        # Need a way to save each iteration - and the curves
+        d.detrend.iter <- vector("list", nrow(event.ind))
+        # Create a data.frame to hold results as we go
+        iter.df <- data.frame(series = pgc_s[, "series"], year = pgc_s[, "year"])
+        for (i in base::seq_along(event.ind$max.ind)) {
+          # Get this event's end index - ie, the start index plus the win.len
+          event.end <- event.ind$max.ind[i] + win.len
+          # Subset the event - max pgc until the end of the series
+          this.event <- pt.rw.detrended[event.ind$max.ind[i]:series.length]
+
+          ## Fit the disturbance lines. Conceivably appropriate options are the ADS, loess spline,
+          # & Hugershoff/Warren. Perhaps I should put straight line and mean in there too.
+          # Suite of options could be c("AgeDepSpline", "Spline", "Friedman", "Hugershoff", "Linear", "Mean")
+
+          # fit the ADS curve - from dplR
+          if (d.detrend.method %in% "AgeDepSpline") {
             event.fit <- dplR::ads(y = this.event,
                                    nyrs0 = nyrs[1],
                                    pos.slope = TRUE)
-
-            d.detrend.method <- "AgeDepSpline"
-
-          } else {
-            event.fit <- predict(hug_fit, newdata = event.df)
           }
+
+          if (d.detrend.method %in% "Spline") {
+            event.fit <- dplR::caps(y = this.event,
+                                    nyrs = nyrs[1],
+                                    f = 0.5)
+          }
+
+          # if (d.detrend.method %in% "Friedman") {
+          #   event.fit <- stats::supsmu(y = this.event,
+          #                              x = base::seq_along(this.event),
+          #                              periodic = FALSE)$y
+          # }
+
+          if (d.detrend.method %in% "Hugershoff") {
+            # Hugershoff - fits to the detected period and the reminder of the series too
+            # The formula is modified. t is an added parameter that controls how far above/below the
+            # initial fit can go beyond the asymptote. b = 1, always, to allow t to work.
+            # d mainly controls the asymptote value.
+
+            hug_form <-
+              formula(rwi ~ a * ((x - t) ^ 1) * exp(-c * (x - t)) + d)
+
+            # Set up some start values & constraints for a, based on event.type (release or suppression)
+            a_start <- ifelse(event.ind$max.ind[i] > 0, 0.1, -0.1)
+            if (event.ind$max.ind[i] > 0) {
+              a_const <- c(0.005, 5)
+            } else {
+              a_const <- c(-5, -0.005)
+            }
+
+            d.range <- range(this.event, na.rm = TRUE)
+
+            lower_const <- list(a = a_const[1],
+                                c = -5,
+                                t = -10,
+                                d = d.range[1])
+            upper_const <- list(a = a_const[2],
+                                c = 5,
+                                t = 10,
+                                d = d.range[2])
+
+            event.df <- data.frame(rwi = this.event, x = base::seq_along(this.event))
+
+
+            hug_fit.warnings <- list()
+            hug_fit.errors <- list()
+
+            hug_fit <- tryCatch(
+              withCallingHandlers(
+                nls(hug_form,
+                    data = event.df,
+                    start = list(a = a_start,
+                                 c = 0.1,
+                                 t = 1.5,
+                                 d = DescTools::TukeyBiweight(this.event, na.rm = TRUE)),
+                    algorithm = "port",
+                    lower = lower_const,
+                    upper = upper_const,
+                    control = nls.control(
+                      maxiter = 100,
+                      minFactor = 1 / 4096,
+                      warnOnly = FALSE
+                    )
+                ),
+                warning = \(w) {
+                  hug_fit.warnings[[length(hug_fit.warnings) + 1]] <<- conditionMessage(w)
+                  invokeRestart("muffleWarning")
+                }),
+              error = \(e) {
+                hug_fit.errors[[length(hug_fit.errors) + 1]] <<- conditionMessage(e)
+                NULL
+              }
+            )
+
+            # Print the warning and ID the series that had the issue
+            if (length(hug_fit.errors) > 0) {
+
+              cat("\nd.detrend.method Hugershoff fit failed for series '",
+                  pgc_s$series[1], "', ", event.ind$year[i], " event", "\nRunning AgeDepSpline instead\n", hug_fit.errors[[1]], "\n\n",
+                  sep = "")
+
+              event.fit <- dplR::ads(y = this.event,
+                                     nyrs0 = nyrs[1],
+                                     pos.slope = TRUE)
+
+              d.detrend.method <- "AgeDepSpline"
+
+            } else {
+              event.fit <- predict(hug_fit, newdata = event.df)
+            }
+          }
+
+          if (d.detrend.method %in% "Linear") {
+            event.fit <- stats::lm(this.event ~ base::seq_along(this.event)) |>
+              stats::predict() |>
+              base::as.numeric()
+          }
+
+          if (d.detrend.method %in% "Mean") {
+            event.fit <- base::mean(this.event,
+                                    na.rm = TRUE)
+          }
+
+
+          # Detrend by subtracting the curve out and adding back the 1st value of the pt series
+          new.detrended <- pt.rw.detrended
+          new.detrended[event.ind$max.ind[i]:series.length] <- (this.event - event.fit) + this.event[1]
+
+          # Transfer the starting series to the data.frame
+          iter.df$pt.rw.i <- pt.rw.detrended
+
+
+          # Druckenbrod's text on distinguishing transient vs  sustained events:
+          # "...sustained release events occur when disturbance detrended ring-width values
+          # remain less than initial ringwidth values for the remainder of the series after
+          # the release event. Conversely, transient events occur when detrended values only
+          # decrease initial ring-width values for a certain sequence of years after the release
+          # event instead of the entire remaining series. Transient release events terminate when
+          # the detrended value would be greater than the initial ring-width value, indicating
+          # that a tree likely returned to suppressed growth conditions." (CTM - notice the implied
+          # underlying condition of suppression).
+
+          # "After the event" I think must mean anything past event.end or up to event.end if
+          # event.end = series.length
+
+          # The MatLab code looks like this:
+          # find(DSti(lngthr(mav:end)) < DStT(lngthr(mav:end)),1) + mav-1
+
+          # DSti - initial (original) ring widths of the disturbance
+          # DStT - detrended ring widths of the disturbance
+
+          # In R, this means:
+          # which(DSti[lngthr[mav:length(lngthr)]] < DStT[lngthr[mav:length(lngthr)]])[1] + mav - 1
+          # The 1st ring width value where the original ring width is less than the detrended value +
+          # the moving window length - 1
+
+          # I suppose if the event is a suppression, "less than" becomes "more than"
+
+          # I interpret this (and the other code) to mean that you fit the whole series, to the end and detrend it.
+          # Then decide whether or not that was justified or not based on the above description
+          # of transient or sustained. If justified, you keep the detrend along the whole curve until the end of
+          # the series. If not, you just keep the detrended section during the identified disturbance period.
+
+          # Determine if event is sustained or transient
+          # The sus object is an index position in the original series - the place where the detrended
+          # values rise above or dip below the original value. event.end is added to translate back
+          # from event index values to original series index values.
+          if (event.ind$max.val[i] > 0) {
+            # For releases...
+            sus <- which(new.detrended[event.end:series.length] >
+                           pt.rw.detrended[event.end:series.length])[1] + event.end - 1
+          } else {
+            # for suppressions...
+            sus <- which(new.detrended[event.end:series.length] <
+                           pt.rw.detrended[event.end:series.length])[1] + event.end - 1
+          }
+
+
+          if (is.na(sus)) {
+            # if sus is NA, then the release extended to the end of the series (sustained)
+            # Detrend the whole rest of series in this case
+            pt.rw.detrended[event.ind$max.ind[i]:series.length] <- new.detrended[event.ind$max.ind[i]:series.length]
+            event.dur <- "sustained"
+          } else {
+            # transient
+            # Detrend just the appropriate section
+            pt.rw.detrended[event.ind$max.ind[i]:sus] <- new.detrended[event.ind$max.ind[i]:sus]
+            event.dur <- "transient"
+          }
+
+          iter.df$curve <- iter.df$pt.rw.i - pt.rw.detrended
+          iter.df$curve <- ifelse(iter.df$curve == 0, NA, iter.df$curve + this.event[1])
+          iter.df$pt.rw.ddtrd.i <- pt.rw.detrended
+          iter.df$iter <- i
+          iter.df$eventID <- event.ind$year[i]
+          iter.df$event.type <- ifelse(event.ind$max.val[i] > 0, "release", "suppression")
+          iter.df$event.dur <- event.dur
+          iter.df$d.detrend.method <- d.detrend.method
+
+          d.detrend.iter[[i]] <- iter.df
         }
-
-        if (d.detrend.method %in% "Linear") {
-          event.fit <- stats::lm(this.event ~ base::seq_along(this.event)) |>
-            stats::predict() |>
-            base::as.numeric()
-        }
-
-        if (d.detrend.method %in% "Mean") {
-          event.fit <- base::mean(this.event,
-                                  na.rm = TRUE)
-        }
-
-
-        # Detrend by subtracting the curve out and adding back the 1st value of the pt series
-        new.detrended <- pt.rw.detrended
-        new.detrended[event.ind$max.ind[i]:series.length] <- (this.event - event.fit) + this.event[1]
-
-        # Transfer the starting series to the data.frame
-        iter.df$pt.rw.i <- pt.rw.detrended
-
-
-        # Druckenbrod's text on distinguishing transient vs  sustained events:
-        # "...sustained release events occur when disturbance detrended ring-width values
-        # remain less than initial ringwidth values for the remainder of the series after
-        # the release event. Conversely, transient events occur when detrended values only
-        # decrease initial ring-width values for a certain sequence of years after the release
-        # event instead of the entire remaining series. Transient release events terminate when
-        # the detrended value would be greater than the initial ring-width value, indicating
-        # that a tree likely returned to suppressed growth conditions." (CTM - notice the implied
-        # underlying condition of suppression).
-
-        # "After the event" I think must mean anything past event.end or up to event.end if
-        # event.end = series.length
-
-        # The MatLab code looks like this:
-        # find(DSti(lngthr(mav:end)) < DStT(lngthr(mav:end)),1) + mav-1
-
-        # DSti - initial (original) ring widths of the disturbance
-        # DStT - detrended ring widths of the disturbance
-
-        # In R, this means:
-        # which(DSti[lngthr[mav:length(lngthr)]] < DStT[lngthr[mav:length(lngthr)]])[1] + mav - 1
-        # The 1st ring width value where the original ring width is less than the detrended value +
-        # the moving window length - 1
-
-        # I suppose if the event is a suppression, "less than" becomes "more than"
-
-        # I interpret this (and the other code) to mean that you fit the whole series, to the end and detrend it.
-        # Then decide whether or not that was justified or not based on the above description
-        # of transient or sustained. If justified, you keep the detrend along the whole curve until the end of
-        # the series. If not, you just keep the detrended section during the identified disturbance period.
-
-        # Determine if event is sustained or transient
-        # The sus object is an index position in the original series - the place where the detrended
-        # values rise above or dip below the original value. event.end is added to translate back
-        # from event index values to original series index values.
-        if (event.ind$max.val[i] > 0) {
-          # For releases...
-          sus <- which(new.detrended[event.end:series.length] >
-                         pt.rw.detrended[event.end:series.length])[1] + event.end - 1
-        } else {
-          # for suppressions...
-          sus <- which(new.detrended[event.end:series.length] <
-                         pt.rw.detrended[event.end:series.length])[1] + event.end - 1
-        }
-
-
-        if (is.na(sus)) {
-          # if sus is NA, then the release extended to the end of the series (sustained)
-          # Detrend the whole rest of series in this case
-          pt.rw.detrended[event.ind$max.ind[i]:series.length] <- new.detrended[event.ind$max.ind[i]:series.length]
-          event.dur <- "sustained"
-        } else {
-          # transient
-          # Detrend just the appropriate section
-          pt.rw.detrended[event.ind$max.ind[i]:sus] <- new.detrended[event.ind$max.ind[i]:sus]
-          event.dur <- "transient"
-        }
-
-        iter.df$curve <- iter.df$pt.rw.i - pt.rw.detrended
-        iter.df$curve <- ifelse(iter.df$curve == 0, NA, iter.df$curve + this.event[1])
-        iter.df$pt.rw.ddtrd.i <- pt.rw.detrended
-        iter.df$iter <- i
-        iter.df$eventID <- event.ind$year[i]
-        iter.df$event.type <- ifelse(event.ind$max.val[i] > 0, "release", "suppression")
-        iter.df$event.dur <- event.dur
-        iter.df$d.detrend.method <- d.detrend.method
-
-        d.detrend.iter[[i]] <- iter.df
-
       }
     } ## End of disturbance event detrending
 
@@ -657,35 +743,53 @@ d_detrend <- function(data = NULL,
     ## Rbind the disturbance detrending iterations to a data.frame
     ddtrd <- do.call(what = "rbind", d.detrend.iter)
 
+    # ggplot(ddtrd) +
+    #   geom_hline(yintercept = 0, color = "red") +
+    #   geom_line(aes(year, pt.rw.i), color. = "grey") +
+    #   geom_line(aes(year, pt.rw.ddtrd.i)) +
+    #   geom_line(aes(year, curve), color = "blue") +
+    #   facet_wrap(~iter, ncol = 1, strip.position = "right")
+
     # Transfer the disturbance detrended series to the data.frame
-    pgc_s$pt.rw.ddtrd <- pt.rw.detrended
+    pgc_s[, "pt.rw.ddtrd"] <- pt.rw.detrended
 
-    ## Reverse the power transformation
-    if (pgc_s[, "action"][1] %in% "log10 transformed") {
-      pgc_s[, "rw.ddtrd"] <- 10^pgc_s[, "pt.rw.ddtrd"]
-    } else {
-      if (pgc_s[, "action"][1] %in% "Power transformed") {
-        pgc_s[, "rw.ddtrd"] <-
-          pgc_s[, "pt.rw.ddtrd"]^(1 / as.numeric(pgc_s[, "optimal.pwr"][1]))
-      } else {
-        # No transformation
-        pgc_s[, "rw.ddtrd"] <- pgc_s[, "pt.rw.ddtrd"]
-      }
-    }
+    # Make a message column to carry warnings
+    pgc_s[, "message"] <- NA
 
-
-    ## Option to not detrend and standardize the series
+    ## Option to not detrend
     if (detrend.method %in% c("none", "None")) {
       # Add the detrend.method and stop here
       pgc_s[, "detrend.method"] <- detrend.method
 
-      # Reassemble the series sublist
-      this.series.sublist <- list(pgc_s, evt_s, ddtrd)
-      names(this.series.sublist) <- c("PGC", "Events", "Dist. detrending")
-      this.series.sublist
+
+      ## Reverse the power transformation
+      if (pgc_s[, "action"][1] %in% "log10 transformed") {
+        pgc_s[, "rw.ddtrd"] <- 10^pgc_s[, "pt.rw.ddtrd"]
+      } else {
+        if (pgc_s[, "action"][1] %in% "Power transformed") {
+
+          # Make sure that there are no negative values in the transformed series
+          if (any(pgc_s[, "pt.rw.ddtrd"][pgc_s[, "pt.rw.ddtrd"] < 0])) {
+            warning(paste("Negative power transformed ring-width value(s) set to 0.001 in series",
+                          pgc_s[, "series"][1]))
+
+            pgc_s[, "pt.rw.ddtrd"][pgc_s[, "pt.rw.ddtrd"] < 0] <- 0.001
+            pgc_s[, "message"] <- "Negative pt.rw.ddtrd value(s) set to 0.001"
+          }
+
+          pgc_s[, "rw.ddtrd"] <-
+            pgc_s[, "pt.rw.ddtrd"]^(1 / as.numeric(pgc_s[, "optimal.pwr"][1]))
+        } else {
+          # No transformation
+          pgc_s[, "rw.ddtrd"] <- pgc_s[, "pt.rw.ddtrd"]
+        }
+      }
+
+      ## Calculate the disturbance signal/ disturbance index
+      pgc_s[, "Dt"] <- pgc_s[, "rw"] - pgc_s[, "rw.ddtrd"]
+
     } else {
-      ## Detrend the whole series after removing all disturbances and reversing the power transformation
-      # Age trend is estimated for the whole transformed series.
+      ## Fit age trend to the whole series after removing all disturbances
 
       # Run detrend.series(). Note that the standardize arg passes
       # to the difference arg here. standardize = TRUE means divide out the curve, FALSE
@@ -697,9 +801,10 @@ d_detrend <- function(data = NULL,
 
       dtrd.result <- withCallingHandlers(
         dplR::detrend.series(
-          pgc_s[, "rw.ddtrd"],
+          pgc_s[, "pt.rw.ddtrd"],
+          y.name = pgc_s[, "series"][1],
           method = detrend.method,
-          difference = ifelse(detrend.method %in% "Ar", FALSE, !standardize),
+          difference = TRUE,
           nyrs = nyrs[2],
           make.plot = FALSE,
           pos.slope = TRUE,
@@ -712,24 +817,61 @@ d_detrend <- function(data = NULL,
 
       # Print the warning and ID the series that had the issue
       if (length(detrend.series.warnings) > 0) {
-        cat("\nseries '", pgc_s$series[1], "' dplR::detrend.series() warning:\n", detrend.series.warnings[[1]], "\n\n", sep = "")
+        cat("\nseries '", pgc_s$series[1], "' dplR::detrend.series() warning:\n",
+            detrend.series.warnings[[1]], "\n\n", sep = "")
       }
 
-      # Extract the detrend index and the fitted trend curve
-      pgc_s[, "ddtrd.index"] <- dtrd.result$series
-      pgc_s[, "rw.ddtrd.curve"] <- dtrd.result$curves
+      # Extract the detrended residuals and the fitted trend curve
+      pgc_s[, "pt.rw.ddtrd.resid"] <- dtrd.result$series
+      pgc_s[, "pt.rw.ddtrd.At"] <- dtrd.result$curves
 
       # Extract the detrend method actually used.
       # This accounts for the stepped methods in ModNegExp and ModHugershoff.
       pgc_s[, "detrend.method"] <- dtrd.result[["model.info"]][[detrend.method]]$method
 
 
+      ## Reverse the power transformation - for both the disturbance-detrended series and the
+      # age trend curve
+      if (pgc_s[, "action"][1] %in% "log10 transformed") {
+        pgc_s[, "rw.ddtrd"] <- 10^pgc_s[, "pt.rw.ddtrd"]
+        pgc_s[, "rw.ddtrd.At"] <- 10^pgc_s[, "pt.rw.ddtrd.At"]
+      } else {
+        if (pgc_s[, "action"][1] %in% "Power transformed") {
 
-      # Reassemble the series sublist
-      this.series.sublist <- list(pgc_s, evt_s, ddtrd)
-      names(this.series.sublist) <- c("PGC", "Events", "Dist. detrending")
-      this.series.sublist
+          # Make sure that there are no negative values in the transformed series
+          ### This can create issues when there was no ddtrd but there were low values.
+          if (any(pgc_s[, "pt.rw.ddtrd"][pgc_s[, "pt.rw.ddtrd"] < 0])) {
+            warning(paste("Negative power transformed ring-width value(s) set to 0.001 in series",
+                          pgc_s[, "series"][1]))
+
+            pgc_s[, "pt.rw.ddtrd"][pgc_s[, "pt.rw.ddtrd"] < 0] <- 0.001
+            pgc_s[, "pt.rw.ddtrd.At"][pgc_s[, "pt.rw.ddtrd.At"] < 0] <- 0.001
+            pgc_s[, "message"] <- "Negative pt.rw.ddtrd value(s) set to 0.001"
+          }
+
+          pgc_s[, "rw.ddtrd"] <-
+            pgc_s[, "pt.rw.ddtrd"]^(1 / as.numeric(pgc_s[, "optimal.pwr"][1]))
+          pgc_s[, "rw.ddtrd.At"] <-
+            pgc_s[, "pt.rw.ddtrd.At"]^(1 / as.numeric(pgc_s[, "optimal.pwr"][1]))
+        } else {
+          # No transformation
+          pgc_s[, "rw.ddtrd"] <- pgc_s[, "pt.rw.ddtrd"]
+          pgc_s[, "rw.ddtrd.At"] <- pgc_s[, "pt.rw.ddtrd.At"]
+        }
+      }
+
+      ## Calculate the disturbance signal/ disturbance index
+      pgc_s[, "Dt"] <- pgc_s[, "rw"] - pgc_s[, "rw.ddtrd"]
+
+      ## Get standardized index from dividing the At curves from the disturbance detrended series
+      pgc_s[, "rw.ddtrd.index"] <- pgc_s[, "rw.ddtrd"] / pgc_s[, "rw.ddtrd.At"]
     }
+
+    # Reassemble the series sublist
+    this.series.sublist <- list(pgc_s, event.ind, ddtrd)
+    names(this.series.sublist) <- c("PGC", "Events", "Dist. detrending")
+    this.series.sublist
+
   }) # End of d.detrended lapply()
 
   #### Output as list of 3 data.frames (all series within)

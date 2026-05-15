@@ -247,11 +247,11 @@ plot_d_detrend <- function(x = NULL) {
                                  levels = c("Original","Dist. detrended","Age detrend curve"))
     } else {
 
-      new.df <- pgc_s[, c("year", "rw", "rw.ddtrd", "rw.ddtrd.curve")]
+      new.df <- pgc_s[, c("year", "rw", "rw.ddtrd", "rw.ddtrd.At")]
 
       new.df.long <- base::data.frame(
         year = rep(new.df$year, 3),
-        rw   = c(new.df$rw, new.df$rw.ddtrd, new.df$rw.ddtrd.curve),
+        rw   = c(new.df$rw, new.df$rw.ddtrd, new.df$rw.ddtrd.At),
         type = base::rep(c("Original","Dist. detrended","Age detrend curve"), each = base::nrow(new.df))
       )
       new.df.long$type <- factor(new.df.long$type,
@@ -331,7 +331,7 @@ plot_d_detrend <- function(x = NULL) {
         axis.title.x = ggplot2::element_blank()
       ) +
       ggplot2::scale_x_continuous(n.breaks = 10) +
-      ggplot2::ylab("Ring width (mm)") +
+      ggplot2::ylab("Ring width\n(mm)") +
       ggplot2::ggtitle(label = this.series)
 
     ### Make the final plot showing the results of all the detrending.
@@ -352,11 +352,20 @@ plot_d_detrend <- function(x = NULL) {
         }[t] * " detrended ring width (mm)")) +
         ggplot2::xlab("Year")
 
+      # Assemble the final output plots
+      final.plots <- cowplot::plot_grid(
+        res.orig.rw.plot,
+        rwi.plot,
+        ncol = 1,
+        align = "v",
+        axis = "lr"
+      )
+
     } else {
 
       rwi.plot <- ggplot2::ggplot() +
         ggplot2::geom_line(data = pgc_s,
-                           ggplot2::aes(year, ddtrd.index),
+                           ggplot2::aes(year, rw.ddtrd.index),
                            na.rm = TRUE) +
         ggplot2::theme(
           panel.background = ggplot2::element_blank(),
@@ -365,21 +374,43 @@ plot_d_detrend <- function(x = NULL) {
           legend.direction = "horizontal"
         ) +
         ggplot2::scale_x_continuous(n.breaks = 10) +
-        ggplot2::ylab(bquote({
+        ggplot2::ylab(bquote(atop({
           A
         }[t] * " & " * {
           D
-        }[t] * " detrended RWI")) +
+        }[t] * " detrended","ratio RWI"))) +
         ggplot2::xlab("Year")
+
+      # Also include the residual plot
+      resid.plot <- ggplot2::ggplot() +
+        ggplot2::geom_line(data = pgc_s,
+                           ggplot2::aes(year, pt.rw.ddtrd.resid),
+                           na.rm = TRUE) +
+        ggplot2::theme(
+          panel.background = ggplot2::element_blank(),
+          legend.position = "bottom",
+          legend.position.inside = c(0.5, 0),
+          legend.direction = "horizontal"
+        ) +
+        ggplot2::scale_x_continuous(n.breaks = 10) +
+        ggplot2::ylab(bquote(atop({
+          A
+        }[t] * " & " * {
+          D
+        }[t] * " detrended","resid. RWI"))) +
+        ggplot2::xlab("Year")
+
+      # Assemble the final output plots
+      final.plots <- cowplot::plot_grid(
+        res.orig.rw.plot,
+        resid.plot,
+        rwi.plot,
+        ncol = 1,
+        align = "v",
+        axis = "lr"
+      )
     }
 
-    final.plots <- cowplot::plot_grid(
-      res.orig.rw.plot,
-      rwi.plot,
-      ncol = 1,
-      align = "v",
-      axis = "lr"
-    )
 
     out.plots <- list(detection.plots, d.iter.plots, final.plots)
     names(out.plots) <- c("Detection plots", "Dist. detrending", "Result plots")
