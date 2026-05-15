@@ -52,9 +52,8 @@
 #'  periods, the maximum PGC value is selected as the start year of the event. In this `modendro`
 #'  implementation, events that occur within the earliest 2*win.len years of the original tree-ring
 #'  series are ignored. This is to avoid treating juvenile growth trends as disturbance events. Also
-#'  unique the `modendro` version, \code{\link{d_detrend}} will always identify both release and
-#'  suppression events. However, you can control which type of event is detrended with the
-#'  `event.type` argument.
+#'  unique the `modendro` version, you can control which type of event is detected & detrended with
+#'  the `event.type` argument.
 #'
 #' Once events are identified, we power- or log-transform (see \code{\link{pwr_t_rwl}}) the whole
 #' series based on the variance-mean (i.e., spread-level) relationship unique to each series, then
