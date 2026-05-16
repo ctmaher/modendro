@@ -759,7 +759,7 @@ d_detrend <- function(data = NULL,
         if (pgc_s[, "action"][1] %in% "Power transformed") {
 
           # Make sure that there are no negative values in the transformed series
-          if (any(pgc_s[, "pt.rw.ddtrd"][pgc_s[, "pt.rw.ddtrd"] < 0])) {
+          if (any(pgc_s[, "pt.rw.ddtrd"] < 0)) {
             warning(paste("Negative power transformed ring-width value(s) set to 0.001 in series",
                           pgc_s[, "series"][1]))
 
@@ -830,7 +830,7 @@ d_detrend <- function(data = NULL,
 
           # Make sure that there are no negative values in the transformed series
           ### This can create issues when there was no ddtrd but there were low values.
-          if (any(pgc_s[, "pt.rw.ddtrd"][pgc_s[, "pt.rw.ddtrd"] < 0])) {
+          if (any(pgc_s[, "pt.rw.ddtrd"] < 0)) {
             warning(paste("Negative power transformed ring-width value(s) set to 0.001 in series",
                           pgc_s[, "series"][1]))
 
