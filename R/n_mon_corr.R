@@ -123,13 +123,13 @@
 #' @examples
 #'## Bring in some real tree-ring and climate data
 #' # Tree-ring data from Perkins & Swetnam 1996 (https://doi.org/10.1139/x26-241)
-#' data(PerkinsSwetnam96)
+#' data(ps96)
 #' # PRISM (https://www.prism.oregonstate.edu/) time series extracted for each site then averaged
 #' # over all sites.
 #' data(idPRISM)
 #'
 #' # Monthly average temperature
-#' PS_gro_Tavg <- n_mon_corr(rwl = PerkinsSwetnam96,
+#' PS_gro_Tavg <- n_mon_corr(rwl = ps96,
 #'                          clim = idPRISM,
 #'                          clim.var = "Tavg.C",
 #'                          common.years = 1901:1990,
@@ -154,7 +154,7 @@
 #'
 #' # Monthly total precipitation
 #' # Note that agg.fun = "sum" for precipitation data.
-#' PS_gro_PPT <- n_mon_corr(rwl = PerkinsSwetnam96,
+#' PS_gro_PPT <- n_mon_corr(rwl = ps96,
 #'                         clim = idPRISM,
 #'                         clim.var = "PPT.mm",
 #'                         common.years = 1901:1990,
@@ -181,15 +181,15 @@
 #' # that you have different climate series for each site.
 #'
 #' data(idPRISMgroup)
-#' data(PSgroupIDs)
+#' data(ps.groupIDs)
 #'
 #' # Take a look at the grouped data. Note that the climate data has the different sites indicated
 #' # and that we introduce a new data.frame (the group.IDs.df) that links tree ring series IDs with
 #' # sites.
 #' head(idPRISMgroup)
-#' head(PSgroupIDs)
+#' head(ps.groupIDs)
 #'
-#' PS_gro_Tavg_grouped <- n_mon_corr(rwl = PerkinsSwetnam96,
+#' PS_gro_Tavg_grouped <- n_mon_corr(rwl = ps96,
 #'                                  clim = idPRISMgroup,
 #'                                  clim.var = "Tavg.C",
 #'                                  common.years = 1901:1990,
@@ -200,7 +200,7 @@
 #'                                  hemisphere = "N",
 #'                                  prewhiten = TRUE,
 #'                                  corr.method = "spearman",
-#'                                  group.IDs.df = PSgroupIDs,
+#'                                  group.IDs.df = ps.groupIDs,
 #'                                  group.var = "site")
 #' names(PS_gro_Tavg_grouped)
 #' PS_gro_Tavg_grouped[["Results summary"]] |> head(n = 10)

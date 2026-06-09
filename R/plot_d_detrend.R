@@ -26,7 +26,58 @@
 #' @export
 #'
 #' @examples
-#' examples to come
+#'
+#' # Missouri post oak collection
+#' data(mo024)
+#'
+#' # Run d_detrend()
+#' mo024.ddtrd.both <- d_detrend(data = mo024,
+#'                               win.len = 15,
+#'                               pgc.thresh = 50,
+#'                               d.detrend.method = "AgeDepSpline",
+#'                               detrend.method = "AgeDepSpline",
+#'                               nyrs = c(10, 30),
+#'                               event.type = "both")
+#'
+#' # Generate plots using plot_d_detrend (output stored in a list)
+#' mo024.ddtrd.both.plots <- plot_d_detrend(mo024.ddtrd.both)
+#'
+#' # look at plots for one series - note that there are 3 plots for each series - in RStudio click
+#' # the back arrow in the plot viewer to see all of them
+#' mo024.ddtrd.both.plots$DEM01C
+#'
+#'
+#' # If you wanted to write PDFs of these plots to disk to browse them more freely,
+#' # you could do the following steps (will write to your working directory):
+#'
+#' library(ggplot2)
+#'
+#' # For the iteration plots:
+#' \dontrun{
+#' dir.create("mo024_ddtrd_plots") # create a folder first
+#' # Then make plot sheets for each series
+#' # choose wise values for width & height to make sure your plots aren't squished
+#' mapply(FUN = \(p, n) {
+#' ggsave(
+#' filename = paste0("mo024_ddtrd_plots/", n, "_ci_iter_plots.pdf"),
+#' plot = marrangeGrob(p, nrow = length(p), ncol = 1),
+#' width = 10, height = length(p)*4
+#' )
+#' }, p = ca533_ci_plots[[1]][sapply(ca533_ci_plots[[1]], FUN = \(x) !is.character(x))],
+#' n = names(ca533_ci_plots[[1]][sapply(ca533_ci_plots[[1]], FUN = \(x) !is.character(x))])
+#' )
+#'
+#' # For the final plots:
+#' # choose wise values for width & height to make sure your plots aren't squished
+#' ggsave(
+#' filename = "ca533_final_ci_plots.pdf",
+#' plot = marrangeGrob(ca533_ci_plots[[2]][sapply(ca533_ci_plots[[2]],
+#' FUN = \(x) !is.character(x))], nrow=1, ncol=1),
+#' width = 10,
+#' height = 4
+#' )
+#' }
+#'
 
 plot_d_detrend <- function(x = NULL) {
   # Control digits for plotting, but restore to what user had before

@@ -10,7 +10,7 @@ d_detrend(
   pgc.thresh = 50,
   d.detrend.method = "AgeDepSpline",
   detrend.method = "AgeDepSpline",
-  nyrs = c(10, 25),
+  nyrs = c(10, 30),
   event.type = "release"
 )
 }
@@ -80,9 +80,8 @@ than or equal to \code{abs(pgc.thresh)} are identified as disturbance events. Wi
 periods, the maximum PGC value is selected as the start year of the event. In this \code{modendro}
 implementation, events that occur within the earliest 2*win.len years of the original tree-ring
 series are ignored. This is to avoid treating juvenile growth trends as disturbance events. Also
-unique the \code{modendro} version, \code{\link{d_detrend}} will always identify both release and
-suppression events. However, you can control which type of event is detrended with the
-\code{event.type} argument.
+unique the \code{modendro} version, you can control which type of event is detected & detrended with
+the \code{event.type} argument.
 
 Once events are identified, we power- or log-transform (see \code{\link{pwr_t_rwl}}) the whole
 series based on the variance-mean (i.e., spread-level) relationship unique to each series, then
@@ -122,9 +121,100 @@ For more details, see Druckenbrod et al. (2024).
 
 I highly recommend you look at the results! Convenient visualizations of the
 \code{\link{d_detrend}} process are available by using \code{\link{plot_d_detrend}}.
+
+Details of output data.frames:
 }
+\section{"PGC"}{
+\describe{
+\item{series}{Series ID}
+\item{year}{Year}
+\item{rw}{Ring widths}
+\item{pt.rw}{Transformed ring widths}
+\item{optimal.pwr}{Estimated optimal power of transformation}
+\item{action}{Type of transformation applied to series}
+\item{win.len}{Moving average window length (constant for all series)}
+\item{mav.Ra.M1}{Right-aligned moving average ring width}
+\item{mav.La.M2}{Left-aligned moving average ring width}
+\item{pgc}{Percent growth change}
+\item{pt.rw.ddtrd}{Transformed dist.-detrended ring widths}
+\item{message}{Information about ... Usually NA}
+\item{pt.rw.ddtrd.resid}{pt.rw.ddtrd - pt.rw.ddtrd.At}
+\item{pt.rw.ddtrd.At}{Fitted age trend (At) to transformed dist.-detrended ring widths}
+\item{detrend.method}{Method used to fit At}
+\item{rw.ddtrd}{Back-transformed dist.-detrended ring widths}
+\item{rw.ddtrd.At}{Back-transformed fitted age trend (At)}
+\item{Dt}{Back-transformed disturbacne signal}
+\item{rw.ddtrd.index}{rw.ddtrd / rw.ddtrd.At}
+...
+}
+
+#' # "Events"
+\describe{
+\item{series}{Series ID}
+\item{max.ind}{Index position of max percentage growth change}
+\item{max.val}{Absolute value of max percentage growth change}
+\item{pgc.thresh}{User-specified percent growth change threshold}
+\item{year}{Estimated first year of disturbance event}
+\item{message}{Summary of distubance events detected for each series}
+...
+}
+
+#' # "Dist. detrending"
+\describe{
+\item{series}{Series ID}
+\item{year}{Year}
+\item{pt.rw.i}{Transformed ring widths for this iteration}
+\item{curve}{Disturbance curve fit in this iteration}
+\item{pt.rw.ddtrd.i}{Transformed ring widths with disturbance curve removed in this iteration}
+\item{iter}{Iteration ID}
+\item{eventID}{Estimated first year of disturbance event}
+\item{event.type}{release or suppression}
+\item{event.dur}{sustained or transient}
+\item{d.detrend.method}{Curve-fitting method for disturbance events}
+...
+}
+}
+
 \examples{
-Examples to come
+
+# Missouri post oak example from Druckenbrod et al. 2024
+
+# Load Missouri post oak ring widths
+data(mo024)
+
+# Run d_detrend - use the same settings as in Druckenbrod et al. 2024
+mo024.ddtrd <- d_detrend(data = mo024,
+                         win.len = 15,
+                         pgc.thresh = 50,
+                         d.detrend.method = "AgeDepSpline",
+                         detrend.method = "AgeDepSpline",
+                         nyrs = c(10, 30),
+                         event.type = "release")
+
+# Generate plots using plot_d_detrend (output stored in a list)
+mo024.ddtrd.plots <- plot_d_detrend(mo024.ddtrd)
+#
+# look at plots for one series - note that there are 3 plots for each series - in RStudio click
+# the back arrow in the plot viewer to see all of them
+mo024.ddtrd.plots$DEM01C
+
+# Run again but with event.type = "both" to detrend both releases and suppressions
+mo024.ddtrd.both <- d_detrend(data = mo024,
+                              win.len = 15,
+                              pgc.thresh = 50,
+                              d.detrend.method = "AgeDepSpline",
+                              detrend.method = "AgeDepSpline",
+                              nyrs = c(10, 30),
+                              event.type = "both")
+
+# Summary look at the 3 output data.frames in the list
+sapply(mo024.ddtrd, head)
+
+# Generate plots using plot_d_detrend (output stored in a list)
+mo024.ddtrd.both.plots <- plot_d_detrend(mo024.ddtrd.both)
+#
+# look at plots for one series
+mo024.ddtrd.both.plots$DEM01C
 }
 \references{
 Cook ER. 1987. The Decomposition of Tree-Ring Series for Environmental Studies.

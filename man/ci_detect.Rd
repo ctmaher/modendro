@@ -96,29 +96,29 @@ width units (typically mm). These series can then be treated as any other ring w
 with the type of detrending/standardization depending on the research goals.
 }
 \examples{
-library(dplR)
-data("co021")
 
+Missouri post oak ring widths
+data(mo024)
 
-co021.ci.out <- ci_detect(co021,
+mo024.ci.out <- ci_detect(mo024,
 detrend.method = "AgeDepSpline",
 max.iter = 5)
 
-names(co021.ci.out)
+names(mo024.ci.out)
 
 # dplR::spag.plot() can give you a quick look at some of the key outputs
-spag.plot(co021.ci.out[["Disturbance-free series"]])
-spag.plot(co021.ci.out[["Disturbance index"]])
+spag.plot(mo024.ci.out[["Disturbance-free series"]])
+spag.plot(mo024.ci.out[["Disturbance index"]])
 
-# You can get more detailed plots from plot_ci_detect
-co021.ci.out.plots <- plot_ci_detect(co021.ci.out)
-co021.ci.out.plots[["Disturbance detection & removal plots"]][["641121"]]
+# You can get detailed plots from plot_ci_detect() - see the help file for more info
+mo024.ci.out.plots <- plot_ci_detect(mo024.ci.out)
+mo024.ci.out.plots[["Disturbance detection & removal plots"]][["DEM15A"]]
 # outputs 5 plots (more if max.iter is increased)
-co021.ci.out.plots[["Final disturbance-free series plots"]][["641121"]]
+mo024.ci.out.plots[["Final disturbance-free series plots"]][["DEM15A"]]
 
 # The power transformation and detrending steps can also be retrieved using plot_cp_detrend:
-co021.detrend.plots <- plot_cp_detrend(co021.ci.out[["Cook & Peters detrend"]])
-co021.detrend.plots[["641121"]]
+mo024.detrend.plots <- plot_cp_detrend(mo024.ci.out[["Cook & Peters detrend"]])
+mo024.detrend.plots[["DEM15A"]]
 
 }
 \references{
@@ -141,5 +141,5 @@ from dendrochronological data.
 }
 \seealso{
 \code{\link{dist_det_rem}}, \code{\link{plot_ci_detect}}, \code{\link{cp_detrend}},
-\code{\link{plot_cp_detrend}}
+\code{\link{plot_cp_detrend}}, \code{\link{d_detrend}}
 }

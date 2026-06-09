@@ -43,21 +43,22 @@
 #' @export
 #'
 #' @examples
-#' library(dplR)
-#' data("ca533")
+#' # Missouri post oak ring widths
+#' data(mo024)
+#'
 #' # Note that this will be somewhat slow, depending on your machine
 #'
-#' ca533_ci <- ci_detect(rwl = ca533)
-#' ca533_ci_plots <- plot_ci_detect(ca533_ci)
-#' names(ca533_ci_plots) # See what each list element contains
+#' mo024_ci <- ci_detect(rwl = mo024)
+#' mo024_ci_plots <- plot_ci_detect(mo024_ci)
+#' names(mo024_ci_plots) # See what each list element contains
 #' # The first element contains the disturbance detection & removal processes & their iterations
 #' # this will display all iterations - scroll backward through your plotting window to see
 #' # them all.
-#' ca533_ci_plots[[1]][['CAM011']]
+#' mo024_ci_plots[[1]][['DEM15A']]
 #'
 #' # The second element contains a plot of the final series compared to the original,
 #' # with the disturbances indicated
-#' ca533_ci_plots[[2]][['CAM011']]
+#' mo024_ci_plots[[2]][['DEM15A']]
 #'
 #' # If you wanted to write these plots to pdf to browse them more freely,
 #' # you could do the following steps (will write to your working directory):
@@ -66,24 +67,24 @@
 #'
 #' # For the iteration plots:
 #' \dontrun{
-#' dir.create("ca533_ci_iter_plots") # create a folder first
+#' dir.create("mo024_ci_iter_plots") # create a folder first
 #' # Then make plot sheets for each series
 #' # choose wise values for width & height to make sure your plots aren't squished
 #' mapply(FUN = \(p, n) {
 #' ggsave(
-#' filename = paste0("ca533_ci_iter_plots/", n, "_ci_iter_plots.pdf"),
+#' filename = paste0("mo024_ci_iter_plots/", n, "_ci_iter_plots.pdf"),
 #' plot = marrangeGrob(p, nrow = length(p), ncol = 1),
 #' width = 10, height = length(p)*4
 #' )
-#' }, p = ca533_ci_plots[[1]][sapply(ca533_ci_plots[[1]], FUN = \(x) !is.character(x))],
-#' n = names(ca533_ci_plots[[1]][sapply(ca533_ci_plots[[1]], FUN = \(x) !is.character(x))])
+#' }, p = mo024_ci_plots[[1]][sapply(mo024_ci_plots[[1]], FUN = \(x) !is.character(x))],
+#' n = names(mo024_ci_plots[[1]][sapply(mo024_ci_plots[[1]], FUN = \(x) !is.character(x))])
 #' )
 #'
 #' # For the final plots:
 #' # choose wise values for width & height to make sure your plots aren't squished
 #' ggsave(
-#' filename = "ca533_final_ci_plots.pdf",
-#' plot = marrangeGrob(ca533_ci_plots[[2]][sapply(ca533_ci_plots[[2]],
+#' filename = "mo024_final_ci_plots.pdf",
+#' plot = marrangeGrob(mo024_ci_plots[[2]][sapply(mo024_ci_plots[[2]],
 #' FUN = \(x) !is.character(x))], nrow=1, ncol=1),
 #' width = 10,
 #' height = 4
@@ -93,8 +94,8 @@
 #' # You can also use the `modendro` function `plot_cp_detrend()` to make plots of just initial
 #' # detrending & transformaton steps.
 #' # The required input is the 4th element in the `ci_detect()` output.
-#' ca533_cp_plots <- plot_cp_detrend(ca533_ci[[5]])
-#' ca533_cp_plots[[1]]
+#' mo024_cp_plots <- plot_cp_detrend(mo024_ci[[5]])
+#' mo024_cp_plots[[1]]
 
 
 plot_ci_detect <- function(ci_output) {

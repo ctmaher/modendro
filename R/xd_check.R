@@ -76,6 +76,7 @@
 #' @examples
 #' # Examples to come
 
+
 xd_check <- function(data = NULL, # the data you are checking. long format or rwl
                      ref = NULL, # a single reference data.frame or a list of references.
                      std.method = "p2yrsL", # standardization method

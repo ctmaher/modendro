@@ -22,12 +22,12 @@
 #'
 #' @examples
 #'
-#' library(dplR)
-#' data("ca533")
-#' ca533_cp <- cp_detrend(ca533, detrend.method = "AgeDepSpline")
-#' ca533_cp_plots <- plot_cp_detrend(ca533_cp)
+#' Missouri post oak ring widths
+#' data(mo024)
+#' mo024cp <- cp_detrend(mo024, detrend.method = "AgeDepSpline")
+#' mo024_cp_plots <- plot_cp_detrend(mo024_cp)
 #' # View the first plot
-#' ca533_cp_plots[[1]]
+#' mo024_cp_plots[[1]]
 #'
 
 plot_cp_detrend <- function(cp_out) {
