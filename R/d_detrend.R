@@ -212,7 +212,7 @@
 #'
 #' # Generate plots using plot_d_detrend (output stored in a list)
 #' mo024.ddtrd.plots <- plot_d_detrend(mo024.ddtrd)
-#' #
+#'
 #' # look at plots for one series - note that there are 3 plots for each series - in RStudio click
 #' # the back arrow in the plot viewer to see all of them
 #' mo024.ddtrd.plots$DEM01C
@@ -231,7 +231,7 @@
 #'
 #' # Generate plots using plot_d_detrend (output stored in a list)
 #' mo024.ddtrd.both.plots <- plot_d_detrend(mo024.ddtrd.both)
-#' #
+#'
 #' # look at plots for one series
 #' mo024.ddtrd.both.plots$DEM01C
 

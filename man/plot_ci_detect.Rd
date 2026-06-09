@@ -42,7 +42,7 @@ are shown in the original units (ring width), with the long term age/size trend 
 the power transformation reversed.
 }
 \examples{
-Missouri post oak ring widths
+# Missouri post oak ring widths
 data(mo024)
 
 # Note that this will be somewhat slow, depending on your machine

@@ -19,7 +19,7 @@ Peters (1997) process for each series.
 }
 \examples{
 
-Missouri post oak ring widths
+# Missouri post oak ring widths
 data(mo024)
 mo024cp <- cp_detrend(mo024, detrend.method = "AgeDepSpline")
 mo024_cp_plots <- plot_cp_detrend(mo024_cp)

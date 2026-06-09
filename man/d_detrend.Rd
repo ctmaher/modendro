@@ -147,8 +147,9 @@ Details of output data.frames:
 \item{rw.ddtrd.index}{rw.ddtrd / rw.ddtrd.At}
 ...
 }
+}
 
-#' # "Events"
+\section{"Events"}{
 \describe{
 \item{series}{Series ID}
 \item{max.ind}{Index position of max percentage growth change}
@@ -158,8 +159,9 @@ Details of output data.frames:
 \item{message}{Summary of distubance events detected for each series}
 ...
 }
+}
 
-#' # "Dist. detrending"
+\section{"Dist. detrending"}{
 \describe{
 \item{series}{Series ID}
 \item{year}{Year}
@@ -193,7 +195,7 @@ mo024.ddtrd <- d_detrend(data = mo024,
 
 # Generate plots using plot_d_detrend (output stored in a list)
 mo024.ddtrd.plots <- plot_d_detrend(mo024.ddtrd)
-#
+
 # look at plots for one series - note that there are 3 plots for each series - in RStudio click
 # the back arrow in the plot viewer to see all of them
 mo024.ddtrd.plots$DEM01C
@@ -212,7 +214,7 @@ sapply(mo024.ddtrd, head)
 
 # Generate plots using plot_d_detrend (output stored in a list)
 mo024.ddtrd.both.plots <- plot_d_detrend(mo024.ddtrd.both)
-#
+
 # look at plots for one series
 mo024.ddtrd.both.plots$DEM01C
 }

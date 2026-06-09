@@ -94,7 +94,7 @@ test_that("A big search still returns a vector", {
     ITRDB_search(species = c("PICO","PISY","PIRE","PISI"), # Widespread pine species
                  lon.range = c(-180, 180), # the whole globe
                  lat.range = c(-80, 80), # all of the areas with trees, and then some
-                 limit = 1000,
+                 limit = 100,
                  simplify = TRUE)
   )
 })

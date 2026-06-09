@@ -25,7 +25,11 @@ the final results for each tree ring series. They are based on the plots in Druc
 (2024).
 }
 \examples{
-# Run again but with event.type = "both" to detrend both releases and suppressions
+
+# Missouri post oak collection
+data(mo024)
+
+# Run d_detrend()
 mo024.ddtrd.both <- d_detrend(data = mo024,
                               win.len = 15,
                               pgc.thresh = 50,
@@ -36,7 +40,7 @@ mo024.ddtrd.both <- d_detrend(data = mo024,
 
 # Generate plots using plot_d_detrend (output stored in a list)
 mo024.ddtrd.both.plots <- plot_d_detrend(mo024.ddtrd.both)
-#
+
 # look at plots for one series - note that there are 3 plots for each series - in RStudio click
 # the back arrow in the plot viewer to see all of them
 mo024.ddtrd.both.plots$DEM01C

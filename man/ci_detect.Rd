@@ -97,7 +97,7 @@ with the type of detrending/standardization depending on the research goals.
 }
 \examples{
 
-Missouri post oak ring widths
+# Missouri post oak ring widths
 data(mo024)
 
 mo024.ci.out <- ci_detect(mo024,
