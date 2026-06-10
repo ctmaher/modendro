@@ -65,7 +65,8 @@ remove them from tree-ring series. By default, events are fit with age-dependent
 The \code{modendro} implementation includes additional flexibility to try different curve fitting
 methods for disturbance events and final age detrending, and to allow the algorithm to detect and
 remove growth suppression events in addition to growth releases. The default settings match the
-parameters in Druckenbrod et al. (2024).
+parameters in Druckenbrod et al. (2024). A note of caution that this algorithm was built and
+parameterized for release events - the behavior of suppression detrending has not been evaluated.
 }
 \details{
 The concept of separately detrending disturbances derives from Cook's (1987) linear aggregate
@@ -78,7 +79,7 @@ radial growth averaging (Nowacki & Abrams 1997) - i.e., the percentage change be
 year of separation) \code{win.len} moving averages of ring width. Periods of PGC that are greater
 than or equal to \code{abs(pgc.thresh)} are identified as disturbance events. Within the event
 periods, the maximum PGC value is selected as the start year of the event. In this \code{modendro}
-implementation, events that occur within the earliest 2*win.len years of the original tree-ring
+implementation, events detected within the earliest 2*(win.len-1) years of the original tree-ring
 series are ignored. This is to avoid treating juvenile growth trends as disturbance events. Also
 unique the \code{modendro} version, you can control which type of event is detected & detrended with
 the \code{event.type} argument.
@@ -152,11 +153,11 @@ Details of output data.frames:
 \section{"Events"}{
 \describe{
 \item{series}{Series ID}
-\item{max.ind}{Index position of max percentage growth change}
-\item{max.val}{Absolute value of max percentage growth change}
+\item{max.ind}{Index position of max percentage growth change (years from innermost ring)}
+\item{max.val}{Value of max (release) or min (suppression) percentage growth change}
 \item{pgc.thresh}{User-specified percent growth change threshold}
 \item{year}{Estimated first year of disturbance event}
-\item{message}{Summary of distubance events detected for each series}
+\item{message}{Summary of distubance events detected for the whole series}
 ...
 }
 }

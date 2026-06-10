@@ -17,8 +17,9 @@
 #'
 #' The `modendro` implementation includes additional flexibility to try different curve fitting
 #' methods for disturbance events and final age detrending, and to allow the algorithm to detect and
-#'  remove growth suppression events in addition to growth releases. The default settings match the
-#'  parameters in Druckenbrod et al. (2024).
+#' remove growth suppression events in addition to growth releases. The default settings match the
+#' parameters in Druckenbrod et al. (2024). A note of caution that this algorithm was built and
+#' parameterized for release events - the behavior of suppression detrending has not been evaluated.
 #'
 #' @param data The collection of raw tree-ring series you wish to disturbance-detrend. Can be class
 #' `"rwl"` (e.g., read in by \code{\link[dplR]{read.rwl}}) or `"data.frame"` (long format). If
@@ -47,13 +48,13 @@
 #'
 #' In \code{\link{d_detrend}} the percentage growth change (PGC) is calculated from
 #' radial growth averaging (Nowacki & Abrams 1997) - i.e., the percentage change between adjacent (1
-#'  year of separation) `win.len` moving averages of ring width. Periods of PGC that are greater
-#'  than or equal to `abs(pgc.thresh)` are identified as disturbance events. Within the event
-#'  periods, the maximum PGC value is selected as the start year of the event. In this `modendro`
-#'  implementation, events that occur within the earliest 2*win.len years of the original tree-ring
-#'  series are ignored. This is to avoid treating juvenile growth trends as disturbance events. Also
-#'  unique the `modendro` version, you can control which type of event is detected & detrended with
-#'  the `event.type` argument.
+#' year of separation) `win.len` moving averages of ring width. Periods of PGC that are greater
+#' than or equal to `abs(pgc.thresh)` are identified as disturbance events. Within the event
+#' periods, the maximum PGC value is selected as the start year of the event. In this `modendro`
+#' implementation, events detected within the earliest 2*(win.len-1) years of the original tree-ring
+#' series are ignored. This is to avoid treating juvenile growth trends as disturbance events. Also
+#' unique the `modendro` version, you can control which type of event is detected & detrended with
+#' the `event.type` argument.
 #'
 #' Once events are identified, we power- or log-transform (see \code{\link{pwr_t_rwl}}) the whole
 #' series based on the variance-mean (i.e., spread-level) relationship unique to each series, then
@@ -122,11 +123,11 @@
 #' # "Events"
 #'  \describe{
 #'   \item{series}{Series ID}
-#'   \item{max.ind}{Index position of max percentage growth change}
-#'   \item{max.val}{Absolute value of max percentage growth change}
+#'   \item{max.ind}{Index position of max percentage growth change (years from innermost ring)}
+#'   \item{max.val}{Value of max (release) or min (suppression) percentage growth change}
 #'   \item{pgc.thresh}{User-specified percent growth change threshold}
 #'   \item{year}{Estimated first year of disturbance event}
-#'   \item{message}{Summary of distubance events detected for each series}
+#'   \item{message}{Summary of distubance events detected for the whole series}
 #'   ...
 #' }
 #'
@@ -461,17 +462,15 @@ d_detrend <- function(data = NULL,
     ## ID the disturbances - use the user-defined threshold (pgc.thresh)
 
     # Find the beginning of disturbances by the year in which pgc >= pgc.thresh, but the year before
-    # is < pgc.thresh
+    # is < pgc.thresh. above.thresh is a vector of index values corresponding to mov.avg.df$pgc
     # Can use the discontinuities (1st diff > 1) here to delineate the events
     above.thresh <- base::which(abs(mov.avg.df$pgc) >= pgc.thresh)
-    # Add an off ramp for no values above thresh to prevent silent errors
-    # if (length(above.thresh) == 0)
 
     # It is possible that the first n PGC values are above/below the threshold due to the juvenile
-    # growth trend. I think the best think to do is to not consider the first win.len of
-    # the PCG values
-    above.thresh <- above.thresh[!(above.thresh %in% 1:(2 * win.len))]
-
+    # growth trend. I think the best thing to do is to not consider the first win.len-1 of
+    # the PCG values. If win.len = 15, the first 28 years will be skipped (the first 14 are NA,
+    # so we skip those too).
+    above.thresh <- above.thresh[!(above.thresh %in% 1:(2 * (win.len - 1)))]
 
     # Get the 1st above.thresh value and the rest
     dist.events.start <- above.thresh[c(1, which(diff(above.thresh) > 1) + 1)]
