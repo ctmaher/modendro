@@ -194,6 +194,9 @@ mo024.ddtrd <- d_detrend(data = mo024,
                          nyrs = c(10, 30),
                          event.type = "release")
 
+# Summary look at the 3 output data.frames in the list
+sapply(mo024.ddtrd, head)
+
 # Generate plots using plot_d_detrend (output stored in a list)
 mo024.ddtrd.plots <- plot_d_detrend(mo024.ddtrd)
 
@@ -210,8 +213,6 @@ mo024.ddtrd.both <- d_detrend(data = mo024,
                               nyrs = c(10, 30),
                               event.type = "both")
 
-# Summary look at the 3 output data.frames in the list
-sapply(mo024.ddtrd, head)
 
 # Generate plots using plot_d_detrend (output stored in a list)
 mo024.ddtrd.both.plots <- plot_d_detrend(mo024.ddtrd.both)

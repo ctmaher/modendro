@@ -149,14 +149,23 @@ plot_d_detrend <- function(x = NULL) {
       event.mark.df$pgc - pgc.range / 7
     )
 
-    pgc.plot <- ggplot2::ggplot(pgc_s, ggplot2::aes(year, pgc, color = pgc)) +
+    # Have to reference variables in an odd way so that check() doesn't throw a note
+    # e.g., .data[[x_val]]
+    year <- "year" # .data[[year]]
+    pgc <- "pgc" # .data[[pgc]]
+    pgc.pos <- "pgc.pos" # .data[[pgc.pos]]
+    event.type <- "event.type" # .data[[event.type]]
+
+    pgc.plot <- ggplot2::ggplot(data = pgc_s, ggplot2::aes(.data[[year]], .data[[pgc]],
+                                                           color = .data[[pgc]])) +
       ggplot2::geom_vline(data = event.mark.df,
-                          ggplot2::aes(xintercept = year),
+                          ggplot2::aes(xintercept = .data[[year]]),
                           linetype = 3) +
       ggplot2::geom_line(na.rm = TRUE) +
       ggplot2::geom_point(
         data = event.mark.df,
-        ggplot2::aes(year, pgc.pos, fill = pgc, shape = event.type),
+        ggplot2::aes(.data[[year]], .data[[pgc.pos]],
+                     fill = .data[[pgc]], shape = .data[[event.type]]),
         size = 3,
         color = "black"
       ) +
@@ -165,7 +174,8 @@ plot_d_detrend <- function(x = NULL) {
         values = c(25, 24),
         guide = "none"
       ) +
-      ggplot2::geom_hline(data = thresh.df, ggplot2::aes(yintercept = pgc, color = pgc)) +
+      ggplot2::geom_hline(data = thresh.df, ggplot2::aes(yintercept = .data[[pgc]],
+                                                         color = .data[[pgc]])) +
       make_anchor_scales(pgc_s$pgc, pgc.thresh, pgc.name) +
       ggplot2::theme(
         panel.background = ggplot2::element_blank(),
@@ -184,18 +194,21 @@ plot_d_detrend <- function(x = NULL) {
     pgc_s$rw.pgc <- pgc_s$rw
     pgc_s$rw.pgc[-get.these.rows1] <- NA
 
+    # More binding
+    rw.pgc <- "rw.pgc"
+
     rw.pgc.plot <- ggplot2::ggplot() +
       ggplot2::geom_vline(data = event.mark.df,
-                          ggplot2::aes(xintercept = year),
+                          ggplot2::aes(xintercept = .data[[year]]),
                           linetype = 3) +
       ggplot2::geom_line(
         data = pgc_s,
         na.rm = TRUE,
-        ggplot2::aes(year, rw.pgc),
+        ggplot2::aes(.data[[year]], .data[[rw.pgc]]),
         color = "black"
       ) +
       ggplot2::geom_line(data = pgc_s[-get.these.rows2, ],
-                         ggplot2::aes(year, rw, color = pgc),
+                         ggplot2::aes(.data[[year]], rw, color = .data[[pgc]]),
                          na.rm = TRUE) +
       make_anchor_scales(pgc_s$pgc, pgc.thresh, pgc.name) +
       ggplot2::scale_shape_manual(values = c(25, 24), guide = "none") +
@@ -238,20 +251,24 @@ plot_d_detrend <- function(x = NULL) {
         ddtrd.split.unique$eventID
       )
 
+      # More variable binding
+      pt.rw.ddtrd.i <- "pt.rw.ddtrd.i"
+      pt.rw.i <- "pt.rw.i"
+
       d.iter.plots <- ggplot2::ggplot(data = ddt_s) +
         ggplot2::geom_line(
-          ggplot2::aes(year, pt.rw.ddtrd.i),
+          ggplot2::aes(.data[[year]], .data[[pt.rw.ddtrd.i]]),
           color = "grey40",
           linetype = 1,
           na.rm = TRUE
         ) +
         ggplot2::geom_line(
-          ggplot2::aes(year, pt.rw.i),
+          ggplot2::aes(.data[[year]], .data[[pt.rw.i]]),
           color = "black",
           na.rm = TRUE
         ) +
         ggplot2::geom_line(
-          ggplot2::aes(year, curve, color = event.type),
+          ggplot2::aes(.data[[year]], curve, color = .data[[event.type]]),
           na.rm = TRUE
         ) +
         ggplot2::scale_color_manual(
@@ -330,13 +347,18 @@ plot_d_detrend <- function(x = NULL) {
       " trend (", pgc_s$detrend.method[1], ")"
     )))
 
+    # Variable binding:
+    rw.ddtrd <- "rw.ddtrd"
+    rw <- "rw"
+    type <- "type"
+
     res.orig.rw.plot <- ggplot2::ggplot() +
       ggplot2::geom_ribbon(
         data = ribbon.df.rel,
         ggplot2::aes(
-          year,
-          ymin = rw.ddtrd,
-          ymax = rw,
+          .data[[year]],
+          ymin = .data[[rw.ddtrd]],
+          ymax = .data[[rw]],
           fill = "release",
           alpha = "release"
         ),
@@ -345,9 +367,9 @@ plot_d_detrend <- function(x = NULL) {
       ggplot2::geom_ribbon(
         data = ribbon.df.sup,
         ggplot2::aes(
-          year,
-          ymin = rw,
-          ymax = rw.ddtrd,
+          .data[[year]],
+          ymin = .data[[rw]],
+          ymax = .data[[rw.ddtrd]],
           fill = "suppression",
           alpha = "suppression"
         ),
@@ -365,7 +387,7 @@ plot_d_detrend <- function(x = NULL) {
         values = c(0.6, 0.35, 0)
       ) +
       ggplot2::geom_line(data = new.df.long,
-                         ggplot2::aes(year, rw, color = type),
+                         ggplot2::aes(.data[[year]], .data[[rw]], color = .data[[type]]),
                          na.rm = TRUE) +
       ggplot2::scale_color_manual(
         name = NULL,
@@ -389,7 +411,7 @@ plot_d_detrend <- function(x = NULL) {
     if (pgc_s$detrend.method[1] %in% c("none", "None")) {
       rwi.plot <- ggplot2::ggplot() +
         ggplot2::geom_line(data = pgc_s,
-                           ggplot2::aes(year, rw.ddtrd),
+                           ggplot2::aes(.data[[year]], .data[[rw.ddtrd]]),
                            na.rm = TRUE) +
         ggplot2::theme(
           panel.background = ggplot2::element_blank(),
@@ -414,10 +436,13 @@ plot_d_detrend <- function(x = NULL) {
 
     } else {
 
+      # Variable binding
+      pt.rw.ddtrd.resid <- "pt.rw.ddtrd.resid"
+
       # Also include the residual series plot
       resid.plot <- ggplot2::ggplot() +
         ggplot2::geom_line(data = pgc_s,
-                           ggplot2::aes(year, pt.rw.ddtrd.resid),
+                           ggplot2::aes(.data[[year]], .data[[pt.rw.ddtrd.resid]]),
                            na.rm = TRUE) +
         ggplot2::theme(
           panel.background = ggplot2::element_blank(),
@@ -433,10 +458,13 @@ plot_d_detrend <- function(x = NULL) {
         }[t] * " detrended", "resid. RWI"))) +
         ggplot2::xlab("Year")
 
+      # Variable binding
+      rw.ddtrd.index <- "rw.ddtrd.index"
+
       # The ratio series plot
       rwi.plot <- ggplot2::ggplot() +
         ggplot2::geom_line(data = pgc_s,
-                           ggplot2::aes(year, rw.ddtrd.index),
+                           ggplot2::aes(.data[[year]], .data[[rw.ddtrd.index]]),
                            na.rm = TRUE) +
         ggplot2::theme(
           panel.background = ggplot2::element_blank(),

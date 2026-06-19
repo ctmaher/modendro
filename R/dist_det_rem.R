@@ -33,19 +33,16 @@
 #' a suppression or a release. This defines the onset year and duration of the disturbance.
 #' A modified version of a Hugershoff curve (Warren & MacWilliam 1981) is then fit
 #' (via \code{\link[stats]{nls}}) to the disturbance period and beyond (all the way to the end
-#' of the series) transformed, detrended residual series (not the AR residuals), with slightly
-#' different coefficients than the Hugershoff curve used by Rydval et al. Namely, the following
-#' values are fixed: \emph{b} = 1, and \emph{d} = Tukey Biweight robust mean of the remainder of
-#' the transformed series after the disturbance, or 0 if the disturbance covers the end of the
-#' series. The \emph{d} term acts like an intercept. The Warren & MacWilliam curve has a \emph{t}
-#' coefficient which we use here. These modifications allow for more robust fitting (reduced
-#' parameters require fewer degrees of freedom). Setting the \emph{b} term to 1 allows the
-#' beginning y values of the Hugershoff curve to go above or below 0 (more directly determined
-#' by \emph{t}), which helps in minimizing artifacts from poor fit in the early years of a
-#' disturbance period.
+#' of the series) transformed, detrended residual series (not the AR residuals).
+#' \code{\link{dist_det_rem}} uses slightly different coefficients than the Hugershoff curve used by
+#' Rydval et al. Namely, \emph{b} = 1, The Warren & MacWilliam curve has a \emph{t} coefficient
+#' which we use here. These modifications allow for more robust fitting (reduced parameters require
+#' fewer degrees of freedom). Setting the \emph{b} term to 1 allows the beginning y values of the
+#' Hugershoff curve to go above or below 0 (more directly determined by \emph{t}), which helps in
+#' minimizing artifacts from poor fit in the early years of a disturbance period.
 #'
 #' While the Hugershoff curve fitting is reasonably robust, \code{\link[stats]{nls}} occasionally
-#' fails to converge. Additionally, the  In these cases a \code{\link[stats]{loess}} spline is fit
+#' fails to converge. In these cases a \code{\link[stats]{loess}} spline is fit
 #' to the disturbance period only instead (not the whole remainder of the series as in the
 #' Hugershoff). The wiggliness of these splines can be adjusted using the `dist.span` argument.
 #' For both methods, the resulting fitted curve is subtracted from the series.
@@ -499,42 +496,83 @@ dist_det_rem <- function(rwi,
         # d mainly controls the asymptote value. We get a better chance at a successful fit if
         # we set these parameters here.
 
+        # hug_form <-
+        #   formula(rwi ~ a * ((x - t) ^ 1) * exp(-c * (x - t)) + d)
+        #
+        # dist_period$x <- 1:(nrow(dist_period))
+        #
+        # # Set up some start values & constraints for a
+        # a_start <- ifelse(y$dist_dir %in% "pos", 0.1, -0.1)
+        # if (y$dist_dir %in% "pos") {
+        #   a_const <- c(0.005, 5)
+        # } else {
+        #   a_const <- c(-5, -0.005)
+        # }
+        #
+        # lower_const <- list(a = a_const[1],
+        #                     c = -5,
+        #                     t = -10)
+        # upper_const <- list(a = a_const[2],
+        #                     c = 5,
+        #                     t = 10)
+        #
+        # hug_fit <- try(nls(
+        #   hug_form,
+        #   data = dist_period,
+        #   start = list(a = a_start,
+        #                c = 0.1,
+        #                t = 1.5),
+        #   algorithm = "port",
+        #   lower = lower_const,
+        #   upper = upper_const,
+        #   control = nls.control(
+        #     maxiter = 100,
+        #     minFactor = 1 / 4096,
+        #     warnOnly = FALSE
+        #   )
+        # ),
+        # silent = TRUE)
+
         hug_form <-
           formula(rwi ~ a * ((x - t) ^ 1) * exp(-c * (x - t)) + d)
 
         dist_period$x <- 1:(nrow(dist_period))
 
-        # Set up some start values & constraints for a
-        a_start <- ifelse(y$dist_dir %in% "pos", 0.1, -0.1)
-        if (y$dist_dir %in% "pos") {
+        # Set up some start values & constraints for a, based on event.type (release or suppression)
+        a_start <- ifelse(event.ind$max.ind[i] > 0, 0.1, -0.1)
+        if (event.ind$max.ind[i] > 0) {
           a_const <- c(0.005, 5)
         } else {
           a_const <- c(-5, -0.005)
         }
 
+        d.range <- range(this.event, na.rm = TRUE)
+
         lower_const <- list(a = a_const[1],
                             c = -5,
-                            t = -10)
+                            t = -10,
+                            d = d.range[1])
         upper_const <- list(a = a_const[2],
                             c = 5,
-                            t = 10)
+                            t = 10,
+                            d = d.range[2])
 
-        hug_fit <- try(nls(
-          hug_form,
-          data = dist_period,
-          start = list(a = a_start,
-                       c = 0.1,
-                       t = 1.5),
-          algorithm = "port",
-          lower = lower_const,
-          upper = upper_const,
-          control = nls.control(
-            maxiter = 100,
-            minFactor = 1 / 4096,
-            warnOnly = FALSE
-          )
-        ),
-        silent = TRUE)
+        hug_fit <- try(
+            nls(hug_form,
+                data = event.df,
+                start = list(a = a_start,
+                             c = 0.1,
+                             t = 1.5,
+                             d = DescTools::TukeyBiweight(this.event, na.rm = TRUE)),
+                algorithm = "port",
+                lower = lower_const,
+                upper = upper_const,
+                control = nls.control(
+                  maxiter = 100,
+                  minFactor = 1 / 4096,
+                  warnOnly = FALSE
+                )
+            ), silent = TRUE)
 
         # SSE of the model fit for disturbance window
         if (!c(data.class(hug_fit) %in% "try-error")) {
@@ -561,6 +599,10 @@ dist_det_rem <- function(rwi,
                   span = dist.span,
                   family = "symmetric")
 
+          # spline_fit <- dplR::ads(y = dist_period,
+          #                        nyrs0 = y$win_len,
+          #                        pos.slope = TRUE)
+
           dist_period$curve <- spline_fit$fitted
           dist_period$eq <- "loess spline"
 
@@ -582,11 +624,11 @@ dist_det_rem <- function(rwi,
             " * (x ",
             plus_minus_t,
             " ",
-            abs(hug_coef[[3]]),
+            abs(hug_coef[[3]]), # t
             "))",
             plus_minus_d,
             " ",
-            d
+            abs(hug_coef[[4]]) # d
           )
         }
 
