@@ -467,7 +467,7 @@ dist_det_rem <- function(rwi,
         # Value of d in the Hugershoff equation will be 0 (the overall series mean) if
         # the disturbance covers
         # the end of the series
-        d <- 0
+        d_start <- 0
         # Attach the rest of series if there is one
         if ((max(dist_period$year) + 1) < max(series_df$year)) {
           rest_of_years <- (max(dist_period$year) + 1):max(series_df$year)
@@ -477,8 +477,8 @@ dist_det_rem <- function(rwi,
           # Rbind it
           dist_period <- rbind(dist_period, rest_of_series)
 
-          # Use TBRM of rest of series for value of d in the Hugershoff equation below
-          d <- DescTools::TukeyBiweight(rest_of_series$rwi, na.rm = TRUE)
+          # Use TBRM of rest of series for start value of d in the Hugershoff equation below
+          d_start <- DescTools::TukeyBiweight(rest_of_series$rwi, na.rm = TRUE)
         }
 
         # Record the direction of the disturbance
@@ -521,7 +521,8 @@ dist_det_rem <- function(rwi,
         #   data = dist_period,
         #   start = list(a = a_start,
         #                c = 0.1,
-        #                t = 1.5),
+        #                t = 1.5,
+        #.               d = DescTools::TukeyBiweight(this.event, na.rm = TRUE)),
         #   algorithm = "port",
         #   lower = lower_const,
         #   upper = upper_const,
@@ -533,20 +534,19 @@ dist_det_rem <- function(rwi,
         # ),
         # silent = TRUE)
 
-        hug_form <-
-          formula(rwi ~ a * ((x - t) ^ 1) * exp(-c * (x - t)) + d)
+        hug_form <- formula(rwi ~ a * ((x - t) ^ 1) * exp(-c * (x - t)) + d)
 
         dist_period$x <- 1:(nrow(dist_period))
 
         # Set up some start values & constraints for a, based on event.type (release or suppression)
-        a_start <- ifelse(event.ind$max.ind[i] > 0, 0.1, -0.1)
-        if (event.ind$max.ind[i] > 0) {
+        a_start <- ifelse(y$dist_dir %in% "pos", 0.1, -0.1)
+        if (y$dist_dir %in% "pos") {
           a_const <- c(0.005, 5)
         } else {
           a_const <- c(-5, -0.005)
         }
 
-        d.range <- range(this.event, na.rm = TRUE)
+        d.range <- range(rest_of_series$rwi, na.rm = TRUE)
 
         lower_const <- list(a = a_const[1],
                             c = -5,
@@ -557,22 +557,23 @@ dist_det_rem <- function(rwi,
                             t = 10,
                             d = d.range[2])
 
-        hug_fit <- try(
-            nls(hug_form,
-                data = event.df,
-                start = list(a = a_start,
-                             c = 0.1,
-                             t = 1.5,
-                             d = DescTools::TukeyBiweight(this.event, na.rm = TRUE)),
-                algorithm = "port",
-                lower = lower_const,
-                upper = upper_const,
-                control = nls.control(
-                  maxiter = 100,
-                  minFactor = 1 / 4096,
-                  warnOnly = FALSE
-                )
-            ), silent = TRUE)
+        hug_fit <- try(nls(
+          hug_form,
+          data = dist_period,
+          start = list(a = a_start,
+                       c = 0.1,
+                       t = 1.5,
+                       d = d_start),
+          algorithm = "port",
+          lower = lower_const,
+          upper = upper_const,
+          control = nls.control(
+            maxiter = 100,
+            minFactor = 1 / 4096,
+            warnOnly = FALSE
+          )
+        ),
+        silent = TRUE)
 
         # SSE of the model fit for disturbance window
         if (!c(data.class(hug_fit) %in% "try-error")) {
@@ -599,10 +600,6 @@ dist_det_rem <- function(rwi,
                   span = dist.span,
                   family = "symmetric")
 
-          # spline_fit <- dplR::ads(y = dist_period,
-          #                        nyrs0 = y$win_len,
-          #                        pos.slope = TRUE)
-
           dist_period$curve <- spline_fit$fitted
           dist_period$eq <- "loess spline"
 
@@ -610,7 +607,7 @@ dist_det_rem <- function(rwi,
           dist_period$curve <- predict(hug_fit, newdata = dist_period)
           hug_coef <- coef(hug_fit) |> round(4)
           plus_minus_t <- ifelse(hug_coef[[3]] > 0, "-", "+")
-          plus_minus_d <- ifelse(d > 0, "-", "+")
+          plus_minus_d <- ifelse(hug_coef[[4]] > 0, "-", "+")
           dist_period$eq <- paste0(
             "y == ",
             hug_coef[[1]],
