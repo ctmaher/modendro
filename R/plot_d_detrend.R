@@ -160,14 +160,16 @@ plot_d_detrend <- function(x = NULL) {
                                                            color = .data[[pgc]])) +
       ggplot2::geom_vline(data = event.mark.df,
                           ggplot2::aes(xintercept = .data[[year]]),
-                          linetype = 3) +
+                          linetype = 3,
+                          na.rm = TRUE) +
       ggplot2::geom_line(na.rm = TRUE) +
       ggplot2::geom_point(
         data = event.mark.df,
         ggplot2::aes(.data[[year]], .data[[pgc.pos]],
                      fill = .data[[pgc]], shape = .data[[event.type]]),
         size = 3,
-        color = "black"
+        color = "black",
+        na.rm = TRUE
       ) +
       ggplot2::scale_shape_manual(
         breaks = c("release", "suppression"),
@@ -175,7 +177,8 @@ plot_d_detrend <- function(x = NULL) {
         guide = "none"
       ) +
       ggplot2::geom_hline(data = thresh.df, ggplot2::aes(yintercept = .data[[pgc]],
-                                                         color = .data[[pgc]])) +
+                                                         color = .data[[pgc]]),
+                          na.rm = TRUE) +
       make_anchor_scales(pgc_s$pgc, pgc.thresh, pgc.name) +
       ggplot2::theme(
         panel.background = ggplot2::element_blank(),
@@ -200,7 +203,8 @@ plot_d_detrend <- function(x = NULL) {
     rw.pgc.plot <- ggplot2::ggplot() +
       ggplot2::geom_vline(data = event.mark.df,
                           ggplot2::aes(xintercept = .data[[year]]),
-                          linetype = 3) +
+                          linetype = 3,
+                          na.rm = TRUE) +
       ggplot2::geom_line(
         data = pgc_s,
         na.rm = TRUE,

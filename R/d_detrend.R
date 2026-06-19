@@ -896,10 +896,10 @@ d_detrend <- function(data = NULL,
         })
 
       # Print the warning and ID the series that had the issue
-      if (length(detrend.series.warnings) > 0) {
-        cat("\nseries '", pgc_s$series[1], "' dplR::detrend.series() warning:\n",
-            detrend.series.warnings[[1]], "\n\n", sep = "")
-      }
+      # if (length(detrend.series.warnings) > 0) {
+      #   cat("\nseries '", pgc_s$series[1], "' dplR::detrend.series() warning:\n",
+      #       detrend.series.warnings[[1]], "\n\n", sep = "")
+      # }
 
       # Extract the detrended residuals and the fitted trend curve
       pgc_s[, "pt.rw.ddtrd.resid"] <- dtrd.result$series

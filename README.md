@@ -41,35 +41,32 @@ Enter modendro’s `rwl_longer()` function.
 
 ``` r
 library(modendro)
-#> Registered S3 method overwritten by 'quantmod':
-#>   method            from
-#>   as.zoo.data.frame zoo
-data("PerkinsSwetnam96")
-head(PerkinsSwetnam96)[,1:5] # typical rwl-format
-#>     TWP05 TWP07 TWP08 TWP13 TWP14
-#> 726    NA    NA    NA    NA    NA
-#> 727    NA    NA    NA    NA    NA
-#> 728    NA    NA    NA    NA    NA
-#> 729    NA    NA    NA    NA    NA
-#> 730    NA    NA    NA    NA    NA
-#> 731    NA    NA    NA    NA    NA
+data("ps96")
+head(ps96)[,1:5] # typical rwl-format
+#>     RRR15 SDP36 TWP05 TWP11 SDP51
+#> 726  0.63    NA    NA    NA    NA
+#> 727  0.57    NA    NA    NA    NA
+#> 728  0.60    NA    NA    NA    NA
+#> 729  0.47    NA    NA    NA    NA
+#> 730  0.42    NA    NA    NA    NA
+#> 731  0.39    NA    NA    NA    NA
 
 
-PS.long <- rwl_longer(rwl = PerkinsSwetnam96,
+PS.long <- rwl_longer(rwl = ps96,
                       series.name = "series", # name the series IDs whatever you want
                       dat.name = "rw.mm", # same for the measurement data
                       trim = TRUE, # trim off the NAs before and after a series
                       new.val.internal.na = NULL) # leave NAs internal to the measurement series
 # Note that we could replace internal NAs here if there were any (e.g., with 0s)
 
-head(PS.long) # familiar format
+head(PS.long) # familiar format for R users
 #>             year series rw.mm
-#> RRR05.58876 1319  RRR05  0.42
-#> RRR05.58877 1320  RRR05  0.46
-#> RRR05.58878 1321  RRR05  0.34
-#> RRR05.58879 1322  RRR05  0.32
-#> RRR05.58880 1323  RRR05  0.42
-#> RRR05.58881 1324  RRR05  0.33
+#> RRR05.28468 1319  RRR05  0.42
+#> RRR05.28469 1320  RRR05  0.46
+#> RRR05.28470 1321  RRR05  0.34
+#> RRR05.28471 1322  RRR05  0.32
+#> RRR05.28472 1323  RRR05  0.42
+#> RRR05.28473 1324  RRR05  0.33
 ```
 
 Once our tree-ring data is in the familiar (to me anyway) long format,
@@ -80,23 +77,24 @@ for plotting.
 
 ``` r
 
-data("PSgroupIDs")
+data("ps.groupIDs")
 
-PS.long.sites <- merge(PS.long, PSgroupIDs, by = "series")
+PS.long.sites <- merge(PS.long, ps.groupIDs, by.x = "series", by.y = "tree")
 
 library(ggplot2)
 
 ggplot(PS.long.sites, aes(year, rw.mm, group = series)) +
   geom_line(alpha = 0.5) +
-  facet_wrap( ~ site, ncol = 1)
+  facet_wrap( ~ site, ncol = 1) +
+  theme(panel.background = element_blank())
 ```
 
-<img src="man/figures/README-example_1.2-1.png" width="100%" />
+<img src="man/figures/README-example_1.2-1.png" alt="" width="100%" />
 
 Another useful application of `rwl_longer()` is when we have several
 rwl-format files that we want to bind together. This is not intuitive
 with the rwl-format - the number of rows may not line up and the columns
-won’t either. This is simple with the long format.
+won’t either. This is a simple operation in the long format.
 
 We’ll borrow some data from the dplR package for this.
 
@@ -107,7 +105,7 @@ dplR. We can do this with modendro’s `longer_rwl()`.
 ``` r
 
 library(dplR)
-#> This is dplR version 1.7.8.
+#> This is dplR version 1.7.9.
 #> dplR is part of openDendro https://opendendro.org.
 #> New users can visit https://opendendro.github.io/dplR-workshop/ to get started.
 data("ca533")
@@ -118,8 +116,8 @@ ca533.long <- rwl_longer(ca533,
 
 comb.long <- rbind(PS.long, ca533.long)
 
-# note that longer_rwl() doesn't care if you have other variables in your long data.frame
-# We'll add some here to illustrate that
+# note that longer_rwl() ignores other variables in your long data.frame
+# We'll add some columns here to illustrate that
 comb.long$foo <- "bar"
 comb.long$bar <- "foo"
 
@@ -243,23 +241,25 @@ ex.pos[["Not read"]]
 
 # you can see the coordinates
 ggplot(ex.pos[["Raw coordinates"]], aes(x, y)) +
-geom_path() +
-geom_point(aes(color = type)) +
-facet_wrap(~series, ncol = 1, scales = "free")
+  geom_path() +
+  geom_point(aes(color = type)) +
+  facet_wrap(~series, ncol = 1, scales = "free") +
+  theme(panel.background = element_blank())
 ```
 
-<img src="man/figures/README-example_1.5-1.png" width="100%" />
+<img src="man/figures/README-example_1.5-1.png" alt="" width="100%" />
 
 ``` r
 # Note that one file truly had erroneous point order - signified by the jagged black line from geom_path (which plots points in the order it receives them). This file you would want to fix in CooRecorder
 
 # take a look at the ring widths - what you came here for
 ggplot(ex.pos[["Ring widths"]], aes(year, rw.mm)) +
-geom_line() +
-facet_wrap(~series, ncol = 1, scales = "free")
+  geom_line() +
+  facet_wrap(~series, ncol = 1, scales = "free") +
+  theme(panel.background = element_blank())
 ```
 
-<img src="man/figures/README-example_1.5-2.png" width="100%" />
+<img src="man/figures/README-example_1.5-2.png" alt="" width="100%" />
 
 ``` r
 # The true erroneous order file has invalid ring widths.
@@ -287,7 +287,13 @@ process can be visualized with the `plot_cp_detrend()` function.
 
 ``` r
 
-PS.cp <- cp_detrend(PerkinsSwetnam96, detrend.method = "ModHugershoff")
+# The ps96 data allows an illustration of a simple utility function in modendro 
+# that will identify and fill internal NAs in a series with a specified new value.
+# The crucial assumption is that that internal NAs represent missing rings due to
+# no growth (0 mm).
+ps96 <- rwl_replace_internal_NAs(ps96, new.val = 0)
+
+PS.cp <- cp_detrend(ps96, detrend.method = "ModHugershoff")
 names(PS.cp) # output is a list
 #> [1] "Resid. detrended series" "Detrend curves"         
 #> [3] "Transformed ring widths" "Transformation metadata"
@@ -302,7 +308,7 @@ PS.cp.plots <- plot_cp_detrend(PS.cp)
 PS.cp.plots[["RRR27"]]
 ```
 
-<img src="man/figures/README-example_2.1-1.png" width="100%" />
+<img src="man/figures/README-example_2.1-1.png" alt="" width="100%" />
 
 ## Example: flexible growth-climate relationships
 
@@ -376,15 +382,15 @@ arguments.
 # Bring in some climate data associated with the tree ring data we loaded earlier
 data("idPRISM")
 head(idPRISM)
-#>           Date year month    PPT.mm     Tavg.C
-#> 1   1895-01-15 1895     1 219.04667  -8.733333
-#> 106 1903-02-15 1903     2  15.02333 -12.866667
-#> 211 1911-03-15 1911     3  50.58667  -4.066667
-#> 316 1919-04-15 1919     4  87.31667   0.800000
-#> 421 1927-05-15 1927     5  98.99000   2.400000
-#> 526 1935-06-15 1935     6  33.36333   8.300000
+#>         Date year month    PPT.mm    Tavg.C
+#> 1 1895-01-15 1895     1 219.04667 -8.733333
+#> 2 1896-01-15 1896     1 202.48333 -5.900000
+#> 3 1897-01-15 1897     1  38.42333 -7.966667
+#> 4 1898-01-15 1898     1  76.49000 -9.966667
+#> 5 1899-01-15 1899     1 163.78333 -5.633333
+#> 6 1900-01-15 1900     1  76.79333 -5.400000
 
-PS.corr <- n_mon_corr(rwl = PerkinsSwetnam96, 
+PS.corr <- n_mon_corr(rwl = ps96, 
                       clim = idPRISM, 
                       clim.var = "Tavg.C",
                       common.years = 1895:1991,
@@ -397,14 +403,15 @@ PS.corr <- n_mon_corr(rwl = PerkinsSwetnam96,
                       corr.method = "spearman")
 #> The following tree-ring series have < 5 years overlap with clim data
 #>     and will be removed from rwl:
-#> TWP05, TWP13, TWP20, TWP21, SDP36, SDP26, SDP28, SDM10, UPS12, UPS16, UPS31, UPS35, UPS04, UPSM1, UPM5, UPM14, UPM25, RRR19, RRR26, RRR28
+#> SDP36, TWP05, TWP11, TWP21, UPSM1, UPS31, UPS16, RRR19, UPM25, RRR28, SDP26, SDP28, SDM10, UPS35, UPS12, RRR26, TWP20
 #> The following tree-ring series have < 25 years overlap with clim data.
 #>     Interpret correlations cautiously.
-#> UPM3, UPM12, UPM16, UPM09
+#> SDP31, UPS29, UPM14, TWP13, UPS04
 
 names(PS.corr)
-#> [1] "Correlation results"             "Climate data (prewhitened)"     
-#> [3] "Climate data (raw)"              "Ring-width series (prewhitened)"
+#> [1] "Correlation results"             "Results summary"                
+#> [3] "Climate data (prewhitened)"      "Climate data (raw)"             
+#> [5] "Ring-width series (prewhitened)"
 ```
 
 Note the warnings about series that don’t have enough overlap with the
@@ -433,29 +440,22 @@ added transparency.
 PS.corr.plots <- plot_n_mon_corr(PS.corr)
 
 names(PS.corr.plots)
-#> [1] "Percent sig. corr. plot" "Mean corr. coef. plot"  
-#> [3] "Aggregated data"
+#> [1] "Percent sig. corr. plot" "Mean corr. coef. plot"
 
 PS.corr.plots[["Percent sig. corr. plot"]]
 ```
 
-<img src="man/figures/README-example_3.2-1.png" width="100%" />
+<img src="man/figures/README-example_3.2-1.png" alt="" width="100%" />
 
 ``` r
 PS.corr.plots[["Mean corr. coef. plot"]]
 ```
 
-<img src="man/figures/README-example_3.2-2.png" width="100%" />
+<img src="man/figures/README-example_3.2-2.png" alt="" width="100%" />
 
 ``` r
 PS.corr.plots[["Aggregated data"]] |> head()
-#>    month win.len lag  dir prop.sig   mean.coef
-#> 3      1       1  -2 Neg.  0.00000 -0.06144863
-#> 4      1       1  -2 Pos. 10.81081  0.15089412
-#> 9      1       2  -2 Neg.  0.00000 -0.03508997
-#> 10     1       2  -2 Pos. 21.62162  0.21733036
-#> 15     1       3  -2 Neg.  0.00000 -0.03507990
-#> 16     1       3  -2 Pos. 21.62162  0.22709802
+#> NULL
 ```
 
 ## Example: detection and removal of disturbances in tree-ring series
@@ -464,13 +464,13 @@ There are several existing methods for detecting release or suppression
 events in tree-ring series - the `TRADER` package for R offers several
 methods for detecting growth releases and the `dfoliatR` package offers
 methods for detecting suppression events from insect defoliators. To my
-knowledge, there has not been an implementation of the time-series based
-intervention detection methods developed by Druckenbrod et al (2005,
-2013) and later by Rydval et al. (2016, 2018). modendro’s `ci_detect()`
-is an R implementation of this method, called “curve intervention
-detection”. See `?ci_detect` for full citations. This method
-simultaneously identifies and removes suppression and release events in
-tree-ring series.
+knowledge, there has not been an R implementation of the time-series
+based intervention detection methods developed by Druckenbrod et al
+(2005, 2013) and later by Rydval et al. (2016, 2018). modendro’s
+`ci_detect()` is an R implementation of this method, called “curve
+intervention detection”. See `?ci_detect` for full citations. This
+method simultaneously identifies and removes suppression and release
+events in tree-ring series.
 
 The curve intervention detection method starts with detrending the
 ring-width series using Cook & Peters (1997) methods, described above.
@@ -516,24 +516,395 @@ the disturbance detection and removal iterations and the final results
 plot for a single tree’s series.
 
 ``` r
-PS.cid <- ci_detect(PerkinsSwetnam96, detrend.method = "ModHugershoff")
+PS.cid <- ci_detect(ps96, detrend.method = "ModHugershoff")
 
 PS.cid.plots <- plot_ci_detect(PS.cid)
+#> Warning: `label` cannot be a <ggplot2::element_blank> object.
+#> `label` cannot be a <ggplot2::element_blank> object.
+#> `label` cannot be a <ggplot2::element_blank> object.
+#> `label` cannot be a <ggplot2::element_blank> object.
+#> `label` cannot be a <ggplot2::element_blank> object.
+#> `label` cannot be a <ggplot2::element_blank> object.
+#> `label` cannot be a <ggplot2::element_blank> object.
+#> `label` cannot be a <ggplot2::element_blank> object.
+#> `label` cannot be a <ggplot2::element_blank> object.
+#> `label` cannot be a <ggplot2::element_blank> object.
+#> `label` cannot be a <ggplot2::element_blank> object.
+#> `label` cannot be a <ggplot2::element_blank> object.
+#> `label` cannot be a <ggplot2::element_blank> object.
+#> `label` cannot be a <ggplot2::element_blank> object.
+#> `label` cannot be a <ggplot2::element_blank> object.
+#> `label` cannot be a <ggplot2::element_blank> object.
+#> `label` cannot be a <ggplot2::element_blank> object.
+#> `label` cannot be a <ggplot2::element_blank> object.
+#> `label` cannot be a <ggplot2::element_blank> object.
+#> `label` cannot be a <ggplot2::element_blank> object.
+#> `label` cannot be a <ggplot2::element_blank> object.
+#> `label` cannot be a <ggplot2::element_blank> object.
+#> `label` cannot be a <ggplot2::element_blank> object.
+#> `label` cannot be a <ggplot2::element_blank> object.
+#> `label` cannot be a <ggplot2::element_blank> object.
+#> `label` cannot be a <ggplot2::element_blank> object.
+#> `label` cannot be a <ggplot2::element_blank> object.
+#> `label` cannot be a <ggplot2::element_blank> object.
+#> `label` cannot be a <ggplot2::element_blank> object.
+#> `label` cannot be a <ggplot2::element_blank> object.
+#> `label` cannot be a <ggplot2::element_blank> object.
+#> `label` cannot be a <ggplot2::element_blank> object.
+#> `label` cannot be a <ggplot2::element_blank> object.
+#> `label` cannot be a <ggplot2::element_blank> object.
+#> `label` cannot be a <ggplot2::element_blank> object.
+#> `label` cannot be a <ggplot2::element_blank> object.
+#> `label` cannot be a <ggplot2::element_blank> object.
+#> `label` cannot be a <ggplot2::element_blank> object.
+#> `label` cannot be a <ggplot2::element_blank> object.
+#> `label` cannot be a <ggplot2::element_blank> object.
+#> `label` cannot be a <ggplot2::element_blank> object.
+#> `label` cannot be a <ggplot2::element_blank> object.
+#> `label` cannot be a <ggplot2::element_blank> object.
+#> `label` cannot be a <ggplot2::element_blank> object.
+#> `label` cannot be a <ggplot2::element_blank> object.
+#> `label` cannot be a <ggplot2::element_blank> object.
+#> `label` cannot be a <ggplot2::element_blank> object.
+#> `label` cannot be a <ggplot2::element_blank> object.
+#> `label` cannot be a <ggplot2::element_blank> object.
+#> `label` cannot be a <ggplot2::element_blank> object.
+#> `label` cannot be a <ggplot2::element_blank> object.
+#> `label` cannot be a <ggplot2::element_blank> object.
+#> `label` cannot be a <ggplot2::element_blank> object.
+#> `label` cannot be a <ggplot2::element_blank> object.
+#> `label` cannot be a <ggplot2::element_blank> object.
+#> `label` cannot be a <ggplot2::element_blank> object.
+#> `label` cannot be a <ggplot2::element_blank> object.
+#> `label` cannot be a <ggplot2::element_blank> object.
+#> `label` cannot be a <ggplot2::element_blank> object.
+#> `label` cannot be a <ggplot2::element_blank> object.
+#> `label` cannot be a <ggplot2::element_blank> object.
+#> `label` cannot be a <ggplot2::element_blank> object.
+#> `label` cannot be a <ggplot2::element_blank> object.
+#> `label` cannot be a <ggplot2::element_blank> object.
+#> `label` cannot be a <ggplot2::element_blank> object.
+#> `label` cannot be a <ggplot2::element_blank> object.
+#> `label` cannot be a <ggplot2::element_blank> object.
+#> `label` cannot be a <ggplot2::element_blank> object.
+#> `label` cannot be a <ggplot2::element_blank> object.
+#> `label` cannot be a <ggplot2::element_blank> object.
+#> `label` cannot be a <ggplot2::element_blank> object.
+#> `label` cannot be a <ggplot2::element_blank> object.
+#> `label` cannot be a <ggplot2::element_blank> object.
+#> `label` cannot be a <ggplot2::element_blank> object.
+#> `label` cannot be a <ggplot2::element_blank> object.
+#> `label` cannot be a <ggplot2::element_blank> object.
+#> `label` cannot be a <ggplot2::element_blank> object.
+#> `label` cannot be a <ggplot2::element_blank> object.
+#> `label` cannot be a <ggplot2::element_blank> object.
+#> `label` cannot be a <ggplot2::element_blank> object.
+#> `label` cannot be a <ggplot2::element_blank> object.
+#> `label` cannot be a <ggplot2::element_blank> object.
+#> `label` cannot be a <ggplot2::element_blank> object.
+#> `label` cannot be a <ggplot2::element_blank> object.
+#> `label` cannot be a <ggplot2::element_blank> object.
+#> `label` cannot be a <ggplot2::element_blank> object.
+#> `label` cannot be a <ggplot2::element_blank> object.
+#> `label` cannot be a <ggplot2::element_blank> object.
+#> `label` cannot be a <ggplot2::element_blank> object.
+#> `label` cannot be a <ggplot2::element_blank> object.
+#> `label` cannot be a <ggplot2::element_blank> object.
+#> `label` cannot be a <ggplot2::element_blank> object.
+#> `label` cannot be a <ggplot2::element_blank> object.
+#> `label` cannot be a <ggplot2::element_blank> object.
+#> `label` cannot be a <ggplot2::element_blank> object.
+#> `label` cannot be a <ggplot2::element_blank> object.
+#> `label` cannot be a <ggplot2::element_blank> object.
+#> `label` cannot be a <ggplot2::element_blank> object.
+#> `label` cannot be a <ggplot2::element_blank> object.
+#> `label` cannot be a <ggplot2::element_blank> object.
+#> `label` cannot be a <ggplot2::element_blank> object.
+#> `label` cannot be a <ggplot2::element_blank> object.
+#> `label` cannot be a <ggplot2::element_blank> object.
+#> `label` cannot be a <ggplot2::element_blank> object.
+#> `label` cannot be a <ggplot2::element_blank> object.
+#> `label` cannot be a <ggplot2::element_blank> object.
+#> `label` cannot be a <ggplot2::element_blank> object.
+#> `label` cannot be a <ggplot2::element_blank> object.
+#> `label` cannot be a <ggplot2::element_blank> object.
+#> `label` cannot be a <ggplot2::element_blank> object.
+#> `label` cannot be a <ggplot2::element_blank> object.
+#> `label` cannot be a <ggplot2::element_blank> object.
+#> `label` cannot be a <ggplot2::element_blank> object.
+#> `label` cannot be a <ggplot2::element_blank> object.
+#> `label` cannot be a <ggplot2::element_blank> object.
+#> `label` cannot be a <ggplot2::element_blank> object.
+#> `label` cannot be a <ggplot2::element_blank> object.
+#> `label` cannot be a <ggplot2::element_blank> object.
+#> `label` cannot be a <ggplot2::element_blank> object.
+#> `label` cannot be a <ggplot2::element_blank> object.
+#> `label` cannot be a <ggplot2::element_blank> object.
+#> `label` cannot be a <ggplot2::element_blank> object.
+#> `label` cannot be a <ggplot2::element_blank> object.
+#> `label` cannot be a <ggplot2::element_blank> object.
+#> `label` cannot be a <ggplot2::element_blank> object.
+#> `label` cannot be a <ggplot2::element_blank> object.
+#> `label` cannot be a <ggplot2::element_blank> object.
+#> `label` cannot be a <ggplot2::element_blank> object.
+#> `label` cannot be a <ggplot2::element_blank> object.
+#> `label` cannot be a <ggplot2::element_blank> object.
+#> `label` cannot be a <ggplot2::element_blank> object.
+#> `label` cannot be a <ggplot2::element_blank> object.
+#> `label` cannot be a <ggplot2::element_blank> object.
+#> `label` cannot be a <ggplot2::element_blank> object.
+#> `label` cannot be a <ggplot2::element_blank> object.
+#> `label` cannot be a <ggplot2::element_blank> object.
+#> `label` cannot be a <ggplot2::element_blank> object.
+#> `label` cannot be a <ggplot2::element_blank> object.
+#> `label` cannot be a <ggplot2::element_blank> object.
 
 PS.cid.plots[["Disturbance detection & removal plots"]][["RRR27"]]
 #> $`1`
 ```
 
-<img src="man/figures/README-example_3.3-1.png" width="100%" />
+<img src="man/figures/README-example_3.3-1.png" alt="" width="100%" />
 
     #> 
     #> $`2`
 
-<img src="man/figures/README-example_3.3-2.png" width="100%" />
+<img src="man/figures/README-example_3.3-2.png" alt="" width="100%" />
 
 ``` r
 
 PS.cid.plots[["Final disturbance-free series plots"]][["RRR27"]]
 ```
 
-<img src="man/figures/README-example_3.3-3.png" width="100%" />
+<img src="man/figures/README-example_3.3-3.png" alt="" width="100%" />
+
+Druckenbrod et al (2024) recently developed a new method for detecting
+and removing disturbances (disturbance detrending). This method is
+implemented in modendro as the `d_detrend()` function. This method has
+several advantages over the `ci_detect()` method (see function
+documentation and references for details). `plot_d_detrend` produces
+plots that illustrate the steps of the process. New to the modendro
+implementation is the possibility to detrend suppression events - this
+option is still experimental, so use with caution! It is also possible
+to use a variety of detrending methods (both for the individual
+disturbances and the overall age trend).
+
+``` r
+# Load Missouri post oak ring widths
+data(mo024)
+
+mo024.ddtrd <- d_detrend(data = mo024,
+                         win.len = 15,
+                         pgc.thresh = 50,
+                         d.detrend.method = "AgeDepSpline",
+                         detrend.method = "AgeDepSpline",
+                         nyrs = c(10, 30),
+                         event.type = "release")
+#> 
+#> series 'DEM14C' dplR::detrend.series() warning:
+#> In raw series DEM14C: Fits from method=='AgeDepSpline' are not all positive. 
+#>   This is extremely rare. Series will be detrended with method=='Mean'. 
+#>   This might not be what you want. 
+#>   ARSTAN would tell you to plot that dirty dog at this point. 
+#>   Proceed with caution.
+#> 
+#> 
+#> series 'DEM15A' dplR::detrend.series() warning:
+#> In raw series DEM15A: Fits from method=='AgeDepSpline' are not all positive. 
+#>   This is extremely rare. Series will be detrended with method=='Mean'. 
+#>   This might not be what you want. 
+#>   ARSTAN would tell you to plot that dirty dog at this point. 
+#>   Proceed with caution.
+#> 
+#> 
+#> series 'DEM17C' dplR::detrend.series() warning:
+#> In raw series DEM17C: Fits from method=='AgeDepSpline' are not all positive. 
+#>   This is extremely rare. Series will be detrended with method=='Mean'. 
+#>   This might not be what you want. 
+#>   ARSTAN would tell you to plot that dirty dog at this point. 
+#>   Proceed with caution.
+#> 
+#> 
+#> series 'DEM19A' dplR::detrend.series() warning:
+#> In raw series DEM19A: Fits from method=='AgeDepSpline' are not all positive. 
+#>   This is extremely rare. Series will be detrended with method=='Mean'. 
+#>   This might not be what you want. 
+#>   ARSTAN would tell you to plot that dirty dog at this point. 
+#>   Proceed with caution.
+#> 
+#> 
+#> series 'DEM21A' dplR::detrend.series() warning:
+#> In raw series DEM21A: Fits from method=='AgeDepSpline' are not all positive. 
+#>   This is extremely rare. Series will be detrended with method=='Mean'. 
+#>   This might not be what you want. 
+#>   ARSTAN would tell you to plot that dirty dog at this point. 
+#>   Proceed with caution.
+#> 
+#> 
+#> series 'DEM26B' dplR::detrend.series() warning:
+#> In raw series DEM26B: Fits from method=='AgeDepSpline' are not all positive. 
+#>   This is extremely rare. Series will be detrended with method=='Mean'. 
+#>   This might not be what you want. 
+#>   ARSTAN would tell you to plot that dirty dog at this point. 
+#>   Proceed with caution.
+#> 
+#> 
+#> series 'DEM37A' dplR::detrend.series() warning:
+#> In raw series DEM37A: Fits from method=='AgeDepSpline' are not all positive. 
+#>   This is extremely rare. Series will be detrended with method=='Mean'. 
+#>   This might not be what you want. 
+#>   ARSTAN would tell you to plot that dirty dog at this point. 
+#>   Proceed with caution.
+#> 
+#> 
+#> series 'DEM38A' dplR::detrend.series() warning:
+#> In raw series DEM38A: Fits from method=='AgeDepSpline' are not all positive. 
+#>   This is extremely rare. Series will be detrended with method=='Mean'. 
+#>   This might not be what you want. 
+#>   ARSTAN would tell you to plot that dirty dog at this point. 
+#>   Proceed with caution.
+#> 
+#> 
+#> series 'DEM40B' dplR::detrend.series() warning:
+#> In raw series DEM40B: Fits from method=='AgeDepSpline' are not all positive. 
+#>   This is extremely rare. Series will be detrended with method=='Mean'. 
+#>   This might not be what you want. 
+#>   ARSTAN would tell you to plot that dirty dog at this point. 
+#>   Proceed with caution.
+#> 
+#> 
+#> series 'DEM43B' dplR::detrend.series() warning:
+#> In raw series DEM43B: Fits from method=='AgeDepSpline' are not all positive. 
+#>   This is extremely rare. Series will be detrended with method=='Mean'. 
+#>   This might not be what you want. 
+#>   ARSTAN would tell you to plot that dirty dog at this point. 
+#>   Proceed with caution.
+#> 
+#> 
+#> series 'DEM47A' dplR::detrend.series() warning:
+#> In raw series DEM47A: Fits from method=='AgeDepSpline' are not all positive. 
+#>   This is extremely rare. Series will be detrended with method=='Mean'. 
+#>   This might not be what you want. 
+#>   ARSTAN would tell you to plot that dirty dog at this point. 
+#>   Proceed with caution.
+#> 
+#> 
+#> series 'DEM51A' dplR::detrend.series() warning:
+#> In raw series DEM51A: Fits from method=='AgeDepSpline' are not all positive. 
+#>   This is extremely rare. Series will be detrended with method=='Mean'. 
+#>   This might not be what you want. 
+#>   ARSTAN would tell you to plot that dirty dog at this point. 
+#>   Proceed with caution.
+#> 
+#> 
+#> series 'DEM52A' dplR::detrend.series() warning:
+#> In raw series DEM52A: Fits from method=='AgeDepSpline' are not all positive. 
+#>   This is extremely rare. Series will be detrended with method=='Mean'. 
+#>   This might not be what you want. 
+#>   ARSTAN would tell you to plot that dirty dog at this point. 
+#>   Proceed with caution.
+#> 
+#> 
+#> series 'DEM55A' dplR::detrend.series() warning:
+#> In raw series DEM55A: Fits from method=='AgeDepSpline' are not all positive. 
+#>   This is extremely rare. Series will be detrended with method=='Mean'. 
+#>   This might not be what you want. 
+#>   ARSTAN would tell you to plot that dirty dog at this point. 
+#>   Proceed with caution.
+#> 
+#> 
+#> series 'DEM55B' dplR::detrend.series() warning:
+#> In raw series DEM55B: Fits from method=='AgeDepSpline' are not all positive. 
+#>   This is extremely rare. Series will be detrended with method=='Mean'. 
+#>   This might not be what you want. 
+#>   ARSTAN would tell you to plot that dirty dog at this point. 
+#>   Proceed with caution.
+
+mo024.ddtrd.plots <- plot_d_detrend(mo024.ddtrd)
+#> Warning: Removed 1 row containing missing values or values outside the scale range
+#> (`geom_vline()`).
+#> Warning: Removed 1 row containing missing values or values outside the scale range
+#> (`geom_point()`).
+#> Warning: Removed 1 row containing missing values or values outside the scale range
+#> (`geom_vline()`).
+#> Removed 1 row containing missing values or values outside the scale range
+#> (`geom_vline()`).
+#> Warning: Removed 1 row containing missing values or values outside the scale range
+#> (`geom_point()`).
+#> Warning: Removed 1 row containing missing values or values outside the scale range
+#> (`geom_vline()`).
+#> Removed 1 row containing missing values or values outside the scale range
+#> (`geom_vline()`).
+#> Warning: Removed 1 row containing missing values or values outside the scale range
+#> (`geom_point()`).
+#> Warning: Removed 1 row containing missing values or values outside the scale range
+#> (`geom_vline()`).
+#> Removed 1 row containing missing values or values outside the scale range
+#> (`geom_vline()`).
+#> Warning: Removed 1 row containing missing values or values outside the scale range
+#> (`geom_point()`).
+#> Warning: Removed 1 row containing missing values or values outside the scale range
+#> (`geom_vline()`).
+#> Removed 1 row containing missing values or values outside the scale range
+#> (`geom_vline()`).
+#> Warning: Removed 1 row containing missing values or values outside the scale range
+#> (`geom_point()`).
+#> Warning: Removed 1 row containing missing values or values outside the scale range
+#> (`geom_vline()`).
+#> Removed 1 row containing missing values or values outside the scale range
+#> (`geom_vline()`).
+#> Warning: Removed 1 row containing missing values or values outside the scale range
+#> (`geom_point()`).
+#> Warning: Removed 1 row containing missing values or values outside the scale range
+#> (`geom_vline()`).
+#> Removed 1 row containing missing values or values outside the scale range
+#> (`geom_vline()`).
+#> Warning: Removed 1 row containing missing values or values outside the scale range
+#> (`geom_point()`).
+#> Warning: Removed 1 row containing missing values or values outside the scale range
+#> (`geom_vline()`).
+#> Removed 1 row containing missing values or values outside the scale range
+#> (`geom_vline()`).
+#> Warning: Removed 1 row containing missing values or values outside the scale range
+#> (`geom_point()`).
+#> Warning: Removed 1 row containing missing values or values outside the scale range
+#> (`geom_vline()`).
+#> Removed 1 row containing missing values or values outside the scale range
+#> (`geom_vline()`).
+#> Warning: Removed 1 row containing missing values or values outside the scale range
+#> (`geom_point()`).
+#> Warning: Removed 1 row containing missing values or values outside the scale range
+#> (`geom_vline()`).
+#> Removed 1 row containing missing values or values outside the scale range
+#> (`geom_vline()`).
+#> Warning: Removed 1 row containing missing values or values outside the scale range
+#> (`geom_point()`).
+#> Warning: Removed 1 row containing missing values or values outside the scale range
+#> (`geom_vline()`).
+#> Removed 1 row containing missing values or values outside the scale range
+#> (`geom_vline()`).
+#> Warning: Removed 1 row containing missing values or values outside the scale range
+#> (`geom_point()`).
+#> Warning: Removed 1 row containing missing values or values outside the scale range
+#> (`geom_vline()`).
+#> Removed 1 row containing missing values or values outside the scale range
+#> (`geom_vline()`).
+#> Warning: Removed 1 row containing missing values or values outside the scale range
+#> (`geom_point()`).
+#> Warning: Removed 1 row containing missing values or values outside the scale range
+#> (`geom_vline()`).
+
+mo024.ddtrd.plots$DEM01C
+#> $`Detection plots`
+```
+
+<img src="man/figures/README-example_3.4-1.png" alt="" width="100%" />
+
+    #> 
+    #> $`Dist. detrending`
+
+<img src="man/figures/README-example_3.4-2.png" alt="" width="100%" />
+
+    #> 
+    #> $`Result plots`
+
+<img src="man/figures/README-example_3.4-3.png" alt="" width="100%" />

@@ -440,11 +440,11 @@ plot_ci_detect <- function(ci_output) {
           ggplot2::ggplot(na.omit(rem_series),
                           ggplot2::aes(.data[[x_val]], .data[[y_val]],
                                        color = .data[[col_lt_val]], linewidth = .data[[col_lt_val]])) +
-          ggplot2::scale_color_manual(name = ggplot2::element_blank(),
+          ggplot2::scale_color_manual(name = NULL,
                                       values = c("black", "grey20", curve_col)) +
-          ggplot2::scale_linewidth_manual(name = ggplot2::element_blank(),
+          ggplot2::scale_linewidth_manual(name = NULL,
                                           values = c(0.75, 0.25, 0.5)) +
-          ggplot2::scale_linetype_manual(name = ggplot2::element_blank(),
+          ggplot2::scale_linetype_manual(name = NULL,
                                          values = c(1, 1, 1)) +
           ggplot2::geom_hline(yintercept = 0, linetype = 3) +
           ggplot2::geom_line() +

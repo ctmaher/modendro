@@ -198,6 +198,7 @@ PS_gro_PPT.plots[["Mean corr. coef. plot"]]
 
 data(idPRISMgroup)
 data(ps.groupIDs)
+colnames(ps.groupIDs)[colnames(ps.groupIDs) \%in\% "tree"] <- "series"
 
 # Take a look at the grouped data. Note that the climate data has the different sites indicated
 # and that we introduce a new data.frame (the group.IDs.df) that links tree ring series IDs with

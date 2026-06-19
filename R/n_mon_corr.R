@@ -121,7 +121,7 @@
 #' @export
 #'
 #' @examples
-#'## Bring in some real tree-ring and climate data
+#' ## Bring in some real tree-ring and climate data
 #' # Tree-ring data from Perkins & Swetnam 1996 (https://doi.org/10.1139/x26-241)
 #' data(ps96)
 #' # PRISM (https://www.prism.oregonstate.edu/) time series extracted for each site then averaged
@@ -182,6 +182,7 @@
 #'
 #' data(idPRISMgroup)
 #' data(ps.groupIDs)
+#' colnames(ps.groupIDs)[colnames(ps.groupIDs) %in% "tree"] <- "series"
 #'
 #' # Take a look at the grouped data. Note that the climate data has the different sites indicated
 #' # and that we introduce a new data.frame (the group.IDs.df) that links tree ring series IDs with
