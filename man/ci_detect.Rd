@@ -107,6 +107,7 @@ max.iter = 5)
 names(mo024.ci.out)
 
 # dplR::spag.plot() can give you a quick look at some of the key outputs
+library(dplR)
 spag.plot(mo024.ci.out[["Disturbance-free series"]])
 spag.plot(mo024.ci.out[["Disturbance index"]])
 
