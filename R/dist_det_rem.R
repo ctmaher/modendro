@@ -468,6 +468,7 @@ dist_det_rem <- function(rwi,
         # the disturbance covers
         # the end of the series
         d_start <- 0
+        d.range <- range(series_df$rwi, na.rm = TRUE)
         # Attach the rest of series if there is one
         if ((max(dist_period$year) + 1) < max(series_df$year)) {
           rest_of_years <- (max(dist_period$year) + 1):max(series_df$year)
@@ -479,6 +480,7 @@ dist_det_rem <- function(rwi,
 
           # Use TBRM of rest of series for start value of d in the Hugershoff equation below
           d_start <- DescTools::TukeyBiweight(rest_of_series$rwi, na.rm = TRUE)
+          d.range <- range(rest_of_series$rwi, na.rm = TRUE)
         }
 
         # Record the direction of the disturbance
@@ -490,11 +492,7 @@ dist_det_rem <- function(rwi,
         ## Curve fitting
         # Hugershoff - fits to the detected period and the reminder of the series too
         # The formula is modified. t is an added parameter that controls how far above/below the
-        # initial fit can go beyond the asymptote. b = 1, always, to allow t to work. d = the
-        # mean of the series after
-        # the disturbance period or 0.
-        # d mainly controls the asymptote value. We get a better chance at a successful fit if
-        # we set these parameters here.
+        # initial fit can go beyond the asymptote. b = 1, always, to allow t to work.
 
         # hug_form <-
         #   formula(rwi ~ a * ((x - t) ^ 1) * exp(-c * (x - t)) + d)
@@ -545,8 +543,6 @@ dist_det_rem <- function(rwi,
         } else {
           a_const <- c(-5, -0.005)
         }
-
-        d.range <- range(rest_of_series$rwi, na.rm = TRUE)
 
         lower_const <- list(a = a_const[1],
                             c = -5,

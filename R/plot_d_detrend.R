@@ -452,15 +452,15 @@ plot_d_detrend <- function(x = NULL) {
           panel.background = ggplot2::element_blank(),
           legend.position = "bottom",
           legend.position.inside = c(0.5, 0),
-          legend.direction = "horizontal"
+          legend.direction = "horizontal",
+          axis.title.x = ggplot2::element_blank()
         ) +
         ggplot2::scale_x_continuous(n.breaks = 10) +
         ggplot2::ylab(bquote(atop({
           A
         }[t] * " & " * {
           D
-        }[t] * " detrended", "resid. RWI"))) +
-        ggplot2::xlab("Year")
+        }[t] * " detrended", "resid. RWI")))
 
       # Variable binding
       rw.ddtrd.index <- "rw.ddtrd.index"
