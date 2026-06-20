@@ -24,11 +24,11 @@
 #' @export
 #'
 #' @examples
-#' data(PerkinsSwetnam96)
+#' data(ps96)
 #' # replace some values with NAs
-#' PS.NAs <- PerkinsSwetnam96
-#' # Give at least one series an NA value
-#' PS.NAs[sample(1:nrow(PS.NAs), 1),] <- NA
+#' PS.NAs <- ps96
+#' # Give a few series NA values
+#' PS.NAs[sample(1:nrow(PS.NAs), 4),] <- NA
 #'
 #' # Try to run a common dplR function that will throw an error if there are missing values in the
 #' # middle of series
