@@ -86,7 +86,7 @@ plot_d_detrend <- function(x = NULL) {
   base::options(digits = 2)
 
   # Global variables handling
-  utils::globalVariables(c(".", "A", "D"))
+  #utils::globalVariables(c(".", "A", "D"))
 
   ### Error catching
   base::stopifnot("x is not a list output from d_detrend()" =
