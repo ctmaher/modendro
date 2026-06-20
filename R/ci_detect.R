@@ -109,8 +109,9 @@
 #' names(mo024.ci.out)
 #'
 #' # dplR::spag.plot() can give you a quick look at some of the key outputs
-#' dplR::spag.plot(mo024.ci.out[["Disturbance-free series"]])
-#' dplR::spag.plot(mo024.ci.out[["Disturbance index"]])
+#' library(dplR)
+#' spag.plot(mo024.ci.out[["Disturbance-free series"]])
+#' spag.plot(mo024.ci.out[["Disturbance index"]])
 #'
 #' # You can get detailed plots from plot_ci_detect() - see the help file for more info
 #' mo024.ci.out.plots <- plot_ci_detect(mo024.ci.out)

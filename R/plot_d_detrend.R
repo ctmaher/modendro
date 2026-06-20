@@ -296,10 +296,9 @@ plot_d_detrend <- function(x = NULL) {
         ggplot2::scale_x_continuous(n.breaks = 10) +
         ggplot2::ylab("Transformed ring width") +
         ggplot2::xlab("Year") +
-        ggplot2::ggtitle(label = this.series, subtitle = base::bquote({
-          D
-        }[t] * .(
-          base::paste0(" event detrending (", ddt_s$d.detrend.method[1], ")")
+        ggplot2::ggtitle(label = this.series,
+                         subtitle = base::bquote({D}[t] * .(base::paste0(
+          " event detrending (", ddt_s$d.detrend.method[1], ")")
         )))
     }
 
@@ -346,7 +345,8 @@ plot_d_detrend <- function(x = NULL) {
     ribbon.df.sup[ribbon.df.rel$type %in% "release", c("rw", "rw.ddtrd")] <- NA
 
     # Nicer-looking version of the detrend method
-    pretty.d.method <- base::bquote({A}[t] * .(base::paste0(" trend (", pgc_s$detrend.method[1], ")"
+    pretty.d.method <- base::bquote({A}[t] * .(base::paste0(
+      " trend (", pgc_s$detrend.method[1], ")"
     )))
 
     # Variable binding:
@@ -394,9 +394,7 @@ plot_d_detrend <- function(x = NULL) {
       ggplot2::scale_color_manual(
         name = NULL,
         values = c("grey40", "black", "darkorange"),
-        labels = c("Original", bquote({
-          D
-        }[t] * ' detrended'), pretty.d.method)
+        labels = c("Original", bquote({D}[t] * ' detrended'), pretty.d.method)
       ) +
       ggplot2::theme(
         panel.background = ggplot2::element_blank(),
@@ -422,9 +420,7 @@ plot_d_detrend <- function(x = NULL) {
           legend.direction = "horizontal"
         ) +
         ggplot2::scale_x_continuous(n.breaks = 10) +
-        ggplot2::ylab(bquote({
-          D
-        }[t] * " detrended ring width (mm)")) +
+        ggplot2::ylab(bquote({D}[t] * " detrended ring width (mm)")) +
         ggplot2::xlab("Year")
 
       # Assemble the final output plots
