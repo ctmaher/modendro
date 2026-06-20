@@ -515,14 +515,27 @@ the disturbance detection and removal iterations and the final results
 plot for a single tree’s series.
 
 ``` r
-# PS.cid <- ci_detect(ps96, detrend.method = "ModHugershoff")
-# 
-# PS.cid.plots <- plot_ci_detect(PS.cid)
-# 
-# PS.cid.plots[["Disturbance detection & removal plots"]][["RRR27"]]
-# 
-# PS.cid.plots[["Final disturbance-free series plots"]][["RRR27"]]
+PS.cid <- ci_detect(ps96, detrend.method = "ModHugershoff")
+
+PS.cid.plots <- plot_ci_detect(PS.cid)
+
+PS.cid.plots[["Disturbance detection & removal plots"]][["RRR27"]]
+#> $`1`
 ```
+
+<img src="man/figures/README-example_3.3-1.png" alt="" width="100%" />
+
+    #> 
+    #> $`2`
+
+<img src="man/figures/README-example_3.3-2.png" alt="" width="100%" />
+
+``` r
+
+PS.cid.plots[["Final disturbance-free series plots"]][["RRR27"]]
+```
+
+<img src="man/figures/README-example_3.3-3.png" alt="" width="100%" />
 
 Druckenbrod et al (2024) recently developed a new method for detecting
 and removing disturbances (disturbance detrending). This method is

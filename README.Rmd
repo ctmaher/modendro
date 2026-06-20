@@ -261,13 +261,13 @@ One of the implicit features of curve intervention detection is that disturbance
 Let's employ the same tree-ring dataset that we've been using for the previous analyses. Then we'll use `plot_ci_detect()` to show plots of the disturbance detection and removal iterations and the final results plot for a single tree's series.
 
 ```{r example_3.3}
-# PS.cid <- ci_detect(ps96, detrend.method = "ModHugershoff")
-# 
-# PS.cid.plots <- plot_ci_detect(PS.cid)
-# 
-# PS.cid.plots[["Disturbance detection & removal plots"]][["RRR27"]]
-# 
-# PS.cid.plots[["Final disturbance-free series plots"]][["RRR27"]]
+PS.cid <- ci_detect(ps96, detrend.method = "ModHugershoff")
+
+PS.cid.plots <- plot_ci_detect(PS.cid)
+
+PS.cid.plots[["Disturbance detection & removal plots"]][["RRR27"]]
+
+PS.cid.plots[["Final disturbance-free series plots"]][["RRR27"]]
 
 ```
 
