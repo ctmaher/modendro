@@ -259,6 +259,7 @@ plot_d_detrend <- function(x = NULL) {
       pt.rw.ddtrd.i <- "pt.rw.ddtrd.i"
       pt.rw.i <- "pt.rw.i"
       curve <- "curve"
+      subtitle.d.method.part <- base::paste0(" event detrending (", ddt_s$d.detrend.method[1], ")")
 
       d.iter.plots <- ggplot2::ggplot(data = ddt_s) +
         ggplot2::geom_line(
@@ -297,9 +298,7 @@ plot_d_detrend <- function(x = NULL) {
         ggplot2::ylab("Transformed ring width") +
         ggplot2::xlab("Year") +
         ggplot2::ggtitle(label = this.series,
-                         subtitle = base::bquote({D}[t] * .(base::paste0(
-          " event detrending (", ddt_s$d.detrend.method[1], ")")
-        )))
+                         subtitle = base::bquote({D}[t] * .(subtitle.d.method.part)))
     }
 
     ### Make the summary ring width plot with detrended series compared to the original, plus show
@@ -345,9 +344,8 @@ plot_d_detrend <- function(x = NULL) {
     ribbon.df.sup[ribbon.df.rel$type %in% "release", c("rw", "rw.ddtrd")] <- NA
 
     # Nicer-looking version of the detrend method
-    pretty.d.method <- base::bquote({A}[t] * .(base::paste0(
-      " trend (", pgc_s$detrend.method[1], ")"
-    )))
+    d.method.part <- base::paste0(" trend (", pgc_s$detrend.method[1], ")")
+    pretty.d.method <- base::bquote({A}[t] * .(d.method.part))
 
     # Variable binding:
     rw.ddtrd <- "rw.ddtrd"
