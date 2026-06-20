@@ -258,6 +258,7 @@ plot_d_detrend <- function(x = NULL) {
       # More variable binding
       pt.rw.ddtrd.i <- "pt.rw.ddtrd.i"
       pt.rw.i <- "pt.rw.i"
+      curve <- "curve"
 
       d.iter.plots <- ggplot2::ggplot(data = ddt_s) +
         ggplot2::geom_line(
@@ -272,7 +273,7 @@ plot_d_detrend <- function(x = NULL) {
           na.rm = TRUE
         ) +
         ggplot2::geom_line(
-          ggplot2::aes(.data[[year]], curve, color = .data[[event.type]]),
+          ggplot2::aes(.data[[year]], .data[[curve]], color = .data[[event.type]]),
           na.rm = TRUE
         ) +
         ggplot2::scale_color_manual(
@@ -345,10 +346,7 @@ plot_d_detrend <- function(x = NULL) {
     ribbon.df.sup[ribbon.df.rel$type %in% "release", c("rw", "rw.ddtrd")] <- NA
 
     # Nicer-looking version of the detrend method
-    pretty.d.method <- base::bquote({
-      A
-    }[t] * .(base::paste0(
-      " trend (", pgc_s$detrend.method[1], ")"
+    pretty.d.method <- base::bquote({A}[t] * .(base::paste0(" trend (", pgc_s$detrend.method[1], ")"
     )))
 
     # Variable binding:
@@ -456,11 +454,7 @@ plot_d_detrend <- function(x = NULL) {
           axis.title.x = ggplot2::element_blank()
         ) +
         ggplot2::scale_x_continuous(n.breaks = 10) +
-        ggplot2::ylab(bquote(atop({
-          A
-        }[t] * " & " * {
-          D
-        }[t] * " detrended", "resid. RWI")))
+        ggplot2::ylab(bquote(atop({A}[t] * " & " * {D}[t] * " detrended", "resid. RWI")))
 
       # Variable binding
       rw.ddtrd.index <- "rw.ddtrd.index"
@@ -477,11 +471,7 @@ plot_d_detrend <- function(x = NULL) {
           legend.direction = "horizontal"
         ) +
         ggplot2::scale_x_continuous(n.breaks = 10) +
-        ggplot2::ylab(bquote(atop({
-          A
-        }[t] * " & " * {
-          D
-        }[t] * " detrended", "ratio RWI"))) +
+        ggplot2::ylab(bquote(atop({A}[t] * " & " * {D}[t] * " detrended", "ratio RWI"))) +
         ggplot2::xlab("Year")
 
 
