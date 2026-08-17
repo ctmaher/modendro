@@ -13,8 +13,8 @@ read_pos(path = NULL, default.OD = NULL)
 files that did not have a date assigned in CooRecorder.}
 }
 \value{
-A list containing 4 data.frames for ring widths, attributes, the original coordinates,
-and a 2-column data.frame of the files not read and the associated error message.
+A list containing 4 data.tables for ring widths, attributes, the original coordinates,
+and a 2-column data.table of the files not read and the associated error message.
 }
 \description{
 \code{\link{read_pos}} reads in .pos files from CooRecorder (Cybis Elektronik & Data AB, Larsson

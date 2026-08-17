@@ -101,8 +101,8 @@
 #' 7.8 or greater - which is the earliest version (I think!) to include the actual pith coordinates
 #' in the .pos files.
 #'
-#' @return A list containing 4 data.frames for ring widths, attributes, the original coordinates,
-#' and a 2-column data.frame of the files not read and the associated error message.
+#' @return A list containing 4 data.tables for ring widths, attributes, the original coordinates,
+#' and a 2-column data.table of the files not read and the associated error message.
 #'
 #' @references
 #' Larsson & Larsson (2023) \emph{CDendro and CooRecorder programs of the CDendro package},
@@ -111,6 +111,7 @@
 #' @seealso \code{\link{longer_rwl}}, \code{\link{rwl_longer}}
 #'
 #' @import stats
+#' @import data.table
 #'
 #' @export
 #'
@@ -198,9 +199,10 @@ read_pos <- function(path = NULL,
       path.pieces <- strsplit(f, split = "/", fixed = TRUE)[[1]]
       path.pieces[[length(path.pieces)]]
     }) # This isolates the .pos files only
-    fdf <- data.frame(filenames = filenames, ind = 1:length(filenames))
-    fdf.agg <- aggregate(ind ~ filenames, data = fdf, FUN = \(f) length(f))
-    these.are.dups <- fdf.agg[which(fdf.agg$ind > 1),]
+    fdt <- data.table::data.table(filenames = filenames, ind = 1:length(filenames))
+    #fdt.agg <- aggregate(ind ~ filenames, data = fdt, FUN = \(f) length(f))
+    fdt.agg <- fdt[, .(ind = .N), by = filenames]
+    these.are.dups <- fdt.agg[ind > 1]
 
     if (nrow(these.are.dups) != 0) {
       # Give warning
@@ -216,6 +218,7 @@ read_pos <- function(path = NULL,
 
     # For internal testing
     #f <- pos.files
+    #f <- pos.files[[2]]
 
     # wrap in tryCatch so we can handle the error
     tryCatch({
@@ -294,7 +297,7 @@ read_pos <- function(path = NULL,
           # The coords are the after the "=", and are themselves separated by ","
           pith.coords <- pith.coord.line[[1]][2] |> strsplit(split = ",")
           # 1st value is x, second is y
-          pith.coords.df <- data.frame(
+          pith.coords.dt <- data.table::data.table(
             series = seriesID,
             x = as.numeric(pith.coords[[1]][1]),
             y = as.numeric(pith.coords[[1]][2]),
@@ -302,11 +305,11 @@ read_pos <- function(path = NULL,
             type = "pith"
           )
 
-          pith.coords.df$type <- factor(pith.coords.df$type,
+          pith.coords.dt$type <- factor(pith.coords.dt$type,
                                         levels = c("reg", "multi1", "multi2", "W", "gap", "pith"))
         } else {
           # If no pith coords
-          pith.coords.df <- NULL
+          pith.coords.dt <- NULL
         }
 
         ## Get comments if they exist - should be between OD and pith coordinates
@@ -314,7 +317,7 @@ read_pos <- function(path = NULL,
         # Written will always exist, but pith coords may not
         # Sometimes these elements are in other places, so we have to control for that too.
         if (length(grep("DATED", raw.input)) >= 1) {
-          if (is.null(pith.coords.df)) {
+          if (is.null(pith.coords.dt)) {
             if ((grep("Written", raw.input) - grep("DATED", raw.input)) > 1) {
               comment.lines <- raw.input[(grep("DATED", raw.input) + 1):(grep("Written",
                                                                               raw.input) - 1)][1]
@@ -336,7 +339,7 @@ read_pos <- function(path = NULL,
             }
           }
         } else { # Rely on the SCALE 1 line instead
-          if (is.null(pith.coords.df)) {
+          if (is.null(pith.coords.dt)) {
             if ((grep("Written", raw.input) - grep("SCALE", raw.input)) > 1) {
               comment.lines <- raw.input[(grep("SCALE", raw.input) + 1):(grep("Written",
                                                                               raw.input) - 1)][1]
@@ -382,110 +385,170 @@ read_pos <- function(path = NULL,
 
         # Any ZERO points have to handled first
         suppressWarnings(
-          ring.bound.df <- data.frame(
+          ring.bound.dt <- data.table::data.table(
             ring.bound.raw = ring.bound.raw,
             zeros.rep = 1 + as.numeric(sub(".*?#ZERO", "", ring.bound.raw))
           )
         )
-        ring.bound.df$zeros.rep <- ifelse(is.na(ring.bound.df$zeros.rep),
+        ring.bound.dt$zeros.rep <- ifelse(is.na(ring.bound.dt$zeros.rep),
                                           1,
-                                          ring.bound.df$zeros.rep)
-        ring.bound <- rep(ring.bound.raw, times = ring.bound.df$zeros.rep)
+                                          ring.bound.dt$zeros.rep)
+        ring.bound <- rep(ring.bound.raw, times = ring.bound.dt$zeros.rep)
 
 
-        names(ring.bound) <- 1:length(ring.bound)
 
-        ring.bound.df <- mapply(FUN = \(x, x.names) {
-          if (!(substr(x, 1, 1) %in% "D")) {
-            # for regular and multi coords
-            # check for label, get it if exists
-            label_match <- sub(".*?#", "", x)
-            label <- ifelse(grepl("#", x), label_match, NA)
+        # ring.bound is a character vector, the following turns it into a data.table of coordinates
+        #names(ring.bound) <- 1:length(ring.bound)
+        # system.time(
+        # ring.bound.dt.orig <- mapply(FUN = \(x, x.names) {
+        #   if (!(substr(x, 1, 1) %in% "D")) {
+        #     # for regular and multi coords
+        #     # check for label, get it if exists
+        #     label_match <- sub(".*?#", "", x)
+        #     label <- ifelse(grepl("#", x), label_match, NA)
+        #
+        #     coords.string <- sub(" #.*", "", x)  # Remove everything after ' #'
+        #     # in the cases of multipoints, split by spaces. If single points this leaves it
+        #     # unchanged.
+        #     coords.string1 <- strsplit(coords.string, "\\s+")[[1]]
+        #
+        #     if (length(coords.string1) == 1) { # "regular points"
+        #       coords <- strsplit(coords.string1, split = ",")
+        #       coords.dt <- data.table::data.table(
+        #         series = seriesID,
+        #         x = as.numeric(coords[[1]][1]),
+        #         y = as.numeric(coords[[1]][2]),
+        #         label = label,
+        #         type = "reg"
+        #       )
+        #     } else { # multi points
+        #       coords1 <- coords.string1[1] |> strsplit(split = ",")
+        #       coords2 <- coords.string1[2] |> strsplit(split = ",")
+        #       coords.dt <- data.table::data.table(
+        #         series = seriesID,
+        #         x = c(as.numeric(coords1[[1]][1]), as.numeric(coords2[[1]][1])),
+        #         y = c(as.numeric(coords1[[1]][2]), as.numeric(coords2[[1]][2])),
+        #         label = label,
+        #         type = c("multi1", "multi2")
+        #         #type = c(paste0("multi1_", x.names), paste0("multi2_", x.names))
+        #       )
+        #     }
+        #
+        #   } else {
+        #     # For season wood and gaps - these are always single points
+        #     # And remove the "D"
+        #     noD <- sub(pattern = "D", replacement = "", x)
+        #
+        #     # check for label, get it if exists.
+        #     # $ indicates go back fomr the end.
+        #     # ^ is go forward from the start
+        #     # Also have to deal with the "#W#" and "#%gap"
+        #     labels <- sub(".*?#", "", noD)
+        #     if (grepl("#", labels)) {
+        #       # Split into primary and secondary labels
+        #       type <- sub("#.*", "", labels)  # Before second #
+        #       label <- sub(".*?#", "", labels)  # After second #
+        #     } else {
+        #       # Single label case - which will be a type (nothing after second #)
+        #       type <- labels
+        #       label <- NA
+        #     }
+        #
+        #     # Do some clean up
+        #     # if a gap, remove the "%"
+        #     type <- gsub(pattern = "%", replacement = "", type)
+        #     label <- gsub("^#+|#+$", "", label)
+        #
+        #     # Remove everything after ' #'
+        #     coords.string <- sub(pattern = " #.*",
+        #                          replacement = "",
+        #                          x = noD)
+        #
+        #     coords <- strsplit(coords.string, split = ",")
+        #     coords.dt <- data.table::data.table(
+        #       series = seriesID,
+        #       x = as.numeric(coords[[1]][1]),
+        #       y = as.numeric(coords[[1]][2]),
+        #       label = label,
+        #       type = type
+        #     )
+        #
+        #   }
+        #   coords.dt
+        # }, x = ring.bound, x.names = names(ring.bound), SIMPLIFY = FALSE) |>
+        #   data.table::rbindlist()
+        # )
 
-            coords.string <- sub(" #.*", "", x)  # Remove everything after ' #'
-            # in the cases of multipoints, split by spaces. If single points this leaves it
-            # unchanged.
-            coords.string1 <- strsplit(coords.string, "\\s+")[[1]]
+        ## Vectorized point parse (replaces the per-point mapply + rbindlist)
+        x.raw <- unname(ring.bound)
+        n     <- length(x.raw)
 
-            if (length(coords.string1) == 1) { # "regular points"
-              coords <- strsplit(coords.string1, split = ",")
-              coords.df <- data.frame(
-                series = seriesID,
-                x = as.numeric(coords[[1]][1]),
-                y = as.numeric(coords[[1]][2]),
-                label = label,
-                type = "reg"
-              )
-            } else { # multi points
-              coords1 <- coords.string1[1] |> strsplit(split = ",")
-              coords2 <- coords.string1[2] |> strsplit(split = ",")
-              coords.df <- data.frame(
-                series = seriesID,
-                x = c(as.numeric(coords1[[1]][1]), as.numeric(coords2[[1]][1])),
-                y = c(as.numeric(coords1[[1]][2]), as.numeric(coords2[[1]][2])),
-                label = label,
-                type = c("multi1", "multi2")
-                #type = c(paste0("multi1_", x.names), paste0("multi2_", x.names))
-              )
-            }
+        # D-prefixed points are seasonwood ("W") / gaps; strip the leading D only on those
+        is.D           <- substr(x.raw, 1L, 1L) == "D"
+        base.str       <- x.raw
+        base.str[is.D] <- sub("D", "", x.raw[is.D])          # == noD, but only where needed
 
-          } else {
-            # For season wood and gaps - these are always single points
-            # And remove the "D"
-            noD <- sub(pattern = "D", replacement = "", x)
+        # Coordinate portion = everything before the first " #", trimmed so a trailing
+        # space on single points doesn't read as a second pair
+        coords.string <- trimws(sub(" #.*", "", base.str))
 
-            # check for label, get it if exists.
-            # $ indicates go back fomr the end.
-            # ^ is go forward from the start
-            # Also have to deal with the "#W#" and "#%gap"
-            labels <- sub(".*?#", "", noD)
-            if (grepl("#", labels)) {
-              # Split into primary and secondary labels
-              type <- sub("#.*", "", labels)  # Before second #
-              label <- sub(".*?#", "", labels)  # After second #
-            } else {
-              # Single label case - which will be a type (nothing after second #)
-              type <- labels
-              label <- NA
-            }
+        # A multipoint now = a non-D coord string with whitespace *between* two pairs
+        is.multi <- !is.D & grepl("\\s", coords.string)
 
-            # Do some clean up
-            # if a gap, remove the "%"
-            type <- gsub(pattern = "%", replacement = "", type)
-            label <- gsub("^#+|#+$", "", label)
+        # --- labels & types -------------------------------------------------------
+        # Non-D label: text after the first '#', else NA (cleaned to NA later at the "" step)
+        labelA <- ifelse(grepl("#", x.raw), sub(".*?#", "", x.raw), NA_character_)
 
-            # Remove everything after ' #'
-            coords.string <- sub(pattern = " #.*",
-                                 replacement = "",
-                                 x = noD)
+        # D label/type: text after first '#'; a second '#' splits it into type#label
+        labelsD   <- sub(".*?#", "", base.str)               # base.str == noD on D rows
+        hasSecond <- grepl("#", labelsD)
+        typeD     <- ifelse(hasSecond, sub("#.*",   "", labelsD), labelsD)
+        labelD    <- ifelse(hasSecond, sub(".*?#",  "", labelsD), NA_character_)
+        typeD     <- gsub("%", "", typeD)                    # drop the '%' from gaps
+        labelD    <- gsub("^#+|#+$", "", labelD)             # strip stray leading/trailing '#'
 
-            coords <- strsplit(coords.string, split = ",")
-            coords.df <- data.frame(
-              series = seriesID,
-              x = as.numeric(coords[[1]][1]),
-              y = as.numeric(coords[[1]][2]),
-              label = label,
-              type = type
-            )
+        label.el <- ifelse(is.D, labelD, labelA)             # one label per input element
 
-          }
-          coords.df
-        }, x = ring.bound, x.names = names(ring.bound), SIMPLIFY = FALSE) |>
-          do.call(what = "rbind")
+        # --- coordinates ----------------------------------------------------------
+        first.pair  <- sub("\\s.*", "", coords.string)                        # "x1,y1"
+        second.pair <- ifelse(is.multi, sub("^\\S+\\s+", "", coords.string),  # "x2,y2"
+                              NA_character_)
+
+        x1 <- as.numeric(sub(",.*$",    "", first.pair))
+        y1 <- as.numeric(sub("^[^,]*,", "", first.pair))
+        x2 <- as.numeric(sub(",.*$",    "", second.pair))    # NA where not multi
+        y2 <- as.numeric(sub("^[^,]*,", "", second.pair))
+
+        # --- expand (multipoints -> two rows) and assemble ------------------------
+        n.rows <- ifelse(is.multi, 2L, 1L)
+        oi     <- rep.int(seq_len(n), n.rows)                # output row -> input element
+        slot   <- sequence(n.rows)                           # 1 for singles; 1,2 within a multi
+
+        ring.bound.dt <- data.table::data.table(
+          series = seriesID,
+          x      = data.table::fifelse(slot == 2L, x2[oi], x1[oi]),
+          y      = data.table::fifelse(slot == 2L, y2[oi], y1[oi]),
+          label  = label.el[oi],
+          type   = data.table::fifelse(
+            is.D[oi], typeD[oi],
+            data.table::fifelse(is.multi[oi],
+                                data.table::fifelse(slot == 1L, "multi1", "multi2"),
+                                "reg"))
+        )
 
         # Files that end in a gap or a W should be trimmed - I think this is rare but is possible
         # Really what we need is that the file ends in a reg point or a multi2 point
-        if(!(ring.bound.df$type[nrow(ring.bound.df)] %in% c("reg","multi2"))) {
-          ring.bound.df <- ring.bound.df[1:(nrow(ring.bound.df) - 1),]
+        if(!(ring.bound.dt$type[nrow(ring.bound.dt)] %in% c("reg","multi2"))) {
+          ring.bound.dt <- ring.bound.dt[1:(nrow(ring.bound.dt) - 1),]
         }
 
         # Check it twice!
-        if(!(ring.bound.df$type[nrow(ring.bound.df)] %in% c("reg","multi2"))) {
-          ring.bound.df <- ring.bound.df[1:(nrow(ring.bound.df) - 1),]
+        if(!(ring.bound.dt$type[nrow(ring.bound.dt)] %in% c("reg","multi2"))) {
+          ring.bound.dt <- ring.bound.dt[1:(nrow(ring.bound.dt) - 1),]
         }
 
         # Add the pith coordinates.
-        all.coords <- rbind(ring.bound.df[, c("series","x","y","label","type")], pith.coords.df)
+        all.coords <- rbind(ring.bound.dt[, c("series","x","y","label","type")], pith.coords.dt)
 
         # Sometimes the files have "Erroneous order" messages, (points are out of out of order).
         # We can order the points by their x or y position. Leave out pith for now if it's there -
@@ -493,7 +556,7 @@ read_pos <- function(path = NULL,
         # The following several lines fix the order if it is broken
 
         # Each set of coords needs a unique identifier
-        all.coords$orig.index <- 1:nrow(all.coords)
+        #all.coords$orig.index <- 1:nrow(all.coords)
 
         # ggplot(all.coords) +
         #   geom_path(aes(x, y), inherit.aes = F) +
@@ -569,8 +632,8 @@ read_pos <- function(path = NULL,
 
 
 
-        # Set up the null data.frame
-        error.df <- data.frame(file = f, message = NA)
+        # Set up the null data.table
+        error.dt <- data.table::data.table(file = f, message = NA)
 
         # All points but pith
         if (any(check.diffs$x.head[!(check.diffs$type %in% "pith")] %in% "div" &
@@ -580,17 +643,17 @@ read_pos <- function(path = NULL,
                          "possible erroneous point order"),
                   call. = FALSE, immediate. = TRUE)
 
-          error.df <- data.frame(file = f,
-                                 message = paste0("Check coordinates - ",
-                                                  "possible erroneous point order"))
+          error.dt <- data.table::data.table(file = f,
+                                             message = paste0("Check coordinates - ",
+                                                              "possible erroneous point order"))
 
         }
 
-        # If pith.coords.df exists,
+        # If pith.coords.dt exists,
         # check if pith direction is the same as last set of points,
         # if the distance is really large,
         # or if the pith lies within the range of the long axis.
-        if (!is.null(pith.coords.df)) {
+        if (!is.null(pith.coords.dt)) {
           # Give a separate warning if the pith direction is divergent & based on different
           # criteria: only one heading has to be divergent or if the long axis dist is more
           # than 50% of the range of the other points
@@ -606,12 +669,15 @@ read_pos <- function(path = NULL,
           ) == 1,
           "x", "y")
 
-          long.axis.range <- range(check.diffs[!(check.diffs$type %in% "pith"),
-                                               long.axis])
+          # long.axis.range <- range(check.diffs[!(check.diffs$type %in% "pith"),
+          #                                      long.axis])
+          long.axis.range <- range(check.diffs[!(check.diffs$type %in% "pith"), ..long.axis])
           long.axis.range.diff <- abs(diff(long.axis.range))
 
           max.diff <- abs(c(check.diffs$x.diff[!(check.diffs$type %in% "pith")],
                             check.diffs$y.diff[!(check.diffs$type %in% "pith")])) |> max()
+
+          short.axis.dir <- paste0(short.axis, ".dir")
 
           if (
             # pith diffs are larger than max diff for ring widths - ie, ignore the small pith diffs
@@ -620,8 +686,8 @@ read_pos <- function(path = NULL,
              max.diff)
             &&
             # direction to pith is different than the last two points
-            !(check.diffs[check.diffs$type %in% "pith", paste0(short.axis, ".dir")] %in%
-              check.diffs[(nrow(check.diffs) - 1), paste0(short.axis, ".dir")])
+            !(check.diffs[check.diffs$type %in% "pith", ..short.axis.dir] %in%
+              check.diffs[(nrow(check.diffs) - 1), ..short.axis.dir])
             ||
             # max pith dist is larger than half of the long.axis.range.diff
             max(abs(c(check.diffs$x.diff[check.diffs$type %in% "pith"],
@@ -633,11 +699,11 @@ read_pos <- function(path = NULL,
                            "possible pith location error"),
                     call. = FALSE, immediate. = TRUE)
 
-            if (is.na(error.df$message)) {
-              error.df$message <- paste0("Check pith location - ",
+            if (is.na(error.dt$message)) {
+              error.dt$message <- paste0("Check pith location - ",
                                          "possible pith location error")
             } else {
-              error.df$message <- paste(error.df$message,
+              error.dt$message <- paste(error.dt$message,
                                         paste0("Check pith location - ",
                                                "possible pith location error"),
                                         sep = "; ")
@@ -727,15 +793,21 @@ read_pos <- function(path = NULL,
 
 
         # Whole ring width is now the sum of dist.mm within each year, excluding multi2 and gaps
-        whole.ring.widths <- aggregate(dist.mm ~ year,
-                                       data = all.coords[!(all.coords$new.type %in%
-                                                             c("multi2", "gap2", "pith")) &
-                                                           !substr(all.coords$new.type, 1, 4) %in%
-                                                           "gap.", ],
-                                       FUN = sum,
-                                       drop = FALSE)
+        # whole.ring.widths.orig <- aggregate(cbind(rw.mm = dist.mm) ~ year,
+        #                                data = all.coords[!(all.coords$new.type %in%
+        #                                                      c("multi2", "gap2", "pith")) &
+        #                                                    !substr(all.coords$new.type, 1, 4) %in%
+        #                                                    "gap.", ],
+        #                                FUN = sum,
+        #                                drop = FALSE)
 
-        colnames(whole.ring.widths)[colnames(whole.ring.widths) %in% "dist.mm"] <- "rw.mm"
+        whole.ring.widths <- all.coords[
+          !(new.type %in% c("multi2", "gap2", "pith")) &
+            !(substr(new.type, 1L, 4L) %in% "gap.") &
+            !is.na(year) & !is.na(dist.mm),          # replicates na.action = na.omit
+          .(rw.mm = sum(dist.mm)),                    # == cbind(rw.mm = dist.mm) ... FUN = sum
+          keyby = year                               # ascending, matching aggregate's sort
+        ]
 
         # Add the seriesID
         whole.ring.widths$series <- seriesID
@@ -752,13 +824,16 @@ read_pos <- function(path = NULL,
                                               c("multi2", "gap2", "pith")), ]
           # Do some error catching here - check for multiple W points per year. If this happens,
           # skip the EW/LW points and give the user a message about potential errors
-          per.year.check <- aggregate(type ~ year,
-                                      data = seas.wood.widths1,
-                                      FUN = length,
-                                      drop = FALSE)
-          if (any(per.year.check[,"type"] > 2)) {
+          # per.year.check <- aggregate(type ~ year,
+          #                             data = seas.wood.widths1,
+          #                             FUN = length,
+          #                             drop = FALSE)
+
+          per.year.check <- seas.wood.widths1[!is.na(year), .(type = .N), keyby = year]
+
+          if (any(per.year.check$type > 2)) {
             paste0("Possibly multiple seasonwood boundaries detected in ",
-                   per.year.check[per.year.check$type > 2, "year"],".",
+                   per.year.check[per.year.check$type > 2, year],". ",
                    "Seasonwood data not read.")
             whole.ring.widths$lw.mm <- NA
             whole.ring.widths$ew.mm <- NA
@@ -787,7 +862,7 @@ read_pos <- function(path = NULL,
                                          }
                                          this.year
 
-                                       }) |> do.call(what = "rbind")
+                                       }) |> data.table::rbindlist()
 
 
             # Add the seasonwood points to the whole ring widths
@@ -810,41 +885,52 @@ read_pos <- function(path = NULL,
 
         # Also need to get the labels back for the appropriate years
         # Prep the labels
-        year.labels <- aggregate(
-          label ~ year,
-          all.coords,
-          na.action = na.pass,
-          drop = FALSE,
-          FUN = \(x) {
-            all.labels <- c(x)
-            if (any(!is.na(all.labels))) {
-              all.labels <- paste(c(as.character(stats::na.omit(
-                all.labels
-              ))), collapse = "; ")
-            } else {
-              all.labels <- NA
-            }
-            all.labels
-          }
-        )
+        # year.labels.orig <- aggregate(
+        #   label ~ year,
+        #   all.coords,
+        #   na.action = na.pass,
+        #   drop = FALSE,
+        #   FUN = \(x) {
+        #     all.labels <- c(x)
+        #     if (any(!is.na(all.labels))) {
+        #       all.labels <- paste(c(as.character(stats::na.omit(
+        #         all.labels
+        #       ))), collapse = "; ")
+        #     } else {
+        #       all.labels <- NA
+        #     }
+        #     all.labels
+        #   }
+        # )
 
-        ## Make the main output data.frames
+        year.labels <- all.coords[
+          !is.na(year),
+          .(label = {
+            lab <- label[!is.na(label)]
+            if (length(lab)) paste(as.character(lab), collapse = "; ") else NA_character_
+          }),
+          keyby = year
+        ]
 
-        whole.ring.widths1 <- merge(
-          whole.ring.widths,
-          year.labels,
-          by = "year",
-          # by.y = "year1",
-          all.y = FALSE
-        )
+        ## Make the main output data.tables
+
+        # whole.ring.widths1 <- merge(
+        #   whole.ring.widths,
+        #   year.labels,
+        #   by = "year",
+        #   # by.y = "year1",
+        #   all.y = FALSE
+        # )
+
+        whole.ring.widths1 <- whole.ring.widths[year.labels, on = "year", nomatch = NULL]
 
         # ggplot(whole.ring.widths1, aes(year, rw.mm)) +
         #   geom_line()
 
-        attributes <- data.frame(
+        attributes <- data.table::data.table(
           series = seriesID,
           img.DPI = NA,
-          d2pith.mm = ifelse(is.null(pith.coords.df),
+          d2pith.mm = ifelse(is.null(pith.coords.dt),
                              NA,
                              all.coords$dist.mm[all.coords$type %in% "pith"]),
           out.date = OD,
@@ -853,7 +939,7 @@ read_pos <- function(path = NULL,
         )
 
 
-        error.message <- error.df$message
+        error.message <- error.dt$message
 
         if (!is.na(DPI)) {
           attributes$img.DPI <- DPI
@@ -866,10 +952,10 @@ read_pos <- function(path = NULL,
                            "be incorrect if DPI is wrong."),
                     call. = FALSE, immediate. = TRUE)
           }
-          error.message <- paste(error.df$message, DPI.message, sep = "; ")
+          error.message <- paste(error.dt$message, DPI.message, sep = "; ")
         }
 
-        attributes$radius.mm <- ifelse(is.null(pith.coords.df),
+        attributes$radius.mm <- ifelse(is.null(pith.coords.dt),
                                        NA,
                                        attributes$total.rw.mm + attributes$d2pith.mm)
         attributes$comment <- comment
@@ -901,28 +987,28 @@ read_pos <- function(path = NULL,
         # dated.
         # Get specific here for the individual file
         if (length(grep("DENDRO", raw.input[1])) != 1) {
-          tbdr.df <- data.frame(file = f,
-                                message = "This file could not be identified as a DENDRO file (another data type?)")
+          tbdr.dt <- data.table::data.table(file = f,
+                                            message = "This file could not be identified as a DENDRO file (another data type?)")
         }
 
         if (CR.ver < 780) {
-          tbdr.df <- data.frame(file = f,
-                                message = enc2utf8(".pos files must be from CooRecorder \u2265 7.8 (update CooRecorder & resave file)"))
+          tbdr.dt <- data.table::data.table(file = f,
+                                            message = enc2utf8(".pos files must be from CooRecorder \u2265 7.8 (update CooRecorder & resave file)"))
         } else {
 
           if (is.null(OD)) {
-            tbdr.df <- data.frame(file = f,
-                                  message = "This file was not dated (no outer year assigned in CooRecorder)")
+            tbdr.dt <- data.table::data.table(file = f,
+                                              message = "This file was not dated (no outer year assigned in CooRecorder)")
           }}
 
-        tbdr.df
+        tbdr.dt
       }
     }, error = function(e) {
       # message("Error: Unknown problem with .pos file")
-      # Return tbdr.df in case of an error
-      tbdr.df <- data.frame(file = f,
-                            message = "Unknown problem with .pos file. Check in CooRecorder.")
-      tbdr.df
+      # Return tbdr.dt in case of an error
+      tbdr.dt <- data.table::data.table(file = f,
+                                        message = "Unknown problem with .pos file. Check in CooRecorder.")
+      tbdr.dt
     }) # end of tryCatch
   })
 
@@ -938,36 +1024,49 @@ read_pos <- function(path = NULL,
 
   } else {
     # If many series, bind the ring widths and
-    # attributes into single data.frames
+    # attributes into single data.tables
 
     rw <- lapply(out.list[which(sapply(out.list, class) %in% "list")], FUN = \(x) {
       x[["Ring widths"]]
     }) |>
-      do.call(what = "rbind")
+      data.table::rbindlist()
     # Sort by series and year within series
     rw <- rw[order(rw$series, rw$year, decreasing = FALSE),]
 
     att <- lapply(out.list[which(sapply(out.list, class) %in% "list")], FUN = \(x) {
       x[["Attributes"]]
     }) |>
-      do.call(what = "rbind")
+      data.table::rbindlist()
     # Sort by series and year within series
     att <- att[order(att$series, decreasing = FALSE),]
     # Add error message for replicated files
-    if(nrow(these.are.dups) != 0) {
-      att[att$series %in% gsub(".pos", "", these.are.dups$filenames), ]$error.message <-
-        ifelse(is.na(att[att$series %in% gsub(".pos", "", these.are.dups$filenames), ]$error.message),
-               "REPLICATED FILE",
-               paste0("REPLICATED FILE; ", att[att$series %in% gsub(".pos", "", these.are.dups$filenames), ]$error.message))
+    # if(nrow(these.are.dups) != 0) {
+    #   att[att$series %in% gsub(".pos", "", these.are.dups$filenames), ]$error.message <-
+    #     ifelse(is.na(att[att$series %in% gsub(".pos", "", these.are.dups$filenames), ]$error.message),
+    #            "REPLICATED FILE",
+    #            paste0("REPLICATED FILE; ", att[att$series %in% gsub(".pos", "", these.are.dups$filenames), ]$error.message))
+    # }
+    if (nrow(these.are.dups) != 0) {
+      dup.series <- gsub(".pos", "", these.are.dups$filenames)
+      att[series %in% dup.series,
+          error.message := ifelse(is.na(error.message),
+                                  "REPLICATED FILE",
+                                  paste0("REPLICATED FILE; ", error.message))]
     }
 
     coord <- lapply(out.list[which(sapply(out.list, class) %in% "list")], FUN = \(x) {
       x[["Raw coordinates"]]
     }) |>
-      do.call(what = "rbind")
+      data.table::rbindlist()
 
-    tbdr <- out.list[which(sapply(out.list, class) %in% "data.frame")] |>
-      do.call(what = "rbind")
+    # tbdr <- out.list[which(sapply(out.list, class) %in% c("data.table", "data.frame"))] |>
+    #   data.table::rbindlist()
+    not.read <- vapply(out.list, is.data.frame, logical(1))   # not-read elements only
+
+    rw    <- lapply(out.list[!not.read], `[[`, "Ring widths") |> data.table::rbindlist()
+    att   <- lapply(out.list[!not.read], `[[`, "Attributes") |> data.table::rbindlist()
+    coord <- lapply(out.list[!not.read], `[[`, "Raw coordinates") |> data.table::rbindlist()
+    tbdr  <- out.list[not.read] |> data.table::rbindlist()
 
     new.out.list <- list(rw, att, coord, tbdr)
 
