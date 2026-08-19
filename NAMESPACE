@@ -25,6 +25,7 @@ export(yrs_to_pith)
 import(data.table)
 import(dplR)
 import(ggplot2)
+import(parallel)
 import(stats)
 importFrom(DescTools,
   MAD,

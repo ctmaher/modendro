@@ -1,6 +1,6 @@
 Package: modendro
 Title: modendro: more dendro (tree-ring) functions in R
-Version: 0.9.1
+Version: 0.9.2
 Authors@R: 
     person("Colin", "Maher", , "cmbristlecone@gmail.com", role = c("aut", "cre"),
            comment = c(ORCID = "https://orcid.org/0000-0001-8409-7775"))
@@ -16,6 +16,7 @@ Imports:
     dplR (>= 1.7.4),
     ggplot2 (>= 3.5.0),
     data.table,
+    parallel,
     cowplot,
     stats,
     DescTools,
