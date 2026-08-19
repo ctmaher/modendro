@@ -312,56 +312,62 @@ read_pos <- function(path = NULL,
           pith.coords.dt <- NULL
         }
 
-        ## Get comments if they exist - should be between OD and pith coordinates
-        # This needs to be the line after DATED and before Pith Coords or "Written"
-        # Written will always exist, but pith coords may not
-        # Sometimes these elements are in other places, so we have to control for that too.
-        if (length(grep("DATED", raw.input)) >= 1) {
-          if (is.null(pith.coords.dt)) {
-            if ((grep("Written", raw.input) - grep("DATED", raw.input)) > 1) {
-              comment.lines <- raw.input[(grep("DATED", raw.input) + 1):(grep("Written",
-                                                                              raw.input) - 1)][1]
-              comment <- gsub(pattern = "#C ",
-                              replacement = "",
-                              comment.lines)
-            } else {
-              comment <- NA
-            }
-          } else {
-            if ((grep("PithCoordinates", raw.input) - grep("DATED", raw.input)) > 1) {
-              comment.lines <- raw.input[(grep("DATED", raw.input) + 1):(grep("PithCoordinates",
-                                                                              raw.input) - 1)][1]
-              comment <- gsub(pattern = "#C ",
-                              replacement = "",
-                              comment.lines)
-            } else {
-              comment <- NA
-            }
-          }
-        } else { # Rely on the SCALE 1 line instead
-          if (is.null(pith.coords.dt)) {
-            if ((grep("Written", raw.input) - grep("SCALE", raw.input)) > 1) {
-              comment.lines <- raw.input[(grep("SCALE", raw.input) + 1):(grep("Written",
-                                                                              raw.input) - 1)][1]
-              comment <- gsub(pattern = "#C ",
-                              replacement = "",
-                              comment.lines)
-            } else {
-              comment <- NA
-            }
-          } else {
-            if ((grep("PithCoordinates", raw.input) - grep("SCALE", raw.input)) > 1) {
-              comment.lines <- raw.input[(grep("SCALE", raw.input) + 1):(grep("PithCoordinates",
-                                                                              raw.input) - 1)][1]
-              comment <- gsub(pattern = "#C ",
-                              replacement = "",
-                              comment.lines)
-            } else {
-              comment <- NA
-            }
-          }
-        }
-        comment <- ifelse(length(comment) > 1, NA, comment)
+
+        ## Get the comment if it exists.
+        ## DATED / Written / PithCoordinates / CalcRadius / CooRecorder / licensedTo are all
+        ## '#C ' lines here too, so the comment is the one '#C ' line that ISN'T metadata.
+        cC.text  <- sub("^#C ", "", grep("^#C ", raw.input, value = TRUE))
+        meta.pat <- "^(DATED |Written=|PithCoordinates=|CalcRadius=|CooRecorder=|licensedTo=)"
+        comment.text <- cC.text[!grepl(meta.pat, cC.text)]
+        comment <- if (length(comment.text) >= 1) paste(comment.text, collapse = "; ") else NA_character_
+
+        ## Old (flawed) comment code
+        # if (length(grep("DATED", raw.input)) >= 1) {
+        #   if (is.null(pith.coords.dt)) {
+        #     if ((grep("Written", raw.input) - grep("DATED", raw.input)) > 1) {
+        #       comment.lines <- raw.input[(grep("DATED", raw.input) + 1):(grep("Written",
+        #                                                                       raw.input) - 1)][1]
+        #       comment <- gsub(pattern = "#C ",
+        #                       replacement = "",
+        #                       comment.lines)
+        #     } else {
+        #       comment <- NA
+        #     }
+        #   } else {
+        #     if ((grep("PithCoordinates", raw.input) - grep("DATED", raw.input)) > 1) {
+        #       comment.lines <- raw.input[(grep("DATED", raw.input) + 1):(grep("PithCoordinates",
+        #                                                                       raw.input) - 1)][1]
+        #       comment <- gsub(pattern = "#C ",
+        #                       replacement = "",
+        #                       comment.lines)
+        #     } else {
+        #       comment <- NA
+        #     }
+        #   }
+        # } else { # Rely on the SCALE 1 line instead
+        #   if (is.null(pith.coords.dt)) {
+        #     if ((grep("Written", raw.input) - grep("SCALE", raw.input)) > 1) {
+        #       comment.lines <- raw.input[(grep("SCALE", raw.input) + 1):(grep("Written",
+        #                                                                       raw.input) - 1)][1]
+        #       comment <- gsub(pattern = "#C ",
+        #                       replacement = "",
+        #                       comment.lines)
+        #     } else {
+        #       comment <- NA
+        #     }
+        #   } else {
+        #     if ((grep("PithCoordinates", raw.input) - grep("SCALE", raw.input)) > 1) {
+        #       comment.lines <- raw.input[(grep("SCALE", raw.input) + 1):(grep("PithCoordinates",
+        #                                                                       raw.input) - 1)][1]
+        #       comment <- gsub(pattern = "#C ",
+        #                       replacement = "",
+        #                       comment.lines)
+        #     } else {
+        #       comment <- NA
+        #     }
+        #   }
+        # }
+        # comment <- ifelse(length(comment) > 1, NA, comment)
 
         ## Get the point coordinates
         # The license info seems to be the 2nd-to-last line before the rest of the coordinates
