@@ -314,10 +314,11 @@ read_pos <- function(path = NULL,
 
 
         ## Get the comment if it exists.
-        ## DATED / Written / PithCoordinates / CalcRadius / CooRecorder / licensedTo are all
+        ## DATED / Written / PithCoordinates / CalcRadius / CooRecorder / licensedTo, etc. are all
         ## '#C ' lines here too, so the comment is the one '#C ' line that ISN'T metadata.
+        # I might get an exception here if I'm missing a possible metadata type
         cC.text  <- sub("^#C ", "", grep("^#C ", raw.input, value = TRUE))
-        meta.pat <- "^(DATED |Written=|PithCoordinates=|CalcRadius=|CooRecorder=|licensedTo=)"
+        meta.pat <- "^(DATED |Written=|PithCoordinates=|CalcRadius=|CooRecorder=|licensedTo=|YearsToPith=|Radius=|DistanceToPith=)"
         comment.text <- cC.text[!grepl(meta.pat, cC.text)]
         comment <- if (length(comment.text) >= 1) paste(comment.text, collapse = "; ") else NA_character_
 
@@ -487,7 +488,7 @@ read_pos <- function(path = NULL,
 
         ## Vectorized point parse (replaces the per-point mapply + rbindlist)
         x.raw <- unname(ring.bound)
-        n     <- length(x.raw)
+        n <- length(x.raw)
 
         # D-prefixed points are seasonwood ("W") / gaps; strip the leading D only on those
         is.D           <- substr(x.raw, 1L, 1L) == "D"
@@ -889,25 +890,6 @@ read_pos <- function(path = NULL,
 
         }
 
-        # Also need to get the labels back for the appropriate years
-        # Prep the labels
-        # year.labels.orig <- aggregate(
-        #   label ~ year,
-        #   all.coords,
-        #   na.action = na.pass,
-        #   drop = FALSE,
-        #   FUN = \(x) {
-        #     all.labels <- c(x)
-        #     if (any(!is.na(all.labels))) {
-        #       all.labels <- paste(c(as.character(stats::na.omit(
-        #         all.labels
-        #       ))), collapse = "; ")
-        #     } else {
-        #       all.labels <- NA
-        #     }
-        #     all.labels
-        #   }
-        # )
 
         year.labels <- all.coords[
           !is.na(year),
