@@ -10,58 +10,72 @@ xd_check(
   std.method = "p2yrsL",
   max.offset = 10,
   p.thresh = 0.05,
-  out.format = "rwl"
+  out.format = "rwl",
+  seg.penalty = 4,
+  min.seg = 20
 )
 }
 \arguments{
 \item{data}{The collection of raw tree-ring series you wish to check. Can be class "rwl" or
-"data.frame" (long format). This is required. If "data.frame" you need 3 columns: "series",
-"year", & "rw".}
+"data.frame"/"data.table (long-format). This is required. If long-format you need 3 columns:
+"series", "year", & "rw".}
 
 \item{ref}{A single reference collection or a list of reference collections of raw tree-ring
-series (NOT a chronology!). Can be class "rwl" or "data.frame" (long format). Optional, but more
-references are better here. If "data.frame" you need 3 columns: "series", "year", & "rw". If a
+series (NOT a chronology!). Can be rwl- or long-format. Optional, but more
+references are better here. If long-format you need 3 columns: "series", "year", & "rw". If a
 list, can be a named list so that you can give unique names to your references.}
 
 \item{std.method}{The method of standardization/normalization to apply to the series and
 references. Default (and currently only) option is "p2yrsL", same default as CooRecorder/CDendro.}
 
 \item{max.offset}{The maximum offset (in years) you want to check in either direction from the
-years as dated. Minimum is 5 years. No true maximum limit, but overlap between series and
-references must be at least 15 years. Default is 10 years.}
+years as dated. Minimum is 5 years, default is 10 years. No true maximum limit, but overlap
+between series and references must be at least 15 years.}
 
 \item{p.thresh}{The p-value threshold to determine if a correlation is significant. Default is
 the common 0.05.}
 
 \item{out.format}{The format of subsets of data based on the dating confidence ranking. Options
 are "rwl" or "long".}
+
+\item{seg.penalty}{Sets the cost of increasingly large segment offsets}
+
+\item{min.seg}{The shortest potential bad segment reported}
 }
 \value{
 A list containing 1) the partitioned results based on relative confidence (itself a
 4-element list), 2) the raw correlation results in a nested list for easy viewing in RStudio,
-and 3) subsets of the data collection corresponding to the relative confidence (format specified
-with \code{out.format}).
+3) subsets of the data collection corresponding to the relative confidence (format specified
+with \code{out.format}), and 4) a data.table of details on potentially bad segments.
 }
 \description{
 This function implements a custom statistical check on the dating of a collection of tree-ring
 series. It is inspired by operations in CDendro (Larsson & Larsson 2024) and COFECHA,
 but does not do all of what either of those programs can do. \code{\link{xd_check}} does simple
-whole-series cross-correlations between leave-one-out (LOO) chronologies and 0-n reference
-chronologies. You provide collections of raw tree-ring widths (not pre-made chronologies), and
-xd_check will standardize/normalize all series and then generate the chronologies internally.
-If you only provide the \code{data} collection, LOO comparisons are all that you'll get. Adding
-appropriate (e.g., properly cross-dated, same species, same region) external reference
-collections adds a lot to the confidence of your checks. The main output of the function is a
-summary based on how many references have best and significant correlations with the series as
-dated and are ranked lowest, medium, and highest confidence.
+whole-series cross-correlations and checks for potential bad segments between leave-one-out (LOO)
+chronologies and 0-n reference chronologies. The power of this method comes from the multiple
+comparisons - more references = more confidence, assuming your references are appropriate (e.g.,
+independent, properly cross-dated, same species, same region).
+
+You provide collections of raw tree-ring widths (not pre-made chronologies), and xd_check will
+standardize/normalize all series and then generate the chronologies internally. If you only
+provide the \code{data} collection, you get only LOO comparisons.
+
+The main output of the function is a summary based on how many references have best and
+significant correlations with the series as dated and are ranked lowest, medium, and highest
+confidence.
 
 One potential use for \code{\link{xd_check}} is to generate "clean" references for subsequent
 runs of the function. You can do this by supplying the reference collection to the \code{data}
-argument and not supplying any of the reference arguments (i.e., LOO only mode). Set the other
+argument and not supplying any of the reference arguments (i.e., LOO-only mode). Set the other
 arguments as you please and then take the "Highest" subset as one of the \code{refx} arguments in the
 next run. Note that this assumes that you have plenty of good series in your collection!
 
-A note of awareness: the chronology building process in \code{\link{xd_check}} is different than
+A note of awareness: statistical checks are correlations and can be incorrect. It is not uncommon
+for forest interior series to have no correlation with any reference. In these cases, rely on
+ground-truths like known sample date and presence of bark.
+
+Differences from CDendro: the chronology building process in \code{\link{xd_check}} is different than
 the default in CDendro, even though the p2yrsL standardization/normalization derives from
 CDendro. The default in CDendro is to create a mean value chronology of "Heavy" detrended series
 (the user can select the type of detrending), then apply the p2yrsL standardization on the
@@ -78,10 +92,18 @@ correlations you see in CDendro and CooRecorder might be quantitatively differen
 the method to compute interseries correlations for a tree-ring collection. In LOO, each series
 has its own chronology made up of the remaining series.
 
+The bad segment checking is based on continuous (annual) contribution to the correlation
+coefficient between a series and each reference chronology, instead of moving window correlations
+of fixed length. In a correctly-dated (and correlated) series, the cumulative correlation
+coefficient contributions are positive and increasing going backward in time. The function
+attempts to find the "optimal offset path" using the Viterbi algorithm, and suggests the segments
+and offsets that might be incorrectly dated.
+
 The basic ranking of dating confidence here is based on two basic criteria: 1) is the
 whole-series correlation best as dated? and 2) is the correlation significant as dated? These
-criteria are assessed for each reference comparison. The more references you have, the higher
-your overall confidence should be.
+criteria are assessed for each reference comparison. For the highest confidence group, potential
+bad segments are not allowed. The more references you have, the higher your overall confidence
+should be.
 }
 \examples{
 # Examples to come

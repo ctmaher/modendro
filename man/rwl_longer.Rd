@@ -2,14 +2,14 @@
 % Please edit documentation in R/rwl_longer.R
 \name{rwl_longer}
 \alias{rwl_longer}
-\title{Convert rwl-format dataframes/matrices to long format}
+\title{Convert rwl-format data.frames/matrices to long format}
 \usage{
 rwl_longer(
   rwl = NULL,
   series.name = "series",
   dat.name = "rw",
-  trim = TRUE,
-  new.val.internal.na = NULL
+  new.val.internal.na = NULL,
+  trim = TRUE
 )
 }
 \arguments{
@@ -22,26 +22,39 @@ Default is "series", but perhaps "tree" or "sample" is more appropriate for your
 \item{dat.name}{Character vector of length 1 for the column name you want for the the tree ring
 data. Default is "rw".}
 
-\item{trim}{Logical vector indicating whether to trim off NA sequences at the beginning or end
-of individual series. Default is TRUE. Will not remove missing rings that are represented with
-NA (i.e., NA values within the series).}
-
 \item{new.val.internal.na}{Numeric vector giving a new value to replace NAs in the
 middle of measurement series (i.e., some measurement protocols leave NAs for missing/locally
 absent rings). E.g., \code{0} makes sense. If \code{NULL}, these values are left as NAs.}
+
+\item{trim}{Logical vector indicating whether to trim off NA sequences at the beginning or end
+of individual series. Default is TRUE. Will not remove missing rings that are represented with
+NA (i.e., NA values within the series).}
 }
 \value{
-A data.frame with 3 columns: 1) "year", 2) "series", 3) dat.name ("rw", "rw.mm",
-"bai.mm" or whatever you name this)
+A data.table/data.frame with 3 columns: 1) "year", 2) series.name (e.g., "series", "tree"
+, etc.),3) dat.name (e.g., "rw", "rw.mm", "bai.mm", etc.)
 }
 \description{
 Simple function to convert rwl-format data (columns are series, rows are years) to long format
 (3 columns: year, series, rw). This is useful for getting your data ready for plotting in ggplot
-or for correlation analyses.
+or for other analyses.
 
 \code{\link{rwl_longer}} doesn't tolerate replicate column names. Column names are series names,
 after all. If you have replicate column names in your rwl, you will get an error message
 that lists the replicated columns. Fix these and run \code{\link{rwl_longer}} again.
+}
+\details{
+\code{\link{rwl_longer}} does a bit more than convert to long format. It also gives the output
+as a \code{data.table} (see \code{\link[data.table]}), which is essentially a special kind of
+data.frame with some different characteristics. The \code{data.table} package enables streamlined and
+very memory efficient code. If you're not ready to dive into \code{data.table}, use
+\code{\link[base]{as.data.frame()}} to convert to a regular data.frame.
+
+\code{\link{rwl_longer}} also has built in data-continuity checking. For example, if your data
+skips a year (this should almost never happen), like this: ...1999, 2000, 2002, 2003, ..., then
+\code{\link{rwl_longer}} will add a row for the missing year and give an NA ring-width value.
+A note of caution: any NA values added in this way will be replaced with \code{new.val.internal.na} if
+you've given a value for that argument.
 }
 \examples{
 library(dplR)
@@ -51,4 +64,7 @@ data("ca533")
 
 ca533.long <- rwl_longer(rwl = ca533, dat.name = "rw.mm", trim = TRUE)
 head(ca533.long)
+}
+\seealso{
+\code{\link[=longer_rwl]{longer_rwl()}}
 }

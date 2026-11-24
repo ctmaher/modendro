@@ -44,67 +44,72 @@
 #' ca533 |> p2yrsL() |> spag.plot()
 #'
 
-p2yrsL <- function(rwl = NULL, limit = 2.6) {
+p2yrsL <- function(rwl = NULL, limit = 2.6, out.format = "long") {
+  . <- j_variable <- NULL
+  #### data format detection and conversion ####
+  # Also does some quality checking. Leverages rwl_longer() and longer_rwl()
+  rwl.long <- rwl_dt_conv(data = rwl,
+                          series.name = "series",
+                          dat.name = "rw",
+                          new.val.internal.na = 0)
 
-  # Error catching
-  stopifnot("rwl is not an object of class 'rwl', 'data.frame', or 'matrix'" =
-              data.class(rwl) %in% "rwl" |
-              data.class(rwl) %in% "data.frame" |
-              data.class(rwl) %in% "matrix"
+  ## More error catching
+
+  # Check for negative values (not allowed)
+  stopifnot(
+    "rwl has negative values. p2yrsL is intended for raw ring width values, which must be > 0." =
+      #all(apply(rwl, MARGIN = 2, FUN = \(x) all(as.numeric(na.omit(x)) >= 0)))
+      all(rwl.long[, .(neg.val = any(rw >= 0)), by = series]$neg.val)
   )
 
-  stopifnot("rwl has no rownames (must be years only) or no colnames (must be series IDs only)" =
-              !is.null(rownames(rwl)) |
-              !is.null(colnames(rwl))
-  )
+  # Also cannot allow zero values - if there are several in a row we divide by 0
+  # Replace ≤0 values in the rwl with the minimum possible non-zero value given the resolution of
+  # the data
+  # & make sure they match
+  min.value <- ifelse(rwl.long[, .(n.char = nchar(sub(".", "", rw, fixed=TRUE))), by = series]$n.char |>
+                        max() <= 3,
+                      0.01, 0.001)
 
-  if (apply(rwl, MARGIN = 2, FUN = \(x) all(is.na(x))) |> any() == TRUE) {
-    these_are_NA <- colnames(rwl)[which(apply(rwl, MARGIN = 2, FUN = \(x) all(is.na(x))) == TRUE)]
-    stop("The following series have no values (all NAs): " , paste(these_are_NA, collapse = ", "))
-  }
+  # Replace 0s with min.value
+  rwl.long[rw < min.value, rw := min.value,]
 
+  # limit arg
   stopifnot("limit must be a positive numeric between 0:10" =
               data.class(limit) %in% "numeric" &
               limit > 0 & limit < 10
   )
 
+  # out.format arg
+  stopifnot(
+    "out.format options are c('rwl', 'long')" =
+      is.character(out.format) &&
+      length(out.format) == 1 &&
+      out.format %in% c("rwl", "long")
+  )
+
   # Calculate rolling (2 year) sums
   # Add an NA at the beginning for proper alignment with the actual ring widths,
   # such that p2yrs = rw(i) / (rw(i) + rw(i-1))
-  sum2yrs <- apply(rwl, MARGIN = 2, \(x) {
-    c(NA, base::rowSums(stats::embed(x, dimension = 2)))
-    }) |>
-    as.data.frame()
+  data.table::setorder(rwl.long, series, year)
 
-  # sum2yrs <- rbind(rep(NA, ncol(sum2yrs)), sum2yrs)
-  # Calculate the proportion of 2 years for each year
-  p2yrs <- rwl / sum2yrs
+  rwl.long[, sum2yrs := c(NA, base::rowSums(stats::embed(rw, dimension = 2))), by = series]
+
+  # Calculate the proportion of 2 years for each year by dividing.
+  rwl.long[, p2yrs := rw / sum2yrs]
 
   ## Set up outer margins for "limited" trimming
-  # Calculate means
-  means <- colMeans(p2yrs, na.rm = TRUE)
-  # colMeans(na.rm = T) is equivalent to, but faster than:
-  # apply(p2yrs, MARGIN = 2, FUN = \(x) mean(x, na.rm = TRUE))
+  rwl.long[, `:=`(hi_lim = mean(p2yrs, na.rm = TRUE) + limit * sd(p2yrs, na.rm = TRUE),
+                  lo_lim = mean(p2yrs, na.rm = TRUE) - limit * sd(p2yrs, na.rm = TRUE)),
+           by = series]
 
-  # Limits are defined in terms of a threshold * the SD from the means
-  limits <- limit * apply(p2yrs, MARGIN = 2, FUN = \(x) sd(x, na.rm = TRUE))
-  hi_lim <- means + limits # Upper limits
-  lo_lim <- means - limits # Lower limits
+  # Replace the values that go outside of the limits with the limit values
+  rwl.long[, p2yrsL := data.table::fifelse(p2yrs > hi_lim, hi_lim, p2yrs)]
+  rwl.long[, p2yrsL := data.table::fifelse(p2yrs < lo_lim, lo_lim, p2yrs)]
 
-  # Cut off the high extremes
-  p2yrsL1 <- mapply(FUN = \(x, y) {
-    ifelse(x > y, y, x)
-  }, x = p2yrs, y = hi_lim) |> as.data.frame()
-
-  # Cut off the low extremes
-  p2yrsL <- mapply(FUN = \(x, y) {
-    ifelse(x < y, y, x)
-  }, x = p2yrsL1, y = lo_lim) |> as.data.frame()
-
-  # Transfer the rownames (years)
-  rownames(p2yrsL) <- rownames(rwl)
-  # Assign data classes
-  class(p2yrsL) <- c("rwl","data.frame")
-  # Return the final rwl-data.frame
-  p2yrsL
-}
+  # Return the final product
+  if (out.format %in% "rwl") {
+    longer_rwl(rwl.long, series.name = "series", dat.name = "p2yrsL")
+  } else { # return the long format data.table
+    rwl.long
+  }
+} ## End of function

@@ -10,10 +10,8 @@
 #' The motivation of this function is to replicate some of the basic operations of CDendro in R.
 #' This allows the user to avoid saving tree-ring collections using some of the arcane tree-ring
 #' file formats which don't allow users to take full advantage of the great features of CooRecorder,
-#' such as point labels, comments, etc. It also calculates the ring widths with greater precision
-#' (they are not rounded by default) than what CDendro exports. Additionally, seasonwood widths are
-#' saved in the same step as whole ring widths, eliminating the extra steps you would have to do in
-#' CDendro.
+#' such as point labels, comments, etc. Additionally, seasonwood widths are saved in the same step
+#' as whole ring widths, eliminating the extra steps you would have to do in CDendro.
 #'
 #' \code{\link{read_pos}} is also a great tool for basic error checking in .pos files. The raw
 #' coordinates are part of the output, so you can use faceted plots in ggplot2 to visually check
@@ -23,7 +21,9 @@
 #' The outputs of \code{\link{read_pos}} are long-format data.tables/data.frames, which are much
 #' more versatile than the old rwl-format. If you need to export this data as a .rwl, however,
 #' you can use \code{\link{longer_rwl}} and dplR's \code{\link[dplR]{write.rwl}}. Note that for
-#' \code{\link[dplR]{write.rwl}} series name lengths are limited.
+#' \code{\link[dplR]{write.rwl}} series name lengths are limited. If you haven't learned
+#' `data.table` yet, you can convert to a regular data.frame using
+#' \code{\link[base]{as.data.frame}}.
 #'
 #' @param path file path to a single .pos file or a directory that may contain several .pos files.
 #'
@@ -98,9 +98,8 @@
 #' names and these show up in the error.message column of the Attributes data.frame in the output
 #' list.
 #'
-#' For the forseeable future, \code{\link{read_pos}} will only work with .pos files from CooRecorder
-#' 7.8 or greater - which is the earliest version (I think!) to include the actual pith coordinates
-#' in the .pos files.
+#' \code{\link{read_pos}} will only work with .pos files from CooRecorder 7.8 or greater - which is
+#' the earliest version (I think!) to include the actual pith coordinates in the .pos files.
 #'
 #' @return A list containing 4 data.tables for ring widths, attributes, the original coordinates,
 #' and a 2-column data.table of the files not read and the associated error message.
@@ -109,7 +108,7 @@
 #' Larsson & Larsson (2023) \emph{CDendro and CooRecorder programs of the CDendro package},
 #'  Cybis Elektronik & Data AB. https://www.cybis.se/forfun/dendro/index.htm
 #'
-#' @seealso \code{\link{longer_rwl}}, \code{\link{rwl_longer}}
+#' @seealso \code{\link{xd_check}}, \code{\link{longer_rwl}}, \code{\link{rwl_longer}},
 #'
 #' @import stats
 #' @import data.table

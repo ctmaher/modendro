@@ -292,11 +292,11 @@ ci_detect <- function(rwl = NULL,
   # Undo any transformation - this results in a "disturbance-free" series in original units
   untransformed <- mapply(FUN = \(x, y) {
     # Undo the transformations
-    if (x["action"] %in% "log10 transformed") {
+    if (x$action %in% "log10 transformed") {
       10^y
     } else {
-      if (x["action"] %in% "Power transformed") {
-        y^(1/as.numeric(x[["optimal.pwr"]]))
+      if (x$action %in% "Power transformed") {
+        y^(1/as.numeric(x$opt.pwr))
       } else {
         y
       }

@@ -41,12 +41,12 @@ regular "Spline" the flexibility is constant throughout. Defaults are c(10, 25) 
 or "both". Default is "release".}
 }
 \value{
-A list containing 3 data.frames 1) the disturbance detrended ring width results including
+A list containing 3 data.tables 1) the disturbance detrended ring width results including
 the percent growth change series and intermediate steps ("PGC"), 2) details about the specific
 disturbance events detected, and 3) details on the disturbance event trend fitting and removal
 process.
 
-All data.frames are in "long-format" with \code{series} as a categorical variable.
+All data.tables are in "long-format" with \code{series} as a categorical variable.
 }
 \description{
 \code{\link{d_detrend}} implements the disturbance detrending algorithm of Druckenbrod et al.
@@ -123,7 +123,7 @@ For more details, see Druckenbrod et al. (2024).
 I highly recommend you look at the results! Convenient visualizations of the
 \code{\link{d_detrend}} process are available by using \code{\link{plot_d_detrend}}.
 
-Details of output data.frames:
+Details of output data.tables:
 }
 \section{"PGC"}{
 \describe{

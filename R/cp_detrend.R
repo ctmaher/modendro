@@ -6,12 +6,6 @@
 #'
 #' @param rwl A rwl-type data.frame (e.g., read in by \code{\link[dplR]{read.rwl}}). Essentially a
 #' data.frame with columns names as series IDs and years as rownames.
-#' @param universal.pwr.t A logical vector indicating whether to compute a single "universal"
-#' optimal power of transformation for all series within a group (if `TRUE` and arg
-#' `ID.group.substr` is unspecified, will assume all series in the rwl). If `FALSE`, the
-#' function estimates a separate optimal power for each individual series (the default).
-#' @param pwr.t.ID.group.substr A numeric vector of length 2 that determines a sub grouping for
-#' calculating "universal" optimal power of transformation. Ulitmately passes to
 #' \code{\link[base]{substr}} as the start (1st number) and stop (2nd number) args to split the
 #' series IDs in your rwl into groups (performed in \code{\link{find_opt_pwr}}).
 #' @param detrend.method Character string of the detrending method to use. Passes to
@@ -114,8 +108,6 @@
 
 cp_detrend <-
   function(rwl = NULL,
-           universal.pwr.t = FALSE,
-           pwr.t.ID.group.substr = NULL,
            detrend.method = "Mean",
            nyrs = NULL,
            pos.slope = FALSE,
@@ -188,14 +180,16 @@ cp_detrend <-
 
     # detrend the transformed series
     detr.result <-
-      dplR::detrend(
-        trans + 2, # add 2 here so that fits are more likely to be positive values
-        method = detrend.method,
-        make.plot = FALSE,
-        difference = TRUE,
-        nyrs = nyrs,
-        return.info = TRUE,
-        pos.slope = pos.slope
+      suppressWarnings(
+        dplR::detrend( # will give a warning about coercing to rwl class
+          trans + 2, # add 2 here so that fits are more likely to be positive values
+          method = detrend.method,
+          make.plot = FALSE,
+          difference = TRUE,
+          nyrs = nyrs,
+          return.info = TRUE,
+          pos.slope = pos.slope
+        )
       )
 
     # Extract the detrending info.

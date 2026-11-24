@@ -40,3 +40,18 @@ test_that("Essential function works - and returns a list", {
   colnames(mat.test) <- paste0("series", 1:10)
   expect_vector(cp_detrend(mat.test), ptype = list())
 })
+
+####
+test_that("Different detrending methods don't produce errors", {
+  mat.test <- matrix(nrow = 50, ncol = 10)
+  mat.test <- apply(mat.test, MARGIN = 2, FUN = \(x) runif(length(x), 0.1, 2), simplify = TRUE) |> as.data.frame()
+  rownames(mat.test) <- 1:50
+  colnames(mat.test) <- paste0("series", 1:10)
+  #expect_silent(what <- cp_detrend(mat.test, detrend.method = "Mean", nyrs = 10))
+  expect_silent(what <- cp_detrend(mat.test, detrend.method = "AgeDepSpline", nyrs = 10))
+  expect_silent(what <- cp_detrend(mat.test, detrend.method = "ModHugershoff"))
+  expect_silent(what <- cp_detrend(mat.test, detrend.method = "Spline", nyrs = 10))
+  expect_silent(what <- cp_detrend(mat.test, detrend.method = "ModNegExp"))
+  expect_silent(what <- cp_detrend(mat.test, detrend.method = "Ar"))
+  expect_silent(what <- cp_detrend(mat.test, detrend.method = "Friedman"))
+})

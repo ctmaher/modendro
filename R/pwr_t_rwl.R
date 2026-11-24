@@ -20,14 +20,6 @@
 #'
 #' @param rwl A rwl object (read in by dplR's \code{\link[dplR]{read.rwl}}). Essentially a
 #' data.frame with columns names as series IDs and years as rownames.
-#' @param universal A logical vector indicating whether to compute a single "universal" optimal
-#' power for all series within a group (if `TRUE` and arg `ID.group.substr` is unspecified, will
-#' assume all series in the rwl). If `FALSE`, the function estimates a separate optimal power for
-#' each individual series.
-#' @param ID.group.substr A numeric vector of length 2 that determines a sub grouping for
-#' calculating "universal" optimal power. Ulitmately passes to \code{\link[base]{substr}} as the
-#' start (1st number) and stop (2nd number) args to split the series IDs in your rwl into groups
-#' (performed in \code{\link{find_opt_pwr}}).
 #'
 #' @return A two-element list, 1 is the transformed series and 2 contains the messages about the
 #' transformations
@@ -46,7 +38,7 @@
 #' data("ca533")
 #' pwr_t_rwl(rwl = ca533)
 
-pwr_t_rwl <- function(rwl = NULL, universal = FALSE, ID.group.substr = NULL) {
+pwr_t_rwl <- function(rwl = NULL) {
 
   # Error catching
   stopifnot("rwl is not an object of class 'rwl', 'data.frame', or 'matrix'" =
@@ -60,16 +52,16 @@ pwr_t_rwl <- function(rwl = NULL, universal = FALSE, ID.group.substr = NULL) {
               !is.null(colnames(rwl))
   )
 
-  stopifnot(
-    "'universal' argument must be a logical vector (TRUE or FALSE)" =
-      is.logical(universal)
-  )
-
-  stopifnot(
-    "'ID.group.substr' argument must be NULL or a 2-element vector" =
-      length(ID.group.substr) == 2 |
-      is.null(ID.group.substr)
-  )
+  # stopifnot(
+  #   "'universal' argument must be a logical vector (TRUE or FALSE)" =
+  #     is.logical(universal)
+  # )
+  #
+  # stopifnot(
+  #   "'ID.group.substr' argument must be NULL or a 2-element vector" =
+  #     length(ID.group.substr) == 2 |
+  #     is.null(ID.group.substr)
+  # )
 
   if (apply(rwl, MARGIN = 2, FUN = \(x) all(is.na(x))) |> any() == TRUE) {
     these_are_NA <- colnames(rwl)[which(apply(rwl, MARGIN = 2, FUN = \(x) all(is.na(x))) == TRUE)]
@@ -96,31 +88,29 @@ pwr_t_rwl <- function(rwl = NULL, universal = FALSE, ID.group.substr = NULL) {
   # if (add1 == TRUE) {
   #   optimal.pwr.t <- find_opt_pwr(rwl0, add1 = TRUE)
   # } else {
-  optimal.pwr.t <- find_opt_pwr(rwl0, universal = universal, ID.group.substr = ID.group.substr)
+  optimal.pwr.t <- find_opt_pwr(rwl = rwl0)
   # }
 
-  optimal.pwr.t <- optimal.pwr.t[orig.IDs]
+  optimal.pwr.t <- optimal.pwr.t[series %in% orig.IDs,]
 
   # if power is very small, then just log10 transform
   # If greater than 1, power transform with power = 1, same as the untransformed series
   # Pwr transform w/ optimal power. Cook & Peters 1997
-  to.log <- which(optimal.pwr.t <= 0.1)
-  no.trans <- which(optimal.pwr.t > 1)
-  pwr.trans <- which(optimal.pwr.t > 0.1 & optimal.pwr.t <= 1)
+  to.log <- optimal.pwr.t[opt.pwr <= 0.1]$series
+  no.trans <- optimal.pwr.t[opt.pwr > 1]$series
+  pwr.trans <- optimal.pwr.t[opt.pwr > 0.1 & opt.pwr <= 1]$series
 
   # Do the transformations - the no trans option is implicit
-  rwl0[, to.log] <- log10(rwl0[,to.log])
-  rwl0[, pwr.trans] <- mapply(FUN = function(x, y) {x^y},
-                              x = rwl0[, pwr.trans], y = optimal.pwr.t[pwr.trans])
+  rwl0[to.log] <- lapply(unclass(rwl0)[to.log], log10)
+  rwl0[pwr.trans] <- mapply(FUN = function(x, y) {x^y},
+                            x = unclass(rwl0[pwr.trans]), y = optimal.pwr.t[series %in% pwr.trans]$opt.pwr)
 
-  pwr.t.df <- data.frame(series = names(optimal.pwr.t),
-                         optimal.pwr = optimal.pwr.t)
-  pwr.t.df$action <- ifelse(optimal.pwr.t <= 0.1, "log10 transformed",
-                            ifelse(optimal.pwr.t > 1, "No transformation",
-                                   "Power transformed"))
+  optimal.pwr.t[, action := fifelse(opt.pwr <= 0.1, "log10 transformed",
+                                    fifelse(opt.pwr > 1, "No transformation",
+                                            "Power transformed"))]
 
   # split back into a list
-  pwr.t.list <- split(pwr.t.df, f = pwr.t.df$series)[orig.IDs]
+  pwr.t.list <- split(optimal.pwr.t, f = optimal.pwr.t$series)[orig.IDs]
   rwl0.out <- as.data.frame(rwl0)
   # Assign data class
   class(rwl0.out) <- c("rwl","data.frame")
@@ -128,4 +118,4 @@ pwr_t_rwl <- function(rwl = NULL, universal = FALSE, ID.group.substr = NULL) {
   names(out.list) <- c("Transformed ring widths", "Transformation metadata", "Raw ring widths")
   out.list
 
-} # end of function
+} ## End of function

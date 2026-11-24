@@ -4,20 +4,11 @@
 \alias{find_opt_pwr}
 \title{Find the optimal power for transforming a tree ring series to approximate homoscedasticity}
 \usage{
-find_opt_pwr(rwl = NULL, universal = FALSE, ID.group.substr = NULL)
+find_opt_pwr(rwl = NULL)
 }
 \arguments{
 \item{rwl}{A rwl object (read in by dplR's  \code{\link[dplR]{read.rwl}}). Essentially a
 data.frame with columns names as series IDs and years as rownames.}
-
-\item{universal}{A logical vector indicating whether to compute a single "universal" optimal
-power for all series within a group (if \code{TRUE} and arg \code{ID.group.substr} is unspecified,
-will assume all series in the rwl). If \code{FALSE}, the function estimates a separate optimal power
-for each individual series.}
-
-\item{ID.group.substr}{A numeric vector of length 2 that determines a sub grouping for
-calculating "universal" optimal power. Passes to \code{\link[base]{substr}} as the start
-(1st number) and stop (2nd number) args to split the series IDs in your rwl into groups.}
 }
 \value{
 A named numeric vector with the series IDs (colnames) and the estimated optimal power
@@ -41,21 +32,6 @@ Note that this is a very simple function that only implements the spread vs. lev
 of an optimal power for making tree ring series ± homoscedastic. Operationally in the \code{modendro}
 package, the final determination of how to transform series is performed in the
 \code{\link{pwr_t_rwl}} function, per Cook & Peters (1997).
-
-The \code{universal} and \code{ID.group.substr} arguments control how many series are included in the
-spread vs. level estimation, allowing for the same transformation to be performed across all
-tree ring series within each group (you determine the group). \code{universal} is a logical switch
-while \code{ID.group.substr} is a 2-element numeric that passes to the \code{start} & \code{stop} args of
-\code{\link[base]{substr}} which will act on the series IDs (i.e., the colnames in \code{rwl}). For
-example, if the first 3 characters of your series IDs refers to the site where the series were
-collected, you would specify \code{ID.group.substr = c(1, 3)}. Or, say the 4th element of the series
-IDs refers to the species collected, you could specify \code{ID.group.substr = c(4, 4)} to estimate
-optimal power by species. This assumes your series IDs contain this information in a systematic
-way. If not, you could also just create separate rwls for each of the groups you are interested
-in, set \code{universal = TRUE} and leave \code{ID.group.substr} unspecified.
-The essential idea of a "universal power transformation" comes from a GitHub issues post in the
-dplR repository by Stefan Klesse (2020). My approach here only scratches the surface of the idea
-presented by Klesse, but is an incremental step in that direction.
 }
 \examples{
 library(dplR)
@@ -70,9 +46,6 @@ find_opt_pwr(rwl = ca533, universal = TRUE)
 Cook, E. R., and Peters, K. (1997) Calculating unbiased tree-ring indices for the study of
 climatic and environmental change.
 \emph{The Holocene}, \strong{7}(3), 361-370.
-
-Klesse, S. (2020) "universal" or "signal-free" power transformation
-https://github.com/OpenDendro/dplR/issues/8
 }
 \seealso{
 \code{\link{pwr_t_rwl}}, \code{\link{cp_detrend}}

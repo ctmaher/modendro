@@ -5,22 +5,30 @@
 #' This function implements a custom statistical check on the dating of a collection of tree-ring
 #' series. It is inspired by operations in CDendro (Larsson & Larsson 2024) and COFECHA,
 #' but does not do all of what either of those programs can do. \code{\link{xd_check}} does simple
-#' whole-series cross-correlations between leave-one-out (LOO) chronologies and 0-n reference
-#' chronologies. You provide collections of raw tree-ring widths (not pre-made chronologies), and
-#' xd_check will standardize/normalize all series and then generate the chronologies internally.
-#' If you only provide the `data` collection, LOO comparisons are all that you'll get. Adding
-#' appropriate (e.g., properly cross-dated, same species, same region) external reference
-#' collections adds a lot to the confidence of your checks. The main output of the function is a
-#' summary based on how many references have best and significant correlations with the series as
-#' dated and are ranked lowest, medium, and highest confidence.
+#' whole-series cross-correlations and checks for potential bad segments between leave-one-out (LOO)
+#' chronologies and 0-n reference chronologies. The power of this method comes from the multiple
+#' comparisons - more references = more confidence, assuming your references are appropriate (e.g.,
+#' independent, properly cross-dated, same species, same region).
+#'
+#' You provide collections of raw tree-ring widths (not pre-made chronologies), and xd_check will
+#' standardize/normalize all series and then generate the chronologies internally. If you only
+#' provide the `data` collection, you get only LOO comparisons.
+#'
+#' The main output of the function is a summary based on how many references have best and
+#' significant correlations with the series as dated and are ranked lowest, medium, and highest
+#' confidence.
 #'
 #' One potential use for \code{\link{xd_check}} is to generate "clean" references for subsequent
 #' runs of the function. You can do this by supplying the reference collection to the `data`
-#' argument and not supplying any of the reference arguments (i.e., LOO only mode). Set the other
+#' argument and not supplying any of the reference arguments (i.e., LOO-only mode). Set the other
 #' arguments as you please and then take the "Highest" subset as one of the `refx` arguments in the
 #' next run. Note that this assumes that you have plenty of good series in your collection!
 #'
-#' A note of awareness: the chronology building process in \code{\link{xd_check}} is different than
+#' A note of awareness: statistical checks are correlations and can be incorrect. It is not uncommon
+#' for forest interior series to have no correlation with any reference. In these cases, rely on
+#' ground-truths like known sample date and presence of bark.
+#'
+#' Differences from CDendro: the chronology building process in \code{\link{xd_check}} is different than
 #' the default in CDendro, even though the p2yrsL standardization/normalization derives from
 #' CDendro. The default in CDendro is to create a mean value chronology of "Heavy" detrended series
 #' (the user can select the type of detrending), then apply the p2yrsL standardization on the
@@ -32,21 +40,23 @@
 #'
 #'
 #' @param data The collection of raw tree-ring series you wish to check. Can be class "rwl" or
-#' "data.frame" (long format). This is required. If "data.frame" you need 3 columns: "series",
-#' "year", & "rw".
+#' "data.frame"/"data.table (long-format). This is required. If long-format you need 3 columns:
+#' "series", "year", & "rw".
 #' @param ref A single reference collection or a list of reference collections of raw tree-ring
-#' series (NOT a chronology!). Can be class "rwl" or "data.frame" (long format). Optional, but more
-#' references are better here. If "data.frame" you need 3 columns: "series", "year", & "rw". If a
+#' series (NOT a chronology!). Can be rwl- or long-format. Optional, but more
+#' references are better here. If long-format you need 3 columns: "series", "year", & "rw". If a
 #' list, can be a named list so that you can give unique names to your references.
 #' @param std.method The method of standardization/normalization to apply to the series and
 #' references. Default (and currently only) option is "p2yrsL", same default as CooRecorder/CDendro.
 #' @param max.offset The maximum offset (in years) you want to check in either direction from the
-#' years as dated. Minimum is 5 years. No true maximum limit, but overlap between series and
-#' references must be at least 15 years. Default is 10 years.
+#' years as dated. Minimum is 5 years, default is 10 years. No true maximum limit, but overlap
+#' between series and references must be at least 15 years.
 #' @param p.thresh The p-value threshold to determine if a correlation is significant. Default is
 #' the common 0.05.
 #' @param out.format The format of subsets of data based on the dating confidence ranking. Options
 #' are "rwl" or "long".
+#' @param seg.penalty Sets the cost of increasingly large segment offsets
+#' @param min.seg The shortest potential bad segment reported
 #'
 #' @details
 #' \code{\link{xd_check}} does a standardization/normalization on all individual series within the
@@ -55,15 +65,23 @@
 #' the method to compute interseries correlations for a tree-ring collection. In LOO, each series
 #' has its own chronology made up of the remaining series.
 #'
+#' The bad segment checking is based on continuous (annual) contribution to the correlation
+#' coefficient between a series and each reference chronology, instead of moving window correlations
+#' of fixed length. In a correctly-dated (and correlated) series, the cumulative correlation
+#' coefficient contributions are positive and increasing going backward in time. The function
+#' attempts to find the "optimal offset path" using the Viterbi algorithm, and suggests the segments
+#' and offsets that might be incorrectly dated.
+#'
 #' The basic ranking of dating confidence here is based on two basic criteria: 1) is the
 #' whole-series correlation best as dated? and 2) is the correlation significant as dated? These
-#' criteria are assessed for each reference comparison. The more references you have, the higher
-#' your overall confidence should be.
+#' criteria are assessed for each reference comparison. For the highest confidence group, potential
+#' bad segments are not allowed. The more references you have, the higher your overall confidence
+#' should be.
 #'
 #' @return A list containing 1) the partitioned results based on relative confidence (itself a
 #' 4-element list), 2) the raw correlation results in a nested list for easy viewing in RStudio,
-#' and 3) subsets of the data collection corresponding to the relative confidence (format specified
-#' with `out.format`).
+#'  3) subsets of the data collection corresponding to the relative confidence (format specified
+#' with `out.format`), and 4) a data.table of details on potentially bad segments.
 #'
 #' @references
 #' Larsson & Larsson (2024) \emph{CDendro and CooRecorder programs of the CDendro package},
@@ -82,8 +100,11 @@ xd_check <- function(data = NULL, # the data you are checking. long format or rw
                      std.method = "p2yrsL", # standardization method
                      max.offset = 10, # max offset in years to check
                      p.thresh = 0.05,
-                     out.format = "rwl"
+                     out.format = "rwl",
+                     seg.penalty = 4, # cost per year of offset change in segment path
+                     min.seg = 20 # shortest segment reported (years)
 ) {
+  . <- j_variable <- NULL
   ## Error catching
   # The function cannot do anything if data is NULL
   stopifnot(
@@ -91,69 +112,12 @@ xd_check <- function(data = NULL, # the data you are checking. long format or rw
       !is.null(data)
   )
 
-  # Data must also be in the proper format
-  stopifnot(
-    "data is not an object of class 'data.frame', or 'matrix'" =
-      is.null(data) |
-      data.class(data) %in% "rwl" |
-      data.class(data) %in% "data.frame" |
-      data.class(data) %in% "matrix"
-  )
-
-  # Convert to long format if read in as an rwl
-  if (any(class(data) %in% "rwl")) {
-    data <- rwl_longer(rwl = data, series.name = "series", dat.name = "rw", trim = TRUE,
-                       new.val.internal.na = 0)
-  }
-
-  # If the data and references are long-format data.frames, we need certain columns
-  ##
-  stopifnot(
-    "data does not have a year column?" =
-      any(colnames(data) %in% c("Year", "year")) == TRUE
-  )
-
-  # make sure that "year" columns are labelled as such
-  colnames(data)[which((colnames(data) %in% c("Year", "year")) == T)] <- "year"
-
-  # general check
-  stopifnot(
-    "data needs to contain these 3 columns: 'series', 'year', & 'rw'" =
-      any(colnames(data) %in% "series") |
-      any(colnames(data) %in% "year") |
-      length(grep("rw", colnames(data))) > 0
-  )
-
-  # make sure that "rw" column is labelled as such
-  colnames(data)[grep("rw", colnames(data))] <- "rw"
-
-  # Make sure these columns are the right kind of data (year & rw need to be numeric)
-  stopifnot(
-    "year variable in data not numeric or integer" =
-      is.numeric(data[, "year"]) |
-      is.integer(data[, "year"]) |
-      is.double(data[, "year"])
-  )
-
-  stopifnot(
-    "ring width ('rw') variable in data not numeric or integer" =
-      is.numeric(data[, "rw"]) |
-      is.integer(data[, "rw"]) |
-      is.double(data[, "rw"])
-  )
-
-  # Also need to make sure there are no internal NAs in rw or year columns (this will not be the
-  # case if data started as an rwl, but might be if user supplies data)
-  noNA.data <- lapply(split(data, f = data[,"series"]), FUN = \(this.series) {
-    this.series[,"rw"] <- replace_internal_NAs(this.series[,"rw"], new.val = 0)
-    this.series
-  }) |> do.call(what = "rbind")
-
-  if (any(noNA.data[,"rw"] != data[,"rw"])) {
-    warning("\nSome series had internal NA values. These were replaced with 0s.\n")
-  }
-
-  data <- noNA.data
+  #### data format detection and conversion ####
+  # Also does some quality checking. Leverages rwl_longer() and longer_rwl()
+  data <- rwl_dt_conv(data = data,
+                      series.name = "series",
+                      dat.name = "rw",
+                      new.val.internal.na = 0)
 
   ## Detailed checking of the data and references to determine if they are rwl format or
   # long format. If rwls are read in using dplR::read.rwl they will have class "rwl" already.
@@ -163,69 +127,24 @@ xd_check <- function(data = NULL, # the data you are checking. long format or rw
   # The references should only go though these checks if they exist.
   # For the list case, it might make the most since to check through everything, then check through
   # the results once to give the entire result at once (maybe).
-  if (!is.null(ref)) {
+  if (!is.null(ref)) { # If there are any references...
     if (is.list(ref) &&
-        !(data.class(ref) %in% "rwl" ||
-          data.class(ref) %in% "data.frame" ||
-          data.class(ref) %in% "matrix")) { # If ref is a list
+        !(is_rwl_like(ref) ||
+          data.class(ref) %in% "data.table" ||
+          data.class(ref) %in% "data.frame")) { # If ref is a list
       ref.names <- names(ref) # keep the names for later
       ref <- lapply(seq_along(ref), FUN = \(i) {
-        this.ref <- ref[[i]]
 
-        if (!(data.class(this.ref) %in% "rwl" ||
-              data.class(this.ref) %in% "data.frame" ||
-              data.class(this.ref) %in% "matrix")) {
+        this.ref <- with_context(rwl_dt_conv(data = ref[[i]],
+                                             series.name = "series",
+                                             dat.name = "rw",
+                                             new.val.internal.na = 0), if (is.null(names(ref)[i])) {
+                                               sprintf("ref element '", names(ref)[i], "'")
+                                             } else {
+                                               sprintf("ref element %d", i)
+                                             }
+        )
 
-          stop(sprintf("ref element %d is not an object of class 'data.frame', or 'matrix'", i))
-        }
-
-        # Convert to long format if a rwl
-        if (any(class(this.ref) %in% "rwl")) {
-          this.ref <- rwl_longer(rwl = this.ref,
-                                 series.name = "series",
-                                 dat.name = "rw",
-                                 trim = TRUE,
-                                 new.val.internal.na = 0)
-        }
-
-        ## Columns check
-        if (any(colnames(this.ref) %in% c("Year", "year")) == FALSE) {
-
-          stop(sprintf("ref element %d does not have a year column",
-                       i))
-        }
-
-        # make sure that "year" columns are labelled as such
-        colnames(this.ref)[which((colnames(this.ref) %in%
-                                    c("Year", "year")) == T)] <- "year"
-
-        # general check
-        if (!(any(colnames(this.ref) %in% "series") ||
-              any(colnames(this.ref) %in% "year") ||
-              length(grep("rw", colnames(this.ref))) > 0)) {
-
-          stop(sprintf("ref element %d needs to contain these 3 columns: 'series', 'year', & 'rw'",
-                       i))
-        }
-
-        # make sure that "rw" column is labelled as such
-        colnames(this.ref)[grep("rw", colnames(this.ref))] <- "rw"
-
-        # Make sure these columns are the right kind of data (year & rw need to be numeric)
-        if (!(is.numeric(this.ref[, "year"]) ||
-              is.integer(this.ref[, "year"]) ||
-              is.double(this.ref[, "year"]))) {
-
-          stop(sprintf("year variable in ref element %d not numeric or integer",
-                       i))
-        }
-
-        if (!(is.numeric(this.ref[, "rw"]) ||
-              is.double(this.ref[, "rw"]))) {
-
-          stop(sprintf("ring width ('rw') in ref element %d not numeric",
-                       i))
-        }
         this.ref
       })
 
@@ -233,55 +152,17 @@ xd_check <- function(data = NULL, # the data you are checking. long format or rw
 
     } else { # if ref is not a list
 
-      stopifnot(
-        "ref is not an object of class 'data.frame', 'matrix', or 'list'" =
-          data.class(ref) %in% "rwl" |
-          data.class(ref) %in% "data.frame" |
-          data.class(ref) %in% "matrix"
-      )
-
-      # Convert to long format if a rwl
-      if (any(class(ref) %in% "rwl")) {
-        ref <- rwl_longer(rwl = ref, series.name = "series", dat.name = "rw", trim = TRUE,
-                          new.val.internal.na = 0)
-      }
-
-      ## Columns check
-      stopifnot(
-        "ref does not have a year column?" =
-          any(colnames(ref) %in% c("Year", "year")) == TRUE
-      )
-
-      # make sure that "year" columns are labelled as such
-      colnames(ref)[which((colnames(ref) %in% c("Year", "year")) == T)] <- "year"
-
-      # general check
-      stopifnot(
-        "ref needs to contain these 3 columns: 'series', 'year', & 'rw'" =
-          any(colnames(ref) %in% "series") |
-          any(colnames(ref) %in% "year") |
-          length(grep("rw", colnames(ref))) > 0
-      )
-
-      # make sure that "rw" column is labelled as such
-      colnames(ref)[grep("rw", colnames(ref))] <- "rw"
-
-      # Make sure these columns are the right kind of data (year & rw need to be numeric)
-      stopifnot(
-        "year variable in ref not numeric or integer" =
-          is.numeric(ref[, "year"]) |
-          is.integer(ref[, "year"]) |
-          is.double(ref[, "year"])
-      )
-
-      stopifnot(
-        "ring width ('rw') variable in ref not numeric or integer" =
-          is.numeric(ref[, "rw"]) |
-          is.integer(ref[, "rw"]) |
-          is.double(ref[, "rw"])
-      )
+      ref <- rwl_dt_conv(data = ref,
+                         series.name = "series",
+                         dat.name = "rw",
+                         new.val.internal.na = 0)
     }
+
+    ### Check that ref has multiple series - warn if there are less than 10 unique series?
+
   }
+
+  ###
 
   ## The other args
   # std.method arg
@@ -309,9 +190,17 @@ xd_check <- function(data = NULL, # the data you are checking. long format or rw
   # out.format arg
   stopifnot(
     "out.format options are c('rwl', 'long')" =
-      is.character(out.format) &
-      length(out.format) == 1 &
+      is.character(out.format) &&
+      length(out.format) == 1 &&
       out.format %in% c("rwl", "long")
+  )
+
+  # segment-related args
+  stopifnot(
+    "seg.penalty must be a positive number" =
+      is.numeric(seg.penalty) && length(seg.penalty) == 1 && seg.penalty > 0,
+    "min.seg must be a positive integer" =
+      is.numeric(min.seg) && length(min.seg) == 1 && min.seg > 0
   )
 
 
@@ -320,10 +209,10 @@ xd_check <- function(data = NULL, # the data you are checking. long format or rw
   # 4) Assemble the results
 
   # Make a list of the data and the ref(s)
-  if (is.list(ref) &&
-      !(data.class(ref) %in% "rwl" ||
-        data.class(ref) %in% "data.frame" ||
-        data.class(ref) %in% "matrix")) {
+  if (is.list(ref) && # If ref is already a list
+      !(is_rwl_like(ref) ||
+        data.class(ref) %in% "data.table" ||
+        data.class(ref) %in% "data.frame")) {
 
     dat.ref.list <- c(list(data), ref)
 
@@ -338,37 +227,37 @@ xd_check <- function(data = NULL, # the data you are checking. long format or rw
       names(dat.ref.list) <- c("data", names(ref))
     }
 
-  } else { # Ref is not a list
+  } else { # ref is not a list
 
     dat.ref.list <- list(data, ref)
     names(dat.ref.list) <- c("data", "ref1")
   }
 
-  # Remove the null values
+  # Remove the null values from the working list
   dat.ref.list <- dat.ref.list[!unlist(lapply(dat.ref.list, FUN = \(x)is.null(x)))]
 
+  # All data is in long-format data.tables, within a list
 
   # Apply the standardization to each element of the list
   std.all <- lapply(dat.ref.list, FUN = \(x) {
     if (std.method %in% "p2yrsL") {
-      std.df <- longer_rwl(df = x, series.name = "series", dat.name = "rw") |>
-        p2yrsL() |>
-        rwl_longer()
+      std.df <- p2yrsL(rwl = x, limit = 2.6, out.format = "long")
+      data.table::setnames(std.df, old = "p2yrsL", new = "std.series")
     }
 
     if (std.method %in% "AR") {
-      # std.df <- longer_rwl(df = x, series.name = "series", dat.name = "rw") |>
+      # std.df <- longer_rwl(data = x, series.name = "series", dat.name = "rw") |>
       #   p2yrsL() |>
       #   rwl_longer()
+      # data.table::setnames(std.df, old = "ar.resid", new = "std.series")
     }
 
     if (std.method %in% "ARIMA") {
-      # std.df <- longer_rwl(df = x, series.name = "series", dat.name = "rw") |>
+      # std.df <- longer_rwl(data = x, series.name = "series", dat.name = "rw") |>
       #   p2yrsL() |>
       #   rwl_longer()
+      # data.table::setnames(std.df, old = "arima.resid", new = "std.series")
     }
-
-    colnames(std.df)[which(colnames(std.df) %in% "rw")] <- "std.series"
     std.df
   })
 
@@ -388,40 +277,43 @@ xd_check <- function(data = NULL, # the data you are checking. long format or rw
 
                        #series$std.series <- ifelse(is.na(series$std.series), 0, series$std.series)
 
-                       this.seriesID <- unique(this.series[,"series"])
+                       this.seriesID <- unique(this.series$series)
+                       loo.chron <- std.all[["data"]][!(std.all[["data"]]$series
+                                                        %in%
+                                                          this.seriesID),
+                                                      .(std.chron =
+                                                          DescTools::TukeyBiweight(std.series, na.rm = TRUE),
+                                                        samp.depth = .N),
+                                                      by = year]
+                       setorder(loo.chron, year)
 
-                       loo.chron1 <- aggregate(std.series ~ year,
-                                               data = std.all[["data"]][!(std.all[["data"]]$series
-                                                                          %in%
-                                                                            this.seriesID),],
-                                               FUN = \(x) DescTools::TukeyBiweight(x, na.rm = TRUE))
-                       colnames(loo.chron1)[colnames(loo.chron1) %in% "std.series"] <- "std.chron"
-
-                       loo.depth <- aggregate(std.series ~ year,
-                                              data = std.all[["data"]][!(std.all[["data"]]$series
-                                                                         %in%
-                                                                           this.seriesID),],
-                                              length)
-                       colnames(loo.depth)[colnames(loo.depth) %in% "std.series"] <- "samp.depth"
-
-                       loo.chron <- merge(loo.chron1, loo.depth, by = "year")
+                       loo.chron <- loo.chron[samp.depth >= 10,] # enforce minimum sample depth
 
                        # Get the possible lag years for the series
-                       lags.df <- sapply(lags, FUN = \(n.lag) {
-                         this.lag <- data.frame(this.series[, "year"] + n.lag)
-                         colnames(this.lag) <- paste0("lag", n.lag, ".year")
+                       lags.df <- lapply(lags, FUN = \(n.lag) {
+                         this.lag <- data.table::data.table(this.series$year + n.lag)
+                         setnames(this.lag, old = "V1", new = paste0("lag", n.lag, ".year"))
                          this.lag
-                       }) |> do.call(what = "cbind") |> as.data.frame()
+                       }) |> data.table::cbindlist()
 
                        # Merge the series with the respective loo chronology with each lag
                        merged.loo.lags <- apply(lags.df, MARGIN = 2, FUN = \(this.lag) {
-                         merge(cbind(this.series[, c("series", "std.series"), drop = FALSE],
-                                     this.lag),
-                               loo.chron,
-                               by.x = "this.lag", by.y = "year")
+                         this.lag.merged <- merge(cbind(this.series[, c("series", "std.series"), drop = FALSE],
+                                                        this.lag),
+                                                  loo.chron,
+                                                  by.x = "this.lag", by.y = "year")
+
+                         data.table::setnames(this.lag.merged, old = "this.lag", new = "year")
+
+                         # Calculate the z-scores and correlation coef contribution (Pearson)
+                         this.lag.merged[, cor.contr := as.numeric(scale(std.series)) *
+                                           as.numeric(scale(std.chron))]
+                         this.lag.merged
                        })
 
-
+                       # seg_check(series.dt = this.series, chron.dt = loo.chron, lags = seq(-1, 1))
+                       # plot_seg_check(this.series, loo.chron, lags = seq(-2, 2))
+                       #
                        # Set min overlap
                        lag.dfs <- lapply(merged.loo.lags, FUN = \(this.lag) {
                          if (nrow(this.lag) < min.overlap) {
@@ -436,7 +328,7 @@ xd_check <- function(data = NULL, # the data you are checking. long format or rw
 
                        # get lag identifiers
                        lag.dfs <- mapply(FUN = \(l, lnames) {
-                         l[,"lag"] <- gsub(".*lag([^.]+)\\.year.*", "\\1", lnames)
+                         l[, lag := gsub(".*lag([^.]+)\\.year.*", "\\1", lnames)]
                          l
                        }, l = lag.dfs, lnames = names(lag.dfs), SIMPLIFY = FALSE)
 
@@ -450,13 +342,11 @@ xd_check <- function(data = NULL, # the data you are checking. long format or rw
     # This will be a list of length 1 to 3 (or n refs)
     std.chrons <- lapply(std.all[!(names(std.all) %in% "data")],
                          FUN = \(this.ref) {
-                           std.chron <- aggregate(std.series ~ year, data = this.ref,
-                                                  FUN = \(x) {
-                                                    DescTools::TukeyBiweight(x, na.rm = TRUE)
-                                                  })
-                           colnames(std.chron)[which(colnames(std.chron) %in% "std.series")] <-
-                             "std.chron"
-                           std.chron
+                           std.chron <- this.ref[, .(std.chron = DescTools::TukeyBiweight(std.series, na.rm = TRUE),
+                                                     samp.depth = .N),
+                                                 by = year]
+                           setorder(std.chron, year)
+                           std.chron[samp.depth >= 10,] # enforce minimum sample depth
                          })
 
     data.refs <- lapply(std.chrons, FUN = \(this.chron) {
@@ -465,18 +355,25 @@ xd_check <- function(data = NULL, # the data you are checking. long format or rw
                          FUN = \(this.series) {
 
                            # Get the possible lag years
-                           lags.df <- sapply(lags, FUN = \(n.lag) {
-                             this.lag <- data.frame(this.series[, "year"] + n.lag)
-                             colnames(this.lag) <- paste0("lag", n.lag, ".year")
+                           lags.df <- lapply(lags, FUN = \(n.lag) {
+                             this.lag <- data.table::data.table(this.series$year + n.lag)
+                             setnames(this.lag, old = "V1", new = paste0("lag", n.lag, ".year"))
                              this.lag
-                           }) |> do.call(what = "cbind") |> as.data.frame()
+                           }) |> data.table::cbindlist()
 
                            # Merge the series with the respective loo chronology with each lag
                            merged.lags <- apply(lags.df, MARGIN = 2, FUN = \(this.lag) {
-                             merge(cbind(this.series[, c("series", "std.series"), drop = FALSE],
-                                         this.lag),
-                                   this.chron,
-                                   by.x = "this.lag", by.y = "year")
+                             this.lag.merged <- merge(cbind(this.series[, c("series", "std.series"), drop = FALSE],
+                                                            this.lag),
+                                                      this.chron,
+                                                      by.x = "this.lag", by.y = "year")
+
+                             data.table::setnames(this.lag.merged, old = "this.lag", new = "year")
+
+                             # Calculate the z-scores and correlation coef contribution (Pearson)
+                             this.lag.merged[, cor.contr := as.numeric(scale(std.series)) *
+                                               as.numeric(scale(std.chron))]
+                             this.lag.merged
                            })
 
                            # Set min overlap
@@ -492,7 +389,7 @@ xd_check <- function(data = NULL, # the data you are checking. long format or rw
 
                            # get lag identifiers
                            lag.dfs <- mapply(FUN = \(l, lnames) {
-                             l[,"lag"] <- gsub(".*lag([^.]+)\\.year.*", "\\1", lnames)
+                             l[, lag := gsub(".*lag([^.]+)\\.year.*", "\\1", lnames)]
                              l
                            }, l = lag.dfs, lnames = names(lag.dfs), SIMPLIFY = FALSE)
 
@@ -509,20 +406,30 @@ xd_check <- function(data = NULL, # the data you are checking. long format or rw
     names(data.refs.list) <- "LOO"
   }
 
+  n.refs <- length(data.refs.list)   # move up from ~l.503
+  seg.res <- data.table::rbindlist(
+    lapply(data.refs.list, \(this.ref) {
+      data.table::rbindlist(lapply(this.ref, seg_path,
+                                   penalty = seg.penalty,
+                                   min.seg = min.seg,
+                                   p.thresh = p.thresh))
+    }),
+    idcol = "reference")
+  seg.res <- seg_agree(seg.res, n.refs = n.refs)
 
-  ## Run the correlations between each series and each reference
+  ## Run the overall correlations between each series and each reference
   # The output here is a single data.frame containing all the results - can make any other type of
   # organization from this point
   cor.res.raw <- mapply(FUN = \(this.combo, these.names) {
     mapply(FUN = \(this.series, series.name) {
       if (length(this.series) == 0) { # Handle really short series properly (no lags possible)
-        all.lags <- data.frame(series = series.name,
-                               reference = these.names,
-                               offset = 0,
-                               overlap = NA,
-                               cor.coef = NA,
-                               p.val = NA,
-                               T.val = NA)
+        all.lags <- data.table::data.table(series = series.name,
+                                           reference = these.names,
+                                           offset = 0,
+                                           overlap = NA,
+                                           cor.coef = NA,
+                                           p.val = NA,
+                                           T.val = NA)
       } else {
         all.lags <- lapply(this.series, FUN = \(this.lag) { # Do correlations on this layer
           overlap <- nrow(this.lag)
@@ -531,8 +438,8 @@ xd_check <- function(data = NULL, # the data you are checking. long format or rw
             p.val <- NA
           } else {
             suppressWarnings(
-              this.cor.res <- cor.test(this.lag[, "std.series"],
-                                       this.lag[, "std.chron"],
+              this.cor.res <- cor.test(this.lag$std.series,
+                                       this.lag$std.chron,
                                        method = "spearman")
             )
             # Round the results for easy viewing
@@ -540,49 +447,38 @@ xd_check <- function(data = NULL, # the data you are checking. long format or rw
             p.val <- round(this.cor.res$p.value[[1]], digits = 3)
           }
 
-          res.df <- data.frame(series = this.lag[1, "series"],
-                               reference = these.names,
-                               offset = this.lag[1, "lag"],
-                               overlap = overlap,
-                               cor.coef = cor.coef,
-                               p.val = p.val)
-          res.df$T.val <- round(
+          res.df <- data.table::data.table(series = this.lag$series[1],
+                                           reference = these.names,
+                                           offset = this.lag$lag[1],
+                                           overlap = overlap,
+                                           cor.coef = cor.coef,
+                                           p.val = p.val)
+          res.df[, T.val := round(
             abs(res.df$cor.coef) *
-              sqrt((res.df$overlap-2)/1-(res.df$cor.coef)^2),
-            digits = 2)
+              sqrt((res.df$overlap-2)/(1-(res.df$cor.coef)^2)),
+            digits = 2)]
 
           res.df
-        }) |> do.call(what = "rbind")
+        }) |> data.table::rbindlist()
       }
 
-      # Calculate correct sugg.ID and sugg.OD that can go beyond the references
-      # This will get the LOO and the reference values - only the LOO is guaran
-      # all.lags$sugg.ID <- all.lags[all.lags$offset %in% "0", "sugg.ID"] +
-      #   as.numeric(all.lags$offset)
-      #
-      # all.lags$sugg.OD <- all.lags[all.lags$offset %in% "0", "sugg.OD"] +
-      #   as.numeric(all.lags$offset)
-      #
       all.lags
 
     }, this.series = this.combo, series.name = names(this.combo),
-    SIMPLIFY = FALSE) |> do.call(what = "rbind")
+    SIMPLIFY = FALSE) |> data.table::rbindlist()
 
   }, this.combo = data.refs.list, these.names = names(data.refs.list),
-  SIMPLIFY = FALSE) |> do.call(what = "rbind")
+  SIMPLIFY = FALSE) |> data.table::rbindlist()
 
 
   # Calculate the sugg.ID and sugg.OD using the original series data
-  data.ID <- aggregate(year ~ series, data = dat.ref.list$data, FUN = \(x) min(x))
-  data.OD <- aggregate(year ~ series, data = dat.ref.list$data, FUN = \(x) max(x))
-  colnames(data.ID)[colnames(data.ID) %in% "year"] <- "sugg.ID"
-  colnames(data.OD)[colnames(data.OD) %in% "year"] <- "sugg.OD"
+  data.ID.OD <- data[, .(sugg.ID = min(year), sugg.OD = max(year)), by = series]
 
-  data.ID.OD <- merge(data.ID, data.OD, by = "series")
-  cor.res.raw1 <- merge(cor.res.raw, data.ID.OD, by = "series", no.dups = FALSE)
+  cor.res.raw1 <- cor.res.raw[data.ID.OD, on = "series"]
 
-  cor.res.raw1$sugg.ID <- cor.res.raw1$sugg.ID + as.numeric(cor.res.raw1$offset)
-  cor.res.raw1$sugg.OD <- cor.res.raw1$sugg.OD + as.numeric(cor.res.raw1$offset)
+  cor.res.raw1[, `:=`(sugg.ID = sugg.ID + as.numeric(offset),
+                      sugg.OD = sugg.OD + as.numeric(offset))]
+
   # Reorganize the columns
   cor.res.raw1 <- cor.res.raw1[, c("series","reference","offset","sugg.ID","sugg.OD",
                                    "overlap","cor.coef","p.val","T.val")]
@@ -594,8 +490,8 @@ xd_check <- function(data = NULL, # the data you are checking. long format or rw
   ## Sort/filter/arrange this massive amount of data into a useful output
   # First step is to reorganize into a list that can be perused easily by the user
   cor.res <- lapply(split(cor.res.raw1, f = cor.res.raw1$series), FUN = \(this.series) {
-    lapply(split(this.series, f = this.series[, "reference"]), FUN = \(this.combo) {
-      this.combo <- this.combo[order(this.combo$cor.coef, decreasing = TRUE),]
+    lapply(split(this.series, f = this.series$reference), FUN = \(this.combo) {
+      data.table::setorder(this.combo, -cor.coef, na.last = TRUE)
       this.combo#[1:5,]
     })
   })
@@ -605,107 +501,102 @@ xd_check <- function(data = NULL, # the data you are checking. long format or rw
   # series.
 
   # Perhaps the best way (consider if all the references have best as dated and are significant)
-  n.refs <- length(data.refs.list)
+  #n.refs <- length(data.refs.list)
   all.bad <- paste("0", n.refs, sep = "/")
 
   cor.res.message <- lapply(split(cor.res.raw1, f = cor.res.raw1$series), FUN = \(this.series) {
 
-    this.series.sum <- lapply(split(this.series, f = this.series[, "reference"]),
+    this.series.sum <- lapply(split(this.series, f = this.series$reference),
                               FUN = \(this.combo) {
-                                this.combo <- this.combo[order(this.combo$cor.coef,
-                                                               decreasing = TRUE),]
-                                rownames(this.combo) <- 1:nrow(this.combo)
-                                as.dated <- this.combo[this.combo$offset %in% "0",]
+                                data.table::setorder(this.combo, -cor.coef, na.last = TRUE)
+                                #rownames(this.combo) <- 1:nrow(this.combo)
+                                as.dated <- this.combo[offset %in% "0",]
+                                if (!nrow(as.dated)) {
+                                  return(data.table::data.table(series = this.combo$series[1],
+                                                                reference = this.combo$reference[1],
+                                                                best.as.dated = 0, sig.as.dated = 0))
+                                } else {
 
-                                data.frame(series = as.dated$series,
-                                           best.as.dated = ifelse(which(this.combo$offset %in% "0")
-                                                                  %in% "1" &
-                                                                    nrow(this.combo) > 1, 1, 0),
-                                           sig.as.dated = ifelse(as.dated$p.val > p.thresh |
-                                                                   is.na(as.dated$p.val), 0, 1))
-
-                              }) |> do.call(what = "rbind")
+                                  data.table::data.table(series = as.dated$series,
+                                                         reference = this.combo$reference[1],
+                                                         best.as.dated = data.table::fifelse(which(this.combo$offset %in% "0")
+                                                                                             %in% "1" &
+                                                                                               nrow(this.combo) > 1, 1, 0),
+                                                         sig.as.dated = data.table::fifelse(as.dated$p.val > p.thresh |
+                                                                                              is.na(as.dated$p.val), 0, 1))
+                                }
+                              }) |> data.table::rbindlist()
 
     # Make sure it says 0/n if the overlap is inadequate to have anything
 
     # I need to figure out which of the references (including LOO) have correlations for
     # this.series as dated.
-    these.refs <- rownames(this.series.sum)[which(names(data.refs.list) %in%
-                                                    rownames(this.series.sum))]
+    these.refs <- this.series[, .(ncorrs = length(na.omit(cor.coef))), by = reference]
 
-    # Error in if (this.series$overlap[this.series$offset %in% "0"] <= min.overlap) { :
-    #     the condition has length > 1
-    # Need to control this for multiple reference comparisons
-    # if (this.series$overlap[this.series$offset %in% "0"] <= min.overlap) { # If low overlap
-    #   agg.df <- data.frame(series = this.series[1, "series"],
-    #                        best.as.dated = all.bad,
-    #                        sig.as.dated = all.bad,
-    #                        as.dated.ID = this.series[this.series$offset %in% "0",
-    #                                                         "sugg.ID"][1],
-    #                        as.dated.OD = this.series[this.series$offset %in% "0",
-    #                                                         "sugg.OD"][1])
-    #   agg.df[, paste0("as.dated.", names(data.refs.list), ".corr")] <- NA
-    #
-    #   agg.df$message <- paste("not checked against any",
-    #                   "references due to overlap <", min.overlap, "yrs")
-    #
-    #} else {
-    agg.df <- aggregate(cbind(best.as.dated, sig.as.dated) ~ series, data = this.series.sum,
-                        FUN = \(x) paste(sum(x), n.refs, sep = "/"), drop = FALSE)
+    agg.df <- this.series.sum[, .(best.as.dated = paste(sum(best.as.dated), n.refs, sep = "/"),
+                                  sig.as.dated = paste(sum(sig.as.dated), n.refs, sep = "/")),
+                              by = series]
 
-    agg.df$as.dated.ID <- unique(this.series[this.series$offset %in% "0",
-                                             "sugg.ID"])
-
-    agg.df$as.dated.OD <- unique(this.series[this.series$offset %in% "0",
-                                             "sugg.OD"])
+    agg.df[, `:=`(as.dated.ID = this.series[offset %in% "0",]$sugg.ID[1],
+                  as.dated.OD = this.series[offset %in% "0",]$sugg.OD[1])]
 
     ## Add the correlation coefficients for as dated
     # Which refs do we have correlation coefs for?
-    cor.coefs <- lapply(1:n.refs, FUN = \(i) {
-      this.coef <- this.series[this.series$offset %in% "0" &
-                                 this.series$reference %in% names(data.refs.list)[i], "cor.coef"]
-      ifelse(length(this.coef) == 0, NA, this.coef)
-    }) |> do.call(what = "c")
+    # cor.coefs <- this.series[offset %in% "0", .(cor.coef = cor.coef), by = .(series, reference)]
+    # cor.colnames <- paste0("as.dated.", names(data.refs.list), ".corr")
+    # agg.df[, (cor.colnames) := as.list(cor.coefs$cor.coef)]
+    cor.coefs <- this.series[offset %in% "0", .(reference, cor.coef)]
+    cor.colnames <- paste0("as.dated.", names(data.refs.list), ".corr")
+    agg.df[, (cor.colnames) := as.list(
+      cor.coefs$cor.coef[match(names(data.refs.list), cor.coefs$reference)])]
 
-    agg.df[, paste0("as.dated.", names(data.refs.list), ".corr")] <- cor.coefs
+    agg.df[, message := fifelse(nrow(these.refs[ncorrs == 0]) == 0,
+                                paste("checked against",
+                                      n.refs,
+                                      fifelse(n.refs == 1,
+                                              "reference", "references")),
+                                fifelse(nrow(these.refs[ncorrs == 0]) == nrow(these.refs),
+                                        paste("not checked against any",
+                                              "references due to overlap <", min.overlap, "yrs"),
+                                        paste("not checked against",
+                                              paste(these.refs[ncorrs == 0]$reference,
+                                                    sep = ifelse(nrow(these.refs) > 2, ", ", "& ")),
+                                              "due to overlap <", min.overlap, "yrs")))]
 
-    agg.df$message <- ifelse(nrow(this.series.sum) < n.refs,
-                             paste("not checked against",
-                                   n.refs - nrow(this.series.sum),
-                                   "references due to overlap <", min.overlap, "yrs"),
-                             ifelse(all(is.na(this.series$overlap[this.series$offset %in% "0"])),
-                                    paste("not checked against any",
-                                          "references due to overlap <", min.overlap, "yrs"),
-                                    paste("checked against",
-                                          n.refs,
-                                          ifelse(n.refs == 1,
-                                                 "reference", "references"))))
-    #}
 
     agg.df
 
-  }) |> do.call(what = "rbind")
+  }) |> data.table::rbindlist()
+
+  seg.max <- if (nrow(seg.res)) {
+    seg.res[, .(n = max(as.integer(sub("/.*", "", agreement)))), by = series]
+  } else {
+    data.table::data.table(series = character(), n = integer())
+  }
+  cor.res.message[seg.max, on = "series", seg.n := i.n]
+  cor.res.message[, seg.flag := paste(data.table::fcoalesce(seg.n, 0L), n.refs, sep = "/")]
+  cor.res.message[, seg.n := NULL]
 
   # Now we can generate different subsets of cor.res.message to represent different categories
   # of caution / or confidence in the dating. c("Lowest conf.", "Medium conf.", "Highest conf.")
   all.good <- paste(n.refs, n.refs, sep = "/")
-  lo <- cor.res.message[cor.res.message$best.as.dated %in% all.bad |
-                          cor.res.message$sig.as.dated %in% all.bad,]
 
-  mi <- cor.res.message[!((cor.res.message$best.as.dated %in% all.bad |
-                             cor.res.message$sig.as.dated %in% all.bad) |
-                            (cor.res.message$best.as.dated %in% all.good &
-                               cor.res.message$sig.as.dated %in% all.good)),]
+  hi <- cor.res.message[best.as.dated %in% all.good &
+                          sig.as.dated %in% all.good &
+                          seg.flag %in% paste("0", n.refs, sep = "/"),]
 
-  hi <- cor.res.message[cor.res.message$best.as.dated %in% all.good &
-                          cor.res.message$sig.as.dated %in% all.good,]
+  lo <- cor.res.message[best.as.dated %in% all.bad |
+                          sig.as.dated %in% all.bad,]
+
+  mi <- cor.res.message[!series %in% c(hi$series, lo$series),]
+
 
   cor.summ.list <- list(lo, mi, hi, cor.res.message)
   names(cor.summ.list) <- c("Lowest conf.", "Medium conf.", "Highest conf.", "All")
 
   # Prep the data subsetting based on the results
   if (out.format %in% "rwl") {
-    data.rwl <- longer_rwl(data,
+    data.rwl <- longer_rwl(data = data,
                            series.name = "series",
                            dat.name = colnames(data)[grep("rw", colnames(data))])
 
@@ -713,17 +604,18 @@ xd_check <- function(data = NULL, # the data you are checking. long format or rw
                         data.rwl[, mi$series, drop = FALSE],
                         data.rwl[, hi$series, drop = FALSE])
   } else {
-    rw.out.list <- list(data[data$series %in% lo$series,],
-                        data[data$series %in% mi$series,],
-                        data[data$series %in% hi$series,])
+    rw.out.list <- list(data[series %in% lo$series,],
+                        data[series %in% mi$series,],
+                        data[series %in% hi$series,])
   }
 
-  names(rw.out.list) <- c("Lowest","Medium","Highest")
+  names(rw.out.list) <- c("Lowest", "Medium", "Highest")
 
   ## The final output is a named list
-  out.list <- list(cor.summ.list, cor.res, rw.out.list)
-  names(out.list) <- c("Dating conf.", "Corr. result list", "Subset RW list")
+  out.list <- list(cor.summ.list, cor.res, rw.out.list, seg.res)
+  names(out.list) <- c("Dating conf.", "Corr. result list", "Subset RW list",
+                       "Segment flags")
 
   out.list
 
-} # End of function
+} ## End of function
