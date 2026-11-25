@@ -41,27 +41,30 @@ seg_path <- function(lag.dfs, penalty = 4, min.seg = 20, p.thresh = 0.05) {
 
   path <- data.table::data.table(series.year = yrs,
                                  offset = lag_path(S, lags, penalty))
-  segs <- path[, .(seg.start = min(series.year), seg.end = max(series.year)),
+  segs <- path[, .(seg.start = min(series.year), seg.end = max(series.year), seg.len = .N),
                by = .(offset, grp = data.table::rleid(offset))]
   segs <- segs[offset != 0L & seg.end - seg.start + 1 >= min.seg]
   if (!nrow(segs)) return(NULL)
   segs[, grp := NULL]
+  # is the whole rest of the series off?
   segs[, whole.series := seg.start == min(yrs) & seg.end == max(yrs)]
 
   # Spearman over each segment: offset vs as dated
   l0 <- al[lag == 0L, .(series.year, chron0 = std.chron)]
-  segs[, c("as.dated.corr", "offset.corr", "p.offset") := {
+  segs[, c("as.dated.corr", "as.dated.p", "offset.corr", "offset.p") := {
     k <- offset; a <- seg.start; b <- seg.end
     s <- l0[al[lag == k & series.year %between% c(a, b)], on = "series.year"]
     ct <- suppressWarnings(cor.test(s$std.series, s$std.chron, method = "spearman"))
-    r0 <- tryCatch(suppressWarnings(cor(s$std.series, s$chron0, method = "spearman",
-                                        use = "complete.obs")),
+    r0 <- tryCatch(suppressWarnings(cor.test(s$std.series, s$chron0, method = "spearman",
+                                             use = "complete.obs")),
                    error = \(e) NA_real_)
-    list(round(r0, 2), round(ct$estimate[[1]], 2), round(ct$p.value, 3))
+    list(round(r0$estimate[[1]], 2), round(r0$p.value, 3),
+         round(ct$estimate[[1]], 2), round(ct$p.value, 3))
   }, by = .(offset, seg.start)]
 
   segs[, series := al$series[1]]
-  segs[(offset.corr > as.dated.corr | is.na(as.dated.corr)) & p.offset < p.thresh]
+  # Subset to just the segs that have a better (and significant) offse.corr than as.dated.corr
+  segs[(offset.corr > as.dated.corr | is.na(as.dated.corr)) & offset.p < p.thresh]
 }
 
 # Agreement across references: a segment is supported by another reference if
@@ -72,7 +75,7 @@ seg_agree <- function(seg.res, n.refs, min.frac = 0.5) {
   yrs <- seg.res[, .(series.year = seg.start:seg.end),
                  by = .(seg.id, series, reference, offset)]
   m <- yrs[yrs, on = .(series, offset, series.year),
-           allow.cartesian = TRUE, nomatch = 0L]     # i.* = focal segment
+           allow.cartesian = TRUE, nomatch = 0L] # i.* = focal segment
   cov <- m[, .(n.yrs = .N), by = .(seg.id = i.seg.id, other = reference)]
   cov[seg.res, on = "seg.id", len := i.seg.end - i.seg.start + 1]
   agree <- cov[n.yrs / len >= min.frac,
@@ -83,6 +86,6 @@ seg_agree <- function(seg.res, n.refs, min.frac = 0.5) {
           `:=`(n.agree = i.n.agree, agree.refs = i.agree.refs)]
   seg.res[, agreement := paste(n.agree, n.refs, sep = "/")]
   data.table::setorder(seg.res, series, -n.agree, seg.start)
-  seg.res[, .(series, reference, offset, seg.start, seg.end, whole.series,
-              as.dated.corr, offset.corr, p.offset, agreement, agree.refs)]
+  seg.res[, .(series, reference, offset, seg.start, seg.end, seg.len, whole.series,
+              as.dated.corr, as.dated.p, offset.corr, offset.p, agreement, agree.refs)]
 }

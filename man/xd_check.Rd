@@ -11,7 +11,7 @@ xd_check(
   max.offset = 10,
   p.thresh = 0.05,
   out.format = "rwl",
-  seg.penalty = 4,
+  seg.penalty = 5,
   min.seg = 20
 )
 }
@@ -38,7 +38,7 @@ the common 0.05.}
 \item{out.format}{The format of subsets of data based on the dating confidence ranking. Options
 are "rwl" or "long".}
 
-\item{seg.penalty}{Sets the cost of increasingly large segment offsets}
+\item{seg.penalty}{Sets the cost of increasingly large segment offsets. Default is 5.}
 
 \item{min.seg}{The shortest potential bad segment reported}
 }
@@ -97,7 +97,8 @@ coefficient between a series and each reference chronology, instead of moving wi
 of fixed length. In a correctly-dated (and correlated) series, the cumulative correlation
 coefficient contributions are positive and increasing going backward in time. The function
 attempts to find the "optimal offset path" using the Viterbi algorithm, and suggests the segments
-and offsets that might be incorrectly dated.
+and offsets that might be incorrectly dated. The \code{seg.penalty} argument tunes how sensitive the
+algorithm is to changes in offset.
 
 The basic ranking of dating confidence here is based on two basic criteria: 1) is the
 whole-series correlation best as dated? and 2) is the correlation significant as dated? These

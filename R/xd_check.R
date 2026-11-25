@@ -55,7 +55,7 @@
 #' the common 0.05.
 #' @param out.format The format of subsets of data based on the dating confidence ranking. Options
 #' are "rwl" or "long".
-#' @param seg.penalty Sets the cost of increasingly large segment offsets
+#' @param seg.penalty Sets the cost of increasingly large segment offsets. Default is 5.
 #' @param min.seg The shortest potential bad segment reported
 #'
 #' @details
@@ -70,7 +70,8 @@
 #' of fixed length. In a correctly-dated (and correlated) series, the cumulative correlation
 #' coefficient contributions are positive and increasing going backward in time. The function
 #' attempts to find the "optimal offset path" using the Viterbi algorithm, and suggests the segments
-#' and offsets that might be incorrectly dated.
+#' and offsets that might be incorrectly dated. The `seg.penalty` argument tunes how sensitive the
+#' algorithm is to changes in offset.
 #'
 #' The basic ranking of dating confidence here is based on two basic criteria: 1) is the
 #' whole-series correlation best as dated? and 2) is the correlation significant as dated? These
@@ -101,7 +102,7 @@ xd_check <- function(data = NULL, # the data you are checking. long format or rw
                      max.offset = 10, # max offset in years to check
                      p.thresh = 0.05,
                      out.format = "rwl",
-                     seg.penalty = 4, # cost per year of offset change in segment path
+                     seg.penalty = 5, # cost per year of offset change in segment path
                      min.seg = 20 # shortest segment reported (years)
 ) {
   . <- j_variable <- NULL
@@ -406,7 +407,9 @@ xd_check <- function(data = NULL, # the data you are checking. long format or rw
     names(data.refs.list) <- "LOO"
   }
 
-  n.refs <- length(data.refs.list)   # move up from ~l.503
+
+  ### Do the segment checks
+  n.refs <- length(data.refs.list)
   seg.res <- data.table::rbindlist(
     lapply(data.refs.list, \(this.ref) {
       data.table::rbindlist(lapply(this.ref, seg_path,
@@ -560,7 +563,7 @@ xd_check <- function(data = NULL, # the data you are checking. long format or rw
                                               "references due to overlap <", min.overlap, "yrs"),
                                         paste("not checked against",
                                               paste(these.refs[ncorrs == 0]$reference,
-                                                    sep = ifelse(nrow(these.refs) > 2, ", ", "& ")),
+                                                    collapse = ifelse(nrow(these.refs) > 2, ", ", " & ")),
                                               "due to overlap <", min.overlap, "yrs")))]
 
 
