@@ -71,7 +71,10 @@
 #' coefficient contributions are positive and increasing going backward in time. The function
 #' attempts to find the "optimal offset path" using the Viterbi algorithm, and suggests the segments
 #' and offsets that might be incorrectly dated. The `seg.penalty` argument tunes how sensitive the
-#' algorithm is to changes in offset.
+#' algorithm is to changes in offset. Currently also leverages multiple references - bad segments
+#' that show up in only 1/n.refs are considered noise and are not returned (a segment needs to show
+#' up as bad in at least 2/n.refs to be flagged). This assumes you have good references! Note that
+#' using only LOO (no external references) is not as strict and will let through more noise.
 #'
 #' The basic ranking of dating confidence here is based on two basic criteria: 1) is the
 #' whole-series correlation best as dated? and 2) is the correlation significant as dated? These
@@ -419,6 +422,11 @@ xd_check <- function(data = NULL, # the data you are checking. long format or rw
     }),
     idcol = "reference")
   seg.res <- seg_agree(seg.res, n.refs = n.refs)
+  # Filter based on agreement among references
+  min.agree <- min(2L, n.refs) # min.agree = 1 when LOO is the only reference
+  if (nrow(seg.res)) {
+    seg.res <- seg.res[as.integer(sub("/.*", "", agreement)) >= min.agree]
+  }
 
   ## Run the overall correlations between each series and each reference
   # The output here is a single data.frame containing all the results - can make any other type of
@@ -572,10 +580,10 @@ xd_check <- function(data = NULL, # the data you are checking. long format or rw
   }) |> data.table::rbindlist()
 
   seg.max <- if (nrow(seg.res)) {
-    seg.res[, .(n = max(as.integer(sub("/.*", "", agreement)))), by = series]
-  } else {
-    data.table::data.table(series = character(), n = integer())
-  }
+    seg.res[as.integer(sub("/.*", "", agreement)) >= min.agree,
+            .(n = max(c(0L, as.integer(sub("/.*", "", agreement))))), by = series]
+  } else data.table::data.table(series = character(), n = integer())
+
   cor.res.message[seg.max, on = "series", seg.n := i.n]
   cor.res.message[, seg.flag := paste(data.table::fcoalesce(seg.n, 0L), n.refs, sep = "/")]
   cor.res.message[, seg.n := NULL]
@@ -615,9 +623,9 @@ xd_check <- function(data = NULL, # the data you are checking. long format or rw
   names(rw.out.list) <- c("Lowest", "Medium", "Highest")
 
   ## The final output is a named list
-  out.list <- list(cor.summ.list, cor.res, rw.out.list, seg.res)
+  out.list <- list(cor.summ.list, cor.res, rw.out.list, seg.res, data.refs.list)
   names(out.list) <- c("Dating conf.", "Corr. result list", "Subset RW list",
-                       "Segment flags")
+                       "Segment flags", "Lag data")
 
   out.list
 

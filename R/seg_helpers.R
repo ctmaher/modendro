@@ -47,7 +47,7 @@ seg_path <- function(lag.dfs, penalty = 4, min.seg = 20, p.thresh = 0.05) {
   if (!nrow(segs)) return(NULL)
   segs[, grp := NULL]
   # is the whole rest of the series off?
-  segs[, whole.series := seg.start == min(yrs) & seg.end == max(yrs)]
+  segs[, whole.series := seg.start == min(yrs)]
 
   # Spearman over each segment: offset vs as dated
   l0 <- al[lag == 0L, .(series.year, chron0 = std.chron)]

@@ -98,7 +98,10 @@ of fixed length. In a correctly-dated (and correlated) series, the cumulative co
 coefficient contributions are positive and increasing going backward in time. The function
 attempts to find the "optimal offset path" using the Viterbi algorithm, and suggests the segments
 and offsets that might be incorrectly dated. The \code{seg.penalty} argument tunes how sensitive the
-algorithm is to changes in offset.
+algorithm is to changes in offset. Currently also leverages multiple references - bad segments
+that show up in only 1/n.refs are considered noise and are not returned (a segment needs to show
+up as bad in at least 2/n.refs to be flagged). This assumes you have good references! Note that
+using only LOO (no external references) is not as strict and will let through more noise.
 
 The basic ranking of dating confidence here is based on two basic criteria: 1) is the
 whole-series correlation best as dated? and 2) is the correlation significant as dated? These
