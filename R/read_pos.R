@@ -803,7 +803,7 @@ read_pos <- function(path = NULL,
                 DPI.message <- NA
                 if (DPI < 600) {
                   DPI.message <- "DPI is suspiciously low!"
-                  warning(paste0("DPI is low for ",
+                  warning(paste0(DPI, " DPI seems low for ",
                                  attributes$series,
                                  ".pos. Ring width measurements will ",
                                  "be incorrect if DPI is wrong."),
